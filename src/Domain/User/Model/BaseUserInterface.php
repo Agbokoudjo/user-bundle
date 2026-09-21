@@ -30,7 +30,30 @@ interface BaseUserInterface extends  \Stringable
 
     public function setEmail(string $email): static;
 
+    public function getEmailCanonical(): ?string;
+
+    public function setEmailCanonical(?string $emailCanonical): void;
+
+
+    
+    public function setUsername(string $username): void;
+
+    public function getUsername(): ?string;
+    
+    public function getUsernameCanonical(): ?string;
+
+    public function setUsernameCanonical(?string $usernameCanonical): void;
+
+
     public function setPassword(string $password): static;
+
+     /**
+     * Checks if the user has a hashed password defined in the database.
+     * This is crucial for determining local login capability vs. external authentication.
+     *
+     * @return bool Returns true if the 'password' property is not null and not an empty string.
+     */
+    public function hasPassword():bool ;
 
     public function getPlainPassword(): ?string;
 
@@ -44,6 +67,16 @@ interface BaseUserInterface extends  \Stringable
 
     public function setEmailVerified(bool $emailVerified): static;
 
+    public function getEmailVerifiedAt(): ?\DateTimeImmutable ;
+
+    public function setEmailVerifiedAt(?\DateTimeImmutable $emailVerifiedAt):void ;
+
+
+    public function isSuperAdmin(): bool ;
+
+    public function setSuperAdmin(bool $boolean): void ;
+
+
     /**
      * @param list<string> $roles
      */
@@ -54,4 +87,33 @@ interface BaseUserInterface extends  \Stringable
     public function removeRole(string $role): static;
 
     public function hasRole(string $role): bool;
+
+
+    public function getConfirmationToken(): ?string;
+
+    public function setConfirmationToken(?string $confirmationToken): void;
+
+    public function getTokenRequestedAt(): ?\DateTimeInterface;
+
+    public function setTokenRequestedAt(?\DateTimeInterface $tokenRequestedAt): void ;
+
+
+    public function getPasswordRequestedAt(): ?\DateTimeInterface;
+
+    public function setPasswordRequestedAt(?\DateTimeInterface $date = null): void;
+
+    public function isPasswordRequestNonExpired(int $ttl): bool;
+
+
+    public function setLastLogin(?\DateTimeInterface $time = null): void;
+
+    public function getLastLogin(): ?\DateTimeInterface;
+
+    public function setCreatedAt(?\DateTimeInterface $createdAt = null): void;
+
+    public function getCreatedAt(): ?\DateTimeInterface;
+
+    public function setUpdatedAt(?\DateTimeInterface $updatedAt = null): void;
+
+    public function getUpdatedAt(): ?\DateTimeInterface;
 }

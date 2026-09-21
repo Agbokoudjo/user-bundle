@@ -15,7 +15,11 @@
         "symfony/http-kernel": "^6.4|^7.4|^8.0",
         "symfony/config": "^6.4|^7.4|^8.0",
         "symfony/dependency-injection": "^6.4|^7.4|^8.0",
-        "symfony/security-core": "^6.4|^7.4|^8.0"
+        "symfony/security-core": "^6.4|^7.4|^8.0",
+        "wlindabla/share-service-bundle": "^1.0",
+        "doctrine/orm": "^3.7",
+        "doctrine/doctrine-bundle": "^3.3",
+        "odolbeau/phone-number-bundle": "*"
     },
     "autoload": {
     "psr-4": { "Wlindabla\\UserBundle\\": "src/" }

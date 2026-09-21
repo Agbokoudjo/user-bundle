@@ -31,9 +31,17 @@ abstract class AbstractBaseUser implements BaseUserInterface
     /** Role granted to every user. Override in your entity if needed (never ROLE_ADMIN). */
     public const string ROLE_DEFAULT = 'ROLE_USER';
 
+    public const string ROLE_SUPER_ADMIN = 'ROLE_SUPER_ADMIN';
+
     protected int|string|null $id = null;
 
+    protected  ?string $username = null;
+
+    protected ?string $usernameCanonical = null;
+
     protected ?string $email = null;
+
+    protected ?string $emailCanonical = null;
 
     protected ?string $password = null;
 
@@ -42,6 +50,18 @@ abstract class AbstractBaseUser implements BaseUserInterface
     protected bool $enabled = false;
 
     protected bool $emailVerified = false;
+
+     protected ?\DateTimeInterface $lastLogin = null;
+
+    protected ?string $confirmationToken = null;
+
+    protected ?string $slug = null;
+    
+    protected ?\DateTimeInterface $passwordRequestedAt = null;
+
+    protected ?\DateTimeInterface  $tokenRequestedAt = null;
+
+    protected ?\DateTimeImmutable $emailVerifiedAt = null;
 
     /** @var list<string> */
     protected array $roles = [];
@@ -173,8 +193,100 @@ abstract class AbstractBaseUser implements BaseUserInterface
         $this->plainPassword = null;
     }
 
+     public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(static::ROLE_SUPER_ADMIN);
+    }
+
+    public function setSuperAdmin(bool $boolean): void
+    {
+        if (true === $boolean) {
+            $this->addRole(static::ROLE_SUPER_ADMIN);
+        } else {
+            $this->removeRole(static::ROLE_SUPER_ADMIN);
+        }
+    }
+
+    public function getUsernameCanonical(): ?string
+    {
+        return $this->usernameCanonical;
+    }
+
+    public function getEmailCanonical(): ?string
+    {
+        return $this->emailCanonical;
+    }
+
+
+    public function setUsername(?string $username): void
+    {
+        $this->username = $username;
+    }
+
+    public function setUsernameCanonical(?string $usernameCanonical): void
+    {
+        $this->usernameCanonical = $usernameCanonical;
+    }
+
+    public function setEmailCanonical(?string $emailCanonical): void
+    {
+        $this->emailCanonical = $emailCanonical;
+    }
+
+     public function setLastLogin(?\DateTimeInterface $time = null): void
+    {
+        $this->lastLogin = $time;
+    }
+
+    public function setConfirmationToken(?string $confirmationToken): void
+    {
+        $this->confirmationToken = $confirmationToken;
+    }
+
+    public function setPasswordRequestedAt(?\DateTimeInterface $date = null): void
+    {
+        $this->passwordRequestedAt = $date;
+    }
+
+    public function getPasswordRequestedAt(): ?\DateTimeInterface
+    {
+        return $this->passwordRequestedAt;
+    }
+
+     /**
+     * Get the value of tokenRequestedAt
+     */
+    public function getTokenRequestedAt(): ?\DateTimeInterface
+    {
+        return $this->tokenRequestedAt;
+    }
+
+    /**
+     * Set the value of tokenRequestedAt
+     */
+    public function setTokenRequestedAt(?\DateTimeInterface  $tokenRequestedAt): void
+    {
+        $this->tokenRequestedAt = $tokenRequestedAt;
+    }
+
+    public function hasPassword(): bool
+    {
+        // Utilise une vérification stricte pour s'assurer que le mot de passe n'est pas NULL et n'est pas vide.
+        return $this->password !== null && $this->password !== '';
+    }
+
     public function __toString(): string
     {
         return $this->getUserIdentifier();
+    }
+
+    public function getLastLogin(): ?\DateTimeInterface
+    {
+        return $this->lastLogin;
+    }
+
+    public function getUsername(): ?string
+    {
+        return $this->username;
     }
 }

@@ -19,6 +19,7 @@ use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use Wlindabla\UserBundle\Infrastruture\Model\UserInterface;
 
 /**
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
@@ -64,5 +65,23 @@ final class WlindablaUserBundle extends AbstractBundle
         $container->parameters()
             ->set('wlindabla_user.classes.user', $config['classes']['user'])
             ->set('wlindabla_user.default_role', $config['default_role']);
+    }
+
+    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
+    {
+        $config = $builder->getExtensionConfig('wlindabla_user');
+        $userClass = $config[0]['classes']['user'] ?? null;
+
+        if (null === $userClass) {
+            return;
+        }
+
+        $container->extension('doctrine', [
+            'orm' => [
+                'resolve_target_entities' => [
+                    UserInterface::class => $userClass,
+                ],
+            ],
+        ]);
     }
 }
