@@ -1,0 +1,30 @@
+# Composer
+/vendor/
+/composer.lock
+
+# PHPUnit
+/.phpunit.cache/
+/.phpunit.result.cache
+/coverage/
+
+# PHP-CS-Fixer
+/.php-cs-fixer.cache
+/.php-cs-fixer.php
+
+# PHPStan / Rector
+/.phpstan.cache/
+/.rector/
+
+# Symfony (kernel de test)
+/tests/.kernel/var/
+/var/
+
+# Environnement local (ne jamais committer de secrets)
+.env.local
+.env.*.local
+
+# IDE / OS
+/.idea/
+/.vscode/
+.DS_Store
+Thumbs.db
