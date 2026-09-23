@@ -17,7 +17,7 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\Tests\Model;
 
 use PHPUnit\Framework\TestCase;
-use Wlindabla\UserBundle\Infrastruture\Model\AbstractUser ;
+use Wlindabla\UserBundle\Domain\User\Model\AbstractBaseUser;
 
 /**
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
@@ -25,9 +25,9 @@ use Wlindabla\UserBundle\Infrastruture\Model\AbstractUser ;
  */
 final class AbstractUserTest extends TestCase
 {
-    private function makeUser(): AbstractUser
+    private function makeUser(): AbstractBaseUser
     {
-        return new class extends AbstractUser {
+        return new class extends AbstractBaseUser {
         };
     }
 

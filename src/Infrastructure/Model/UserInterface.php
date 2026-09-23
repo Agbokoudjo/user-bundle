@@ -14,7 +14,7 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace Wlindabla\UserBundle\Infrastruture\Model;
+namespace Wlindabla\UserBundle\Infrastructure\Model;
 
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface as SecurityUserInterface;

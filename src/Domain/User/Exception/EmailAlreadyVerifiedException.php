@@ -16,28 +16,34 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\Domain\User\Exception;
 
-use Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException;
-
-
 /**
- * Exception lancée quand on tente de vérifier un email déjà vérifié.
+ * Thrown when attempting to verify an email that is already verified.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package App\Domain\User\Exception
+ * @package <https://github.com/Agbokoudjo/>
  */
 final class EmailAlreadyVerifiedException extends InvalidTokenException
 {
-    public function __construct(
-        string $message = 'Cet email est déjà vérifié.',
-        ?\Throwable $previous = null
-    ) {
-        parent::__construct($message, self::CODE_ALREADY_USED, $previous);
+    private function __construct(string $message, array $translationParameters)
+    {
+        parent::__construct(
+            message: $message,
+            code: self::CODE_ALREADY_USED,
+            translationKey: 'invalid_token.email_already_verified',
+            translationParameters: $translationParameters,
+        );
     }
 
-    public static function forUser(string $email): self
+    public static function create(): self
+    {
+        return new self('This email address is already verified.', []);
+    }
+
+    public static function forEmail(string $email): self
     {
         return new self(
-            sprintf('L\'email de l\'utilisateur %s est déjà vérifié. Vous pouvez vous connecter.', $email)
+            \sprintf('The email address for user %s is already verified. You can log in.', $email),
+            ['%email%' => $email],
         );
     }
 }

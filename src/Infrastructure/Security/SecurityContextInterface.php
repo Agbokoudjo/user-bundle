@@ -14,20 +14,15 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace Wlindabla\UserBundle\Infrastruture\Model;
+namespace Wlindabla\UserBundle\Infrastructure\Security;
 
-use Wlindabla\UserBundle\Domain\User\Model\AbstractBaseUser;
-use Wlindabla\UserBundle\Infrastruture\Model\UserInterface ;
+use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 
 /**
- * Framework-agnostic base implementation of a user.
- *
- * Persistence mapping is added by the Doctrine layer, not here.
- *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package <https://github.com/Agbokoudjo/>
+ * @package App\Infrastructure\Security
  */
-abstract class AbstractUser extends AbstractBaseUser implements UserInterface
+interface SecurityContextInterface
 {
-    
+    public function getCurrentUser(): ?BaseUserInterface;
 }

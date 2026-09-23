@@ -1,0 +1,6 @@
+invalid_token:
+    invalid: 'Le lien de vérification est invalide ou a été modifié.'
+    expired: 'Le lien de vérification a expiré. Veuillez en demander un nouveau.'
+    already_used: 'Ce lien de vérification a déjà été utilisé.'
+    user_not_found: 'Aucun compte ne correspond à ce lien de vérification.'
+    email_already_verified: 'Cette adresse email est déjà vérifiée.'

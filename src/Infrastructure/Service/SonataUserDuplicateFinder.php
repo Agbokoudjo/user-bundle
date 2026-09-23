@@ -14,7 +14,7 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace Wlindabla\UserBundle\Infrastruture\Service;
+namespace Wlindabla\UserBundle\Infrastructure\Service;
 
 use Wlindabla\ShareServiceBundle\Similarity\IdentitySimilarityChecker;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserFindDuplicatesRepositoryInterface;
@@ -24,7 +24,6 @@ use Wlindabla\UserBundle\Domain\User\Application\Manager\UserFindDuplicatesRepos
  * ou approbation d'une AccountRequest) ressemble fortement à un compte
  * SonataUser déjà existant.
  *
- * Même architecture en deux étages que AccountRequestDuplicateFinder :
  * pré-sélection indexée (pg_trgm) puis confirmation fine (IdentitySimilarityChecker).
  */
 final class SonataUserDuplicateFinder

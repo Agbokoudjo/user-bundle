@@ -14,25 +14,29 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace Wlindabla\UserBundle\Model\Doctrine;
+namespace Wlindabla\UserBundle\Infrastructure\Doctrine;
 
 use Doctrine\ORM\Mapping as ORM;
+use libphonenumber\PhoneNumber;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Wlindabla\UserBundle\Infrastruture\Model\AbstractUser;
 use Symfony\Component\Validator\Constraints as Assert;
 use Vich\UploaderBundle\Mapping\Attribute as Vich;
+use Wlindabla\UserBundle\Domain\User\Model\AbstractBaseUser;
+use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 
 /**
  * Doctrine mapping for the base user. Extend this class in your application
  * (e.g. App\Entity\User) and declare it as the target of UserInterface via
  * doctrine.orm.resolve_target_entities.
+ * Framework-agnostic base implementation of a user.
  *
+ * Persistence mapping is added by the Doctrine layer, not here.
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
 #[ORM\MappedSuperclass]
-abstract class BaseUser extends AbstractUser
+abstract class BaseUser extends AbstractBaseUser implements UserInterface
 {
     #[Assert\NotBlank(message: 'Le nom complet est obligatoire.')]
     #[Assert\NotNull(message: 'Le nom complet ne peut pas être nul.')]

@@ -16,156 +16,151 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\Domain\User\Exception;
 
-use DomainException;
-
 /**
- * Exception lancée lorsqu'un token de vérification utilisateur est invalide.
- * 
- * Cette exception couvre plusieurs cas d'invalidité :
- * - Token ne correspondant pas au hash stocké
- * - Token expiré
- * - Token déjà utilisé
- * - Utilisateur non trouvé
- * 
- * Elle est utilisée principalement pour :
- * - Confirmation d'email
- * - Réinitialisation de mot de passe
- * - Vérification 2FA
+ * Thrown when a user verification token is invalid.
+ *
+ * Covers several cases of invalidity:
+ * - the token does not match the stored hash
+ * - the token has expired
+ * - the token has already been used
+ * - no user matches the token
+ *
+ * Mainly used for:
+ * - email confirmation
+ * - password reset
+ * - 2FA verification
+ *
+ * The exception message is always safe to display to the end user. Any
+ * technical detail useful for logs is carried separately via
+ * getDebugContext() and getTranslationParameters() — never appended to
+ * the message itself, to avoid leaking internals to the user.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package App\Domain\User\Exception
+ * @package <https://github.com/Agbokoudjo/>
  */
-class InvalidTokenException extends DomainException
+class InvalidTokenException extends \DomainException
 {
-    /**
-     * Code d'erreur : Token invalide (ne correspond pas au hash).
-     */
-    public const CODE_INVALID = 1001;
+    /** Error code: token invalid (does not match the stored hash). */
+    public const int CODE_INVALID = 1001;
+
+    /** Error code: token expired (validity window exceeded). */
+    public const int CODE_EXPIRED = 1002;
+
+    /** Error code: token already used (previously consumed). */
+    public const int CODE_ALREADY_USED = 1003;
+
+    /** Error code: no user found for this token. */
+    public const int CODE_USER_NOT_FOUND = 1004;
 
     /**
-     * Code d'erreur : Token expiré (dépassement du délai de validité).
-     */
-    public const CODE_EXPIRED = 1002;
-
-    /**
-     * Code d'erreur : Token déjà utilisé (consommé précédemment).
-     */
-    public const CODE_ALREADY_USED = 1003;
-
-    /**
-     * Code d'erreur : Utilisateur introuvable pour ce token.
-     */
-    public const CODE_USER_NOT_FOUND = 1004;
-
-    /**
-     * Constructeur de l'exception.
-     *
-     * @param string $message Message d'erreur explicite
-     * @param int $code Code d'erreur sémantique (utiliser les constantes CODE_*)
-     * @param \Throwable|null $previous Exception précédente pour le chaînage
+     * @param array<string, string> $translationParameters
      */
     public function __construct(
-        string $message = 'Le lien de vérification est invalide.',
+        string $message = 'The verification link is invalid.',
         int $code = self::CODE_INVALID,
-        ?\Throwable $previous = null
+        private readonly string $translationKey = 'invalid_token.invalid',
+        private readonly array $translationParameters = [],
+        private readonly ?string $debugContext = null,
+        ?\Throwable $previous = null,
     ) {
         parent::__construct($message, $code, $previous);
     }
 
     /**
-     * Crée une exception pour un token invalide (hash ne correspond pas).
-     *
-     * @param string|null $additionalInfo Informations supplémentaires à logger (jamais exposées à l'utilisateur)
-     * 
-     * @return self
+     * Translation key to use with the `WlindablaUserBundle` domain
+     * (e.g. via Symfony's TranslatableMessage) instead of the raw message.
      */
-    public static function invalidToken(?string $additionalInfo = null): self
+    public function getTranslationKey(): string
     {
-        $message = 'Le lien de vérification est invalide ou a été modifié.';
-
-        if ($additionalInfo !== null) {
-            $message .= sprintf(' [Debug: %s]', $additionalInfo);
-        }
-
-        return new self($message, self::CODE_INVALID);
+        return $this->translationKey;
     }
 
     /**
-     * Crée une exception pour un token expiré.
-     *
-     * @param \DateTimeInterface|null $expiredAt Date d'expiration du token
-     * 
-     * @return self
+     * @return array<string, string>
      */
-    public static function expiredToken(?\DateTimeInterface $expiredAt = null): self
+    public function getTranslationParameters(): array
     {
-        $message = 'Le lien de vérification a expiré. Veuillez en demander un nouveau.';
-
-        if ($expiredAt !== null) {
-            $message .= sprintf(' (Expiré le %s)', $expiredAt->format('d/m/Y à H:i'));
-        }
-
-        return new self($message, self::CODE_EXPIRED);
+        return $this->translationParameters;
     }
 
     /**
-     * Crée une exception pour un token déjà utilisé.
-     *
-     * @param \DateTimeInterface|null $usedAt Date d'utilisation du token
-     * 
-     * @return self
+     * Technical context for logs only. Never render this to the user —
+     * it may contain the raw token, an internal state, etc.
      */
-    public static function alreadyUsedToken(?\DateTimeInterface $usedAt = null): self
+    public function getDebugContext(): ?string
     {
-        $message = 'Ce lien de vérification a déjà été utilisé.';
-
-        if ($usedAt !== null) {
-            $message .= sprintf(' (Utilisé le %s)', $usedAt->format('d/m/Y à H:i'));
-        }
-
-        return new self($message, self::CODE_ALREADY_USED);
+        return $this->debugContext;
     }
 
     /**
-     * Crée une exception lorsque l'utilisateur n'est pas trouvé.
+     * Creates an exception for an invalid token (hash mismatch).
      *
-     * @return self
+     * @param string|null $debugContext Technical detail to log, never shown to the user
      */
-    public static function userNotFound(): self
+    public static function invalidToken(?string $debugContext = null): self
     {
         return new self(
-            'Aucun compte utilisateur ne correspond à ce lien de vérification.',
-            self::CODE_USER_NOT_FOUND
+            message: 'The verification link is invalid or has been altered.',
+            code: self::CODE_INVALID,
+            translationKey: 'invalid_token.invalid',
+            debugContext: $debugContext,
         );
     }
 
     /**
-     * Vérifie si l'exception est due à un token expiré.
-     *
-     * @return bool
+     * Creates an exception for an expired token.
      */
+    public static function expiredToken(?\DateTimeInterface $expiredAt = null): self
+    {
+        return new self(
+            message: 'The verification link has expired. Please request a new one.',
+            code: self::CODE_EXPIRED,
+            translationKey: 'invalid_token.expired',
+            translationParameters: null !== $expiredAt
+                ? ['%expired_at%' => $expiredAt->format(\DateTimeInterface::ATOM)]
+                : [],
+        );
+    }
+
+    /**
+     * Creates an exception for an already-used token.
+     */
+    public static function alreadyUsedToken(?\DateTimeInterface $usedAt = null): self
+    {
+        return new self(
+            message: 'This verification link has already been used.',
+            code: self::CODE_ALREADY_USED,
+            translationKey: 'invalid_token.already_used',
+            translationParameters: null !== $usedAt
+                ? ['%used_at%' => $usedAt->format(\DateTimeInterface::ATOM)]
+                : [],
+        );
+    }
+
+    /**
+     * Creates an exception when no user matches the token.
+     */
+    public static function userNotFound(): self
+    {
+        return new self(
+            message: 'No account matches this verification link.',
+            code: self::CODE_USER_NOT_FOUND,
+            translationKey: 'invalid_token.user_not_found',
+        );
+    }
+
     public function isExpired(): bool
     {
-        return $this->getCode() === self::CODE_EXPIRED;
+        return self::CODE_EXPIRED === $this->getCode();
     }
 
-    /**
-     * Vérifie si l'exception est due à un token déjà utilisé.
-     *
-     * @return bool
-     */
     public function isAlreadyUsed(): bool
     {
-        return $this->getCode() === self::CODE_ALREADY_USED;
+        return self::CODE_ALREADY_USED === $this->getCode();
     }
 
-    /**
-     * Vérifie si l'exception est due à un utilisateur introuvable.
-     *
-     * @return bool
-     */
     public function isUserNotFound(): bool
     {
-        return $this->getCode() === self::CODE_USER_NOT_FOUND;
+        return self::CODE_USER_NOT_FOUND === $this->getCode();
     }
 }

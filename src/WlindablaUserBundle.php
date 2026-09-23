@@ -19,7 +19,7 @@ use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
-use Wlindabla\UserBundle\Infrastruture\Model\UserInterface;
+use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 
 /**
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
