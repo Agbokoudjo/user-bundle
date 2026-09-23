@@ -26,6 +26,7 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Wlindabla\ShareServiceBundle\Similarity\IdentityNormalizer;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserFindDuplicatesRepositoryInterface;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
+use Wlindabla\UserBundle\Domain\User\Application\Manager\UserRepositoryInterface;
 
 /**
  * Base Doctrine repository for the user entity.
@@ -75,7 +76,8 @@ use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-abstract class AbstractUserRepository extends ServiceEntityRepository implements UserFindDuplicatesRepositoryInterface
+abstract class AbstractUserRepository extends ServiceEntityRepository 
+implements UserFindDuplicatesRepositoryInterface,UserRepositoryInterface
 {
     /**
      * @param class-string $entityClass FQCN of your concrete User entity
