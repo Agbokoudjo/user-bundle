@@ -1,0 +1,10 @@
+wlindabla_share_service:
+    async_method_dispatcher:
+        transport: async_app_transport
+        # Strict whitelist: only these FQCNs can be invoked from a queued message.
+        allowed_services:
+            - Wlindabla\UserBundle\Domain\User\Service\UpdatePasswordUserServiceInterface
+            - Wlindabla\UserBundle\Domain\User\Application\CommandHandler\UpdateUserProfileHandler
+            - Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ApplyEmailVerificationHandler
+            - Wlindabla\UserBundle\Domain\User\Application\CommandHandler\GenerateTemporaryPasswordHandler
+            - Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ToggleUserAccountHandler

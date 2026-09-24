@@ -1,0 +1,31 @@
+{#
+ * This file is part of the project by AGBOKOUDJO Franck.
+ * (c) AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+#}
+<!DOCTYPE html>
+<html>
+<body style="font-family: 'Inter', Arial, sans-serif; color:#34495E; background:#F4F6F5; padding:24px;">
+    <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h2 style="color:#1F7A56;">Nouvelle demande de création de compte</h2>
+        <p>Une nouvelle demande a été vérifiée et attend votre décision :</p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+            <tr><td style="padding:6px 0;color:#64798C;">Nom & prénom</td><td><strong>{{ account_request.fullName }}</strong></td></tr>
+            <tr><td style="padding:6px 0;color:#64798C;">Email</td><td>{{ account_request.email }}</td></tr>
+            <tr><td style="padding:6px 0;color:#64798C;">Téléphone</td><td>
+             {%- include 'bundles/SonataAdminBundle/CRUD/display_phone_number.html.twig' with { value: account_request.phone } only -%}</td></tr>
+            <tr><td style="padding:6px 0;color:#64798C;">Profil / fonction</td><td>{{ account_request.profile }}</td></tr>
+            <tr><td style="padding:6px 0;color:#64798C;">Objet</td><td>{{ account_request.subject }}</td></tr>
+            <tr><td style="padding:6px 0;color:#64798C;vertical-align:top;">Raison</td><td>{{ account_request.reason|nl2br }}</td></tr>
+        </table>
+        <p style="text-align:center;margin:32px 0;">
+            <a href="{{ absolute_url(account_request_show_url(account_request)) }}"
+               style="background:#2D9D6F;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;display:inline-block;">
+                Examiner la demande
+            </a>
+        </p> 
+        <p style="margin-top:32px;color:#64798C;font-size:.85rem;">
+           eQapitalise — CERRHUD, Cotonou, Bénin
+        </p>
+    </div>
+</body>
+</html>

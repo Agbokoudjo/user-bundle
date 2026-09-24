@@ -1,0 +1,21 @@
+{#
+ * This file is part of the project by AGBOKOUDJO Franck.
+ * (c) AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+#}
+<!DOCTYPE html>
+<html>
+<body style="font-family: 'Inter', Arial, sans-serif; color:#34495E; background:#F4F6F5; padding:24px;">
+    <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+        <h2 style="color:#E67E22;">Votre demande de création de compte</h2>
+        <p>Salut {{ account_request.fullName }},</p>
+        <p>
+            Après examen, votre demande de création de compte sur eQapitalise n'a pas été retenue en l'état.
+        </p>
+        {% if account_request.rejectionReason %}
+            <p><strong>Motif :</strong> {{ account_request.rejectionReason }}</p>
+        {% endif %}
+        <p>Pour toute question, vous pouvez contacter la direction de CERRHUD ou le coordinateur nationale de Eqap.</p>
+        <p style="margin-top:32px;color:#64798C;font-size:.85rem;">eQapitalise — CERRHUD, Cotonou, Bénin</p>
+    </div>
+</body>
+</html>

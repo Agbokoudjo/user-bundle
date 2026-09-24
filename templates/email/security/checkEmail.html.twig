@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"> 
+    <link rel="stylesheet" href="{{asset('bundles/sonatatwig/css/flashmessage.css')}}">
+    <title>Compte rendue de verification d'email</title>
+    <style type="text/css">
+        :root {
+            --teal: #0ec5b2;
+            --orange: #e19a2a;
+            --text: #3b3b3b;
+            --light: #eeedf2;
+            --primary: #0ec5b2;
+            --background: #f4f6f9;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --font-family: 'Inter', sans-serif;
+            --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.2); /* Ombre pour faire flotter le formulaire sur le fond sombre */
+            --transition-speed: 0.3s;
+            --border-radius: 1rem;
+            }
+
+            body {
+                font-family: 'Inter', sans-serif;
+                background-color: #f4f6f9; /* Couleur de fond douce */
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                color: #343a40; /* Texte principal foncé */
+                line-height: 1.6;
+            }
+
+        .message-box {
+            width: 100%;
+            max-width: 480px; /* Taille standard pour une boîte de message/login */
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Ombre douce */
+            overflow: hidden; /* Assure que les coins arrondis fonctionnent bien */
+            text-align: center;
+        }
+
+        .message-header {
+            background: #0d1f4e;
+            padding: 20px;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .message-logo img {
+            max-width: 60px; /* Taille de l'icône du logo */
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .message-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* --- MESSAGE BODY (Contenu et Messages Flash) --- */
+        .message-box-body {
+            padding: 30px;
+            min-height: 150px; /* Assure un minimum d'espace même sans contenu */
+        }
+
+        /* Styles pour les messages flash (Basé sur Bootstrap) */
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            text-align: left; /* Meilleure lisibilité pour les messages longs */
+        }
+
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .alert-danger, .alert-error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .alert-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+
+        /* --- LIENS --- */
+        .message-box-body a {
+            display: block; /* Chaque lien sur une nouvelle ligne */
+            margin-top: 15px;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .message-box-body a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        /* --- MESSAGE FOOTER (Pied de page) --- */
+        .message-box-footer {
+            background-color: #f1f1f1;
+            padding: 15px;
+            font-size: 0.8rem;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        } 
+
+    </style>
+</head>
+<body>
+    <div class="message-box">
+         {% block message_box_header %}
+            <div class="message-header">
+                {% if 'icon' == sonata_config.getOption('logo_content') or 'all' == sonata_config.getOption('logo_content') %}
+                    <div class="message-logo">
+                        <img  src="{{ asset('assets/' ~ sonata_config.logo,'admin') }}" alt="{{ sonata_config.title }}" class="img-fluid">
+                    </div>
+                {% endif %}
+                {% if 'text' == sonata_config.getOption('logo_content') or 'all' == sonata_config.getOption('logo_content') %}
+                        <h1 class="message-brand">{{ sonata_config.title }}</h1> 
+                {% endif %}
+            </div>
+        {% endblock %}
+
+        <div class="message-box-body">
+            {% include 'bundles/SonataTwigBundle/FlashMessage/render.html.twig' %}
+
+            {% if page_login_url is defined  %}
+                 <a href="{{ path(page_login_url) }}">
+                    {{ 'link_login'|trans({}, 'SonataUserBundle') }}
+                </a>
+            {% endif %}
+           
+            {% if page_redidrection_url is defined and page_label is defined %}
+                 <a href="{{ path(page_redidrection_url) }}">
+                    {{page_label}}
+                </a>
+            {% endif %}
+        </div>
+        <div class="message-box-footer">
+            <p>© {{ 'now'|date('Y', 'UTC') }} {{NAME_SITE}}</p>
+        </div>
+    </div>
+</body>
+</html>

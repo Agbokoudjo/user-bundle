@@ -18,7 +18,7 @@ namespace Wlindabla\UserBundle\Infrastructure\Model;
 
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface as SecurityUserInterface;
-use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
+use Wlindabla\UserBundle\Infrastructure\Model\UserIdentityNormalizerInterface;
 
 /**
  * Contract of a user managed by the bundle.
@@ -26,7 +26,7 @@ use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-interface UserInterface extends BaseUserInterface,SecurityUserInterface, PasswordAuthenticatedUserInterface
+interface UserInterface extends SecurityUserInterface, PasswordAuthenticatedUserInterface,UserIdentityNormalizerInterface
 {
     
 }

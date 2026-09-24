@@ -23,6 +23,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 use Wlindabla\UserBundle\Domain\User\Service\CanonicalFieldsUpdaterInterface;
+use Wlindabla\UserBundle\Infrastructure\Persistance\UserManagerDoctrineReference;
 
 /**
  * Generic Doctrine implementation of UserManagerInterface. Nothing to
@@ -38,7 +39,7 @@ use Wlindabla\UserBundle\Domain\User\Service\CanonicalFieldsUpdaterInterface;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-final class DoctrineUserManager implements UserManagerInterface
+final class DoctrineUserManager implements UserManagerInterface,UserManagerDoctrineReference
 {
     private ?ObjectRepository $repository = null;
 
@@ -54,7 +55,7 @@ final class DoctrineUserManager implements UserManagerInterface
     {
         return $this->repository ??= $this->entityManager->getRepository($this->userClass);
     }
-
+    
     /**
      * Convenience accessor for services that don't need a full
      * EntityManager. If your repository extends

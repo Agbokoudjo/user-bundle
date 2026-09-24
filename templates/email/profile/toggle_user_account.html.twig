@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status Compte </title>
+</head>
+<body>
+    {# Détermination du statut et des couleurs #}
+    {% set is_active = status == true %}
+    {% set color = is_active ? '#039855' : '#E03C31' %} {# Vert pour Actif, Rouge pour Désactivé #}
+    {% set status_text = is_active ? 'ACTIVÉ' : 'DÉSACTIVÉ' %}
+
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        
+        {# Salutation #}
+        <p style="font-size: 16px;">Salut {{ username }},</p>
+
+        {# En-tête principal #}
+        <h1 style="color: {{ color }}; font-size: 24px; text-align: center; border-bottom: 2px solid {{ color }}; padding-bottom: 10px;">
+            Votre Compte est {{ status_text }}
+        </h1>
+
+        {% if is_active %}
+            {# Cas : Compte ACTIVÉ #}
+            <p>Nous vous informons que votre compte sur <strong>{{ NAME_SITE }}</strong> a été {{ status_text }} par l'équipe d'administration.</p>
+            
+            <p>Vous pouvez dès à présent accéder à votre espace d'administration en cliquant sur le bouton ci-dessous :</p>
+            
+            {# Affichage sécurisé du mot de passe temporaire #}
+            {% if password_user is defined and password_user is not empty %}
+                
+            <div style="background-color: #f0f8ff; border-left: 4px solid {{ color }}; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0; font-size: 14px;">
+                    <strong>🔑 Mot de passe temporaire :</strong><br>
+                    <span style="background-color: #e8e8e8; padding: 5px 10px; border-radius: 3px; font-size: 16px; font-family: 'Courier New', monospace;">{{ password_user }}</span>
+                </p>
+            </div>
+            <p style="color: #d9534f; font-weight: bold;">
+                ⚠️ <strong>Important :</strong> Une fois connecté à l'espace d'administration, veuillez <strong>changer immédiatement</strong> votre mot de passe pour des raisons de sécurité.
+            </p>
+            {% endif %}
+
+            {# Bouton de connexion #}
+            <div style="text-align: center; margin: 25px 0;">
+                <a href="{{ url_login }}" 
+                   style="background-color: {{ color }}; 
+                          color: #ffffff; 
+                          padding: 12px 25px; 
+                          text-decoration: none; 
+                          border-radius: 5px; 
+                          font-weight: bold; 
+                          display: inline-block;">
+                    Se Connecter
+                </a>
+            </div>
+
+        {% else %}
+            {# Cas : Compte DÉSACTIVÉ #}
+            <p style="color: #666;">
+                Nous vous informons que votre compte sur <strong>{{ NAME_SITE }}</strong> a été {{ status_text }} par l'équipe d'administration.
+            </p>
+            
+            <p>
+                Si vous pensez qu'il s'agit d'une erreur ou pour obtenir plus d'informations, veuillez <strong>contacter les administrateurs</strong> de {{ NAME_SITE }}.
+            </p>
+        {% endif %}
+
+        {# Pied de page #}
+        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
+        
+        <p style="font-size: 12px; color: #888;">
+            <strong>Note :</strong> Ceci est un email automatique, merci de ne pas y répondre directement. 
+            Veuillez utiliser notre adresse de support habituelle si vous avez des questions.
+        </p>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation de compte </title>
+</head>
+<body>
+    
+    {% set primary_color = '#007BFF' %} {# Bleu professionnel pour l'action #}
+    {% set border_color = '#DDDDDD' %}
+    {% set accent_color = '#F5F5F5' %}
+
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid {{ border_color }}; border-radius: 8px;">
+        
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid {{ border_color }};">
+            <h1 style="color: {{ primary_color }}; font-size: 24px; margin: 0;">
+                Création de votre Compte <strong>{{ siteName }}</strong>
+            </h1>
+        </div>
+
+        <div style="padding: 20px 0;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Salut <strong>{{ username }}</strong> ,</p>
+
+            <p style="margin-bottom: 20px;">
+                Nous vous confirmons que votre compte  pour l'application <strong>{{ siteName }}</strong> a été créé avec succès .
+            </p>
+            
+            <p style="background-color: {{ accent_color }}; padding: 15px; border-left: 4px solid {{ primary_color }}; margin-bottom: 25px;">
+                Avant de pouvoir vous connecter, vous devez <strong>vérifier et activer votre adresse e-mail <span style="color:#0ec5b2; font-weight: 600;">{{recipientEmail}}</span></strong> en cliquant sur le lien ci-dessous.
+            </p>
+
+            {# Bouton d'Action #}
+            <div style="text-align: center; margin: 25px 0;">
+                <a href="{{ confirmationUrl }}" 
+                   style="background-color: {{ primary_color }}; 
+                          color: #ffffff !important; 
+                          text-decoration: none; 
+                          padding: 15px 30px; 
+                          border-radius: 5px; 
+                          font-weight: bold; 
+                          display: inline-block; 
+                          font-size: 16px;">
+                    Confirmer Mon Compte
+                </a>
+            </div>
+            
+            <p style="font-size: 14px; margin-top: 30px; color: #666;">
+                Ce lien de confirmation expirera bientôt pour des raisons de sécurité. Si vous rencontrez des problèmes, copiez et collez l'URL suivante dans votre navigateur :
+            </p>
+            <p style="font-size: 12px; word-break: break-all; color: {{ primary_color }};">
+                {{ confirmationUrl }}
+            </p>
+        </div>
+        
+        {# Pied de page #}
+        <div style="border-top: 1px solid {{ border_color }}; padding-top: 15px; text-align: center;">
+            <p style="font-size: 12px; color: #888;">
+                Ceci est un message automatique du système <strong>{{ siteName }}</strong>.<br>
+                Merci de ne pas répondre directement à cet e-mail.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

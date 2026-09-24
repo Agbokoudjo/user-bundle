@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerte sécurité — tentative de changement d'email signalée</title>
+</head>
+<body>
+
+    {% set danger_color = '#c0392b' %}
+    {% set border_color = '#DDDDDD' %}
+    {% set danger_bg = '#FBEAE9' %}
+
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid {{ border_color }}; border-radius: 8px;">
+
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid {{ border_color }};">
+            <h1 style="color: {{ danger_color }}; font-size: 24px; margin: 0;">
+                ⚠️ Alerte sécurité — <strong>{{ siteName }}</strong>
+            </h1>
+        </div>
+
+        <div style="padding: 20px 0;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Bonjour,</p>
+
+            <p style="background-color: {{ danger_bg }}; padding: 15px; border-left: 4px solid {{ danger_color }}; margin-bottom: 25px;">
+                Une demande de changement d'email a été signalée <strong>"Ce n'était pas moi"</strong>
+                par le titulaire de l'ancienne adresse. Ceci peut indiquer une tentative de
+                détournement de compte en cours et mérite une vérification.
+            </p>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+                <tr>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Compte concerné</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ targetUsername }} (ID: {{ targetUserId }})</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Initiée par</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ requestedByUsername }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Ancienne adresse</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ oldEmail }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Nouvelle adresse demandée</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ newEmail }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Demande initiée le</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ requestedAt|date('d/m/Y à H:i', 'UTC') }} (UTC)</td>
+                </tr>
+            </table>
+
+            <p style="margin-bottom: 20px;">
+                La demande a été automatiquement annulée — aucune action supplémentaire n'est requise
+                pour bloquer ce changement. Une vérification manuelle est recommandée pour identifier
+                l'origine de cette tentative.
+            </p>
+        </div>
+
+        <div style="border-top: 1px solid {{ border_color }}; padding-top: 15px; text-align: center;">
+            <p style="font-size: 12px; color: #888;">
+                Ceci est un message automatique du système <strong>{{ siteName }}</strong>.<br>
+                Merci de ne pas répondre directement à cet e-mail.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

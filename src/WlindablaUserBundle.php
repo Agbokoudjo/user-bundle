@@ -51,6 +51,16 @@ final class WlindablaUserBundle extends AbstractBundle
                     ->defaultValue('ROLE_USER')
                     ->cannotBeEmpty()
                 ->end()
+                ->arrayNode('security')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->integerNode('user_cache_ttl')
+                            ->info('Seconds a loaded/refreshed user stays cached by UserProvider. Lower it if disabling an account or changing roles must take effect faster than this delay.')
+                            ->defaultValue(43200)
+                            ->min(0)
+                        ->end()
+                    ->end()
+                ->end()
             ->end();
     }
 
@@ -64,7 +74,8 @@ final class WlindablaUserBundle extends AbstractBundle
     ): void {
         $container->parameters()
             ->set('wlindabla_user.classes.user', $config['classes']['user'])
-            ->set('wlindabla_user.default_role', $config['default_role']);
+            ->set('wlindabla_user.default_role', $config['default_role'])
+            ->set('wlindabla_user.security.user_cache_ttl', $config['security']['user_cache_ttl']);
     }
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void

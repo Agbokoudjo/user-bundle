@@ -289,4 +289,22 @@ abstract class AbstractBaseUser implements BaseUserInterface
     {
         return $this->username;
     }
+
+    public function getStatus():bool{
+        
+        return $this->isEnabled();
+    }
+
+     /**
+     * Get the value of slug
+     */
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(?string $slug): void
+    {
+        $this->slug = $slug;
+    }
 }

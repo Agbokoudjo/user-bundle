@@ -61,6 +61,8 @@ interface BaseUserInterface extends  \Stringable
 
     public function isEnabled(): bool;
 
+    public function getStatus(): bool;
+
     public function setEnabled(bool $enabled): static;
 
     public function isEmailVerified(): bool;
@@ -116,4 +118,9 @@ interface BaseUserInterface extends  \Stringable
     public function setUpdatedAt(?\DateTimeInterface $updatedAt = null): void;
 
     public function getUpdatedAt(): ?\DateTimeInterface;
+
+
+    public function getSlug(): ?string;
+
+    public function setSlug(?string $slug): void;
 }
