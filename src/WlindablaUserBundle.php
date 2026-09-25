@@ -61,12 +61,29 @@ final class WlindablaUserBundle extends AbstractBundle
                         ->end()
                     ->end()
                 ->end()
+                ->arrayNode('routes')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->scalarNode('login')
+                            ->info('Route name to link back to after email verification. Required now that the bundle no longer ships its own Sonata login controller.')
+                            ->defaultValue("app_admin_user_login")
+                        ->end()
+                        ->scalarNode('home')
+                            ->info('Fallback route name shown on verification error pages. Optional — the link is simply omitted if not configured.')
+                            ->defaultNull()
+                        ->end()
+                    ->end()
+                ->end()
                 ->arrayNode('templates')
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->scalarNode('email_verification')
                             ->info('Twig template rendered by UserAccountEmailVerificationSubscriber.')
                             ->defaultValue('email/profile/admin_account_confirmation.html.twig')
+                        ->end()
+                        ->scalarNode('email_verification_result')
+                            ->info('Twig template rendered by EmailVerificationController for every outcome (success, expired, already used, invalid, unexpected error).')
+                            ->defaultValue('email/security/checkEmail.html.twig')
                         ->end()
                     ->end()
                 ->end()
@@ -85,8 +102,9 @@ final class WlindablaUserBundle extends AbstractBundle
             ->set('wlindabla_user.classes.user', $config['classes']['user'])
             ->set('wlindabla_user.default_role', $config['default_role'])
             ->set('wlindabla_user.security.user_cache_ttl', $config['security']['user_cache_ttl'])
-            ->set('wlindabla_user.templates', $config['templates']);
-            ;
+            ->set('wlindabla_user.templates', $config['templates'])
+            ->set('wlindabla_user.routes.login', $config['routes']['login'])
+            ->set('wlindabla_user.routes.home', $config['routes']['home']);
     }
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void

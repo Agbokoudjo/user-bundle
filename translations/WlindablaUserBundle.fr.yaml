@@ -7,3 +7,12 @@ invalid_token:
 
 verification_email:
     subject: 'Votre compte %site_name% a été créé'
+
+email_verification:
+    success: 'Votre email a été vérifié avec succès ! Vous pouvez maintenant vous connecter.'
+    expired_resent: 'Le lien de vérification a expiré. Un nouveau lien vous a été envoyé.'
+    expired_resend_failed: 'Le lien de vérification a expiré, et nous n''avons pas pu vous en renvoyer un pour le moment. Réessayez dans quelques instants.'
+    already_used: 'Votre email est déjà vérifié ! Vous pouvez vous connecter directement.'
+    user_not_found: 'Aucun compte ne correspond à ce lien de vérification.'
+    invalid: 'Le lien de vérification est invalide. Veuillez réessayer.'
+    unexpected_error: 'Une erreur est survenue. Veuillez réessayer plus tard ou contacter le support.'

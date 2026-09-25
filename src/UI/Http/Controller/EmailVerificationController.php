@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+
 /*
  * This file is part of the project by AGBOKOUDJO Franck.
  *
@@ -20,13 +21,13 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException;
 use Wlindabla\UserBundle\Domain\User\Service\EmailVerificationInterface;
+use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 
-/**instruction pour claude Ai: claude devrait nous dire comment on doit amlioerer cet controller
- * et comment on peut configurer pour que ça soit appeler lorsque la route est appeller 
- * less message des execeptions ,et les des templatest claude devrait nous dire comment le configurer pour que ça soit tradusable dans 
- * la langue de l'utilisateur par default,
+/**
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
@@ -35,119 +36,123 @@ use Wlindabla\UserBundle\Domain\User\Service\EmailVerificationInterface;
     '/verify-email/{token}/{id}',
     name: 'app.verify.email',
     methods: ['GET'],
-    requirements: [
-        'token' => '[a-zA-Z0-9]{32,64}'
-    ],
+    requirements: ['token' => '[a-zA-Z0-9]{32,64}'],
 )]
-
 final class EmailVerificationController extends AbstractController
 {
     public function __construct(
-        private EmailVerificationInterface $verificationService,
-        private readonly ?LoggerInterface $logger = null
-    ) {}
+        private readonly EmailVerificationInterface $verificationService,
+        private readonly TemplateRegistryInterface $templateRegistry,
+        private readonly TranslatorInterface $translator,
+        private readonly ?string $loginRouteName = null,
+        private readonly ?string $homeRouteName = null,
+        private readonly ?LoggerInterface $logger = null,
+    ) {
+    }
 
-    public function __invoke(
-        string $token,
-        int $id
-    ):Response{
-        $page_redirection_route_name= "app_admin_user_login";
+    public function __invoke(string $token, int $id): Response
+    {
         try {
+            $this->verificationService->verifyEmail($token, $id);
 
-            $this->verificationService->verifyEmail($token,$id);
-            $this->addFlash('success', 'Votre email a été vérifié avec succès ! Vous pouvez maintenant vous connecter.');
+            $this->addFlash('success', $this->translator->trans('email_verification.success', [], 'WlindablaUserBundle'));
 
-            return $this->render('/email/security/checkEmail.html.twig', [
-                'page_login_url' =>  'app_admin_user_login'
-            ]);
-            
+            return $this->renderResult();
         } catch (InvalidTokenException $e) {
-
             if ($e->isExpired()) {
-                $this->addFlash(
-                    'warning',
-                    'Le lien de vérification a expiré. Un nouveau lien vous a été envoyé.'
-                );
+                return $this->handleExpiredToken($id);
+            }
 
-                // Renvoyer un email 
-                $this->verificationService->resendVerificationEmail($id);
-
-                return $this->render('/email/security/checkEmail.html.twig', [
-                        'page_login_url' => $page_redirection_route_name
-                    ]);
-                }
-
-            return $this->handleInvalidToken($e,$page_redirection_route_name);
-
-        } catch (\Exception $e) {
+            return $this->handleInvalidToken($e);
+        } catch (\Throwable $e) {
             return $this->handleUnexpectedError($e);
         }
     }
 
     /**
-     * Gère les différents cas d'erreur de token.
-     *
-     * @param InvalidTokenException $exception L'exception levée
-     * @param string $slug Le slug de l'utilisateur
-     * @param   string  $page_redirection_route_name
-     * @return Response La route de redirection
+     * Isolated in its own try/catch: a failure here (e.g. the resend
+     * cooldown from SecureTokenService) is not covered by the outer
+     * try/catch of __invoke() — a catch block is not protected by the try
+     * that triggered it — so without this it could crash the page it was
+     * meant to keep friendly.
      */
-    private function handleInvalidToken(
-        InvalidTokenException $e,
-        string  $page_redirection_route_name
-    ): Response{
-      
-         if ($e->isAlreadyUsed()) {
-            $this->addFlash(
-                'warning',
-                'Votre email est déjà vérifié ! Vous pouvez vous connecter directement.'
-            );
-            
-            return $this->render('/email/security/checkEmail.html.twig', [
-                'page_login_url' => $page_redirection_route_name
+    private function handleExpiredToken(int $id): Response
+    {
+        try {
+            $this->verificationService->resendVerificationEmail($id);
+
+            $this->addFlash('warning', $this->translator->trans('email_verification.expired_resent', [], 'WlindablaUserBundle'));
+        } catch (\Throwable $e) {
+            $this->logger?->warning('Failed to resend the verification email after an expired token.', [
+                'user_id' => $id,
+                'error' => $e->getMessage(),
             ]);
 
-        } elseif ($e->isUserNotFound()) {
-
-            $this->addFlash(
-                'danger',
-                '❌' . $e->getMessage()
-            );
-        } else {
-            $this->addFlash(
-                'danger',
-                '❌ Le lien de vérification est invalide. Veuillez réessayer.'
-            );
+            $this->addFlash('warning', $this->translator->trans('email_verification.expired_resend_failed', [], 'WlindablaUserBundle'));
         }
 
-        return $this->render('/email/security/checkEmail.html.twig', [
-            'page_redirection_url' => 'app_home',
-            'page_label' => 'Aller a la page d\'accueill'
-        ]);
-    }  
+        return $this->renderResult();
+    }
 
-    /**
-     * Gère les erreurs inattendues.
-     *
-     * @param \Exception $exception L'exception levée
-     * 
-     * @return Response
-     */
-    private function handleUnexpectedError(\Exception $exception): Response
+    private function handleInvalidToken(InvalidTokenException $e): Response
     {
-        $this->logger?->critical('Erreur inattendue lors de la vérification d\'email', [
+        if ($e->isAlreadyUsed()) {
+            $this->addFlash('warning', $this->translator->trans('email_verification.already_used', [], 'WlindablaUserBundle'));
+
+            return $this->renderResult();
+        }
+
+        if ($e->isUserNotFound()) {
+            $this->addFlash('danger', $this->translator->trans('email_verification.user_not_found', [], 'WlindablaUserBundle'));
+        } else {
+            $this->addFlash('danger', $this->translator->trans('email_verification.invalid', [], 'WlindablaUserBundle'));
+        }
+
+        return $this->renderResult();
+    }
+
+    private function handleUnexpectedError(\Throwable $exception): Response
+    {
+        $this->logger?->critical('Unexpected error during email verification.', [
             'error' => $exception->getMessage(),
             'trace' => $exception->getTraceAsString(),
         ]);
 
-        $this->addFlash(
-            'error',
-            '⚠️ Une erreur est survenue. Veuillez réessayer plus tard ou contacter le support.'
-        );
-       
-        return $this->render('/email/security/checkEmail.html.twig', [
-            'page_redirection_url' => 'app_home',
-            'page_label' => 'Aller a la page d\'accueill'
+        $this->addFlash('error', $this->translator->trans('email_verification.unexpected_error', [], 'WlindablaUserBundle'));
+
+        return $this->renderResult();
+    }
+
+    /**
+     * One template for every outcome; only the flash messages differ.
+     * login_url/home_url are null when the corresponding route isn't
+     * configured, or doesn't exist — the template decides whether to
+     * render the link at all, the page itself never crashes on a
+     * missing/misconfigured route.
+     */
+    private function renderResult(): Response
+    {
+        return $this->render($this->templateRegistry->get('email_verification_result'), [
+            'login_url' => $this->safeGenerateUrl($this->loginRouteName),
+            'home_url' => $this->safeGenerateUrl($this->homeRouteName),
         ]);
+    }
+
+    private function safeGenerateUrl(?string $routeName): ?string
+    {
+        if (null === $routeName) {
+            return null;
+        }
+
+        try {
+            return $this->generateUrl($routeName);
+        } catch (RouteNotFoundException $e) {
+            $this->logger?->warning('Route configured for EmailVerificationController does not exist.', [
+                'route' => $routeName,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 }

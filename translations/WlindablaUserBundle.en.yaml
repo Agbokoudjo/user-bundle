@@ -7,3 +7,12 @@ invalid_token:
     
 verification_email:
     subject: 'Your %site_name% account has been created'
+
+email_verification:
+    success: 'Your email has been verified successfully! You can now log in.'
+    expired_resent: 'The verification link has expired. A new link has been sent to you.'
+    expired_resend_failed: 'The verification link has expired, and we could not resend a new one right now. Please try again shortly.'
+    already_used: 'Your email is already verified! You can log in directly.'
+    user_not_found: 'No account matches this verification link.'
+    invalid: 'The verification link is invalid. Please try again.'
+    unexpected_error: 'An error occurred. Please try again later or contact support.'
