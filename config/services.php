@@ -36,5 +36,5 @@ return static function (ContainerConfigurator $container): void {
     $services->set(ToggleUserAccountSubscriber::class)
         ->arg('$loginRouteName', '%wlindabla_user.routes.login%')
         ->autowire()
-        ->tag('controller.service_arguments');
+        ->tag('subscriber.service_arguments');
 };
