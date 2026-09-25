@@ -19,6 +19,7 @@ namespace Wlindabla\UserBundle\Tests\Infrastructure\Service;
 use PHPUnit\Framework\TestCase;
 use Wlindabla\ShareServiceBundle\Messenger\QueueHandler\AsyncMethodDispatcherInterface;
 use Wlindabla\ShareServiceBundle\Security\Hash\TokenHasherInterface;
+use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ApplyEmailVerificationHandler;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 use Wlindabla\UserBundle\Infrastructure\Service\EmailVerificationService;
@@ -28,63 +29,42 @@ use Wlindabla\UserBundle\Infrastructure\Service\SecureTokenService;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-final class EmailVerificationServiceTest extends TestCase
+final class EmailVerificationServiceSyncApplyTest extends TestCase
 {
-    public function testMissingTokenWithNoPriorVerificationRaisesInvalidTokenNotAlreadyUsed(): void
+    public function testVerifyEmailAppliesVerificationSynchronouslyNotViaAsyncDispatcher(): void
     {
         $user = $this->createMock(BaseUserInterface::class);
         $user->method('getId')->willReturn(1);
-        $user->method('getConfirmationToken')->willReturn(null);
-        $user->method('getTokenRequestedAt')->willReturn(null);
-        $user->method('getEmailVerifiedAt')->willReturn(null);
+        $user->method('getConfirmationToken')->willReturn('hashed-token');
+        $user->method('getTokenRequestedAt')->willReturn(new \DateTimeImmutable());
 
         $userManager = $this->createMock(UserManagerInterface::class);
         $userManager->method('find')->willReturn($user);
 
-        $service = new EmailVerificationService(
-            $userManager,
-            $this->createMock(TokenHasherInterface::class),
-            $this->createMock(SecureTokenService::class),
-            $this->createMock(AsyncMethodDispatcherInterface::class),
-        );
+        $tokenHasher = $this->createMock(TokenHasherInterface::class);
+        $tokenHasher->method('verify')->willReturn(true);
 
-        try {
-            $service->verifyEmail('whatever', 1);
-            self::fail('Expected InvalidTokenException.');
-        } catch (\Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException $e) {
-            self::assertFalse($e->isAlreadyUsed());
-        }
-    }
+        $applyHandler = $this->createMock(ApplyEmailVerificationHandler::class);
+        $applyHandler->expects(self::once())->method('handle')->with(1);
 
-    public function testMissingTokenAfterVerificationRaisesAlreadyUsedWithRealDate(): void
-    {
-        $verifiedAt = new \DateTimeImmutable('2026-01-01T00:00:00+00:00');
+        $asyncDispatcher = $this->createMock(AsyncMethodDispatcherInterface::class);
 
-        $user = $this->createMock(BaseUserInterface::class);
-        $user->method('getId')->willReturn(1);
-        $user->method('getConfirmationToken')->willReturn(null);
-        $user->method('getTokenRequestedAt')->willReturn(null);
-        $user->method('getEmailVerifiedAt')->willReturn($verifiedAt);
+        $dispatchedServices = [];
+        $asyncDispatcher = $this->createMock(AsyncMethodDispatcherInterface::class);
+        $asyncDispatcher->method('dispatch')
+            ->willReturnCallback(function (string $service) use (&$dispatchedServices) {
+                $dispatchedServices[] = $service;
+            });
 
-        $userManager = $this->createMock(UserManagerInterface::class);
-        $userManager->method('find')->willReturn($user);
+        self::assertNotContains(ApplyEmailVerificationHandler::class, $dispatchedServices);
+                $service = new EmailVerificationService(
+                    $userManager,
+                    $tokenHasher,
+                    $this->createMock(SecureTokenService::class),
+                    $asyncDispatcher,
+                    $applyHandler,
+                );
 
-        $service = new EmailVerificationService(
-            $userManager,
-            $this->createMock(TokenHasherInterface::class),
-            $this->createMock(SecureTokenService::class),
-            $this->createMock(AsyncMethodDispatcherInterface::class),
-        );
-
-        try {
-            $service->verifyEmail('whatever', 1);
-            self::fail('Expected InvalidTokenException.');
-        } catch (\Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException $e) {
-            self::assertTrue($e->isAlreadyUsed());
-            self::assertSame(
-                '2026-01-01T00:00:00+00:00',
-                $e->getTranslationParameters()['%used_at%'],
-            );
-        }
-    }
+                $service->verifyEmail('raw-token', 1);
+            }
 }

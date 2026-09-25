@@ -42,7 +42,8 @@ final class EmailVerificationService implements EmailVerificationInterface
         private readonly UserManagerInterface $userManager,
         private readonly TokenHasherInterface $tokenHasher,
         private readonly SecureTokenService $secureTokenService,
-        private readonly AsyncMethodDispatcherInterface $asyncMethodDispatcher
+        private readonly AsyncMethodDispatcherInterface $asyncMethodDispatcher,
+        private readonly ApplyEmailVerificationHandler $applyEmailVerificationHandler,
     ) {}
 
     /**
@@ -127,12 +128,7 @@ final class EmailVerificationService implements EmailVerificationInterface
             $this->asyncMethodDispatcher->dispatch(
                 LoggerInterface::class,
                 'error',
-                [
-                    'Token de vérification invalide (hash mismatch)',
-                    [
-                        'user_id' => $user->getId()
-                    ]
-                ]
+                ['Token de vérification invalide (hash mismatch)', ['user_id' => $user->getId()]],
             );
 
             throw InvalidTokenException::invalidToken('Hash mismatch');
@@ -154,11 +150,14 @@ final class EmailVerificationService implements EmailVerificationInterface
         }
 
         // 7. Application des changements (logique métier) en asynchrone
-        $this->asyncMethodDispatcher->dispatch(
-            ApplyEmailVerificationHandler::class,
-            'handle',
-            [$user->getId()]
-        );
+        // Application synchrone : referme la fenêtre entre "token validé" et
+        // "token invalidé" — un deuxième passage sur le même lien pendant cette
+        // fenêtre (double-clic, prévisualisation d'un client mail, retry réseau)
+        // ne doit plus pouvoir revalider un token déjà consommé. Le log et
+        // l'événement d'envoi d'email, eux, restent asynchrones : c'est là que
+        // l'async apporte quelque chose (décharger la base et le SMTP sous forte
+        // charge), pas sur l'écriture qui décide si le lien reste valide.
+        $this->applyEmailVerificationHandler->handle($user->getId());
 
         $this->asyncMethodDispatcher->dispatch(
             LoggerInterface::class,
@@ -168,9 +167,8 @@ final class EmailVerificationService implements EmailVerificationInterface
                 [
                     'user_id' => $user->getId(),
                     'email' => $user->getEmail(),
-                    'auto_enabled' => $user->isEnabled(),
-                ]
-            ]
+                ],
+            ],
         );
         
     }
