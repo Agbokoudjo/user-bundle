@@ -16,24 +16,24 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\Infrastructure\EventSubscriber;
 
-use App\Infrastructure\Service\Mailing\MailerManagerInterface;
-use App\Infrastructure\Service\Mailing\PriorityInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use Wlindabla\MailingBundle\Mailing\MailerManagerInterface;
+use Wlindabla\MailingBundle\Mailing\PriorityInterface;
 use Wlindabla\UserBundle\Domain\User\Event\ToggleUserAccountEvent;
 use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInterface;
+use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 
 /**
- * Subscriber pour gérer les notifications lors de l'activation/désactivation de comptes utilisateurs.
- * 
- * Envoie automatiquement un email à l'utilisateur pour l'informer du changement
- * de statut de son compte (activé ou désactivé).
+ * Sends an email to notify a user their account was enabled or disabled.
  *
- * @internal Ce subscriber est appelé automatiquement par l'EventDispatcher
+ * @internal called automatically by the EventDispatcher
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package App\Infrastructure\Listener
+ * @package <https://github.com/Agbokoudjo/>
  */
 final class ToggleUserAccountSubscriber implements EventSubscriberInterface
 {
@@ -42,88 +42,83 @@ final class ToggleUserAccountSubscriber implements EventSubscriberInterface
         private readonly ParameterBagInterface $parameterBag,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly LoggerInterface $logger,
-        private CacheUserProviderInterface $userProvider
-       ) {}
+        private readonly CacheUserProviderInterface $userProvider,
+        private readonly TemplateRegistryInterface $templateRegistry,
+        private readonly TranslatorInterface $translator,
+        private readonly ?string $loginRouteName = null,
+    ) {
+    }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents(): array
     {
         return [
-            ToggleUserAccountEvent::class=> 'onToggleUserAccountEvent'
+            ToggleUserAccountEvent::class => 'onToggleUserAccountEvent',
         ];
     }
 
-    /**
-     * Gère l'événement de changement de statut du compte utilisateur.
-     *
-     * Envoie un email de notification à l'utilisateur concerné.
-     *
-     * @param ToggleUserAccountEvent $event L'événement contenant les informations du compte
-     * 
-     * @return void
-     */
     public function onToggleUserAccountEvent(ToggleUserAccountEvent $event): void
     {
         $user = $event->getUser();
 
         try {
             $siteName = $this->parameterBag->get('app.site_name');
-            $loginUrl = $this->urlGenerator->generate(
-                'app_admin_user_login',
-                [],
-                UrlGeneratorInterface::ABSOLUTE_URL
+            $loginUrl = $this->generateLoginUrl();
+            $isActive = $user->isEnabled();
+
+            $subject = $this->translator->trans(
+                $isActive ? 'toggle_account_email.subject_activated' : 'toggle_account_email.subject_deactivated',
+                ['%site_name%' => $siteName],
+                'WlindablaUserBundle',
             );
 
-            $subject = $this->buildEmailSubject($user->getStatus(), $siteName);
+            $context = [
+                'status' => $isActive,
+                'username' => $user->getUsername(),
+                'url_login' => $loginUrl,
+                'site_name' => $siteName,
+            ];
 
-            $context_twig=[
-                    'status' => $user->getStatus(),
-                    'username' => $user->getUsername(),
-                    'url_login' => $loginUrl,
-                    'NAME_SITE' => $siteName
-                ];
-           
-            if($password_user = $event->getTemporaryPassword()){
-                $context_twig['password_user']= $password_user; 
+            if ($temporaryPassword = $event->getTemporaryPassword()) {
+                $context['password_user'] = $temporaryPassword;
             }
-            
+
             $this->mailerManager->notifyBySystem(
                 $user->getEmail(),
                 $subject,
-                'email/profile/toggle_user_account.html.twig',
-                $context_twig,
-                PriorityInterface::PRIORITY_NORMAL
+                $this->templateRegistry->get('toggle_user_account'),
+                $context,
+                PriorityInterface::PRIORITY_NORMAL,
             );
-             $this->userProvider->invalidateUserCache($user->getId()) ;
-             
-            $this->logger?->info('Email de changement de statut envoyé', [
+
+            $this->userProvider->invalidateUserCache($user->getId());
+
+            $this->logger->info('Account status change email sent.', [
                 'user_email' => $user->getEmail(),
-                'new_status' => $user->getStatus() ? 'activé' : 'désactivé'
+                'new_status' => $isActive ? 'enabled' : 'disabled',
             ]);
-            
-        } catch (\Exception $e) {
-            $this->logger?->error('Échec de l\'envoi de l\'email de changement de statut', [
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to send the account status change email.', [
                 'user_email' => $user->getEmail(),
                 'error' => $e->getMessage(),
             ]);
         }
     }
 
-    /**
-     * Construit le sujet de l'email selon le statut du compte.
-     *
-     * @param bool $isActive Le statut du compte (true = activé, false = désactivé)
-     * @param string $siteName Le nom du site
-     * Instruction pour claude Ai: claude Ai devrait nous proposer de traduire les message en anglais c'est la version anglais  qui devrait etre envoyer chez l'utilisateur
-     * les client messagerie moderne comme gmail dispose deja dans leur interface web des traducteur  de l'utilisateur 
-     * @return string Le sujet de l'email
-     */
-    private function buildEmailSubject(bool $isActive, string $siteName): string
+    private function generateLoginUrl(): ?string
     {
-        return $isActive
-            ? sprintf('Votre compte %s a été activé', $siteName)
-            : sprintf('Votre compte %s a été désactivé', $siteName);
+        if (null === $this->loginRouteName) {
+            return null;
+        }
+
+        try {
+            return $this->urlGenerator->generate($this->loginRouteName, [], UrlGeneratorInterface::ABSOLUTE_URL);
+        } catch (RouteNotFoundException $e) {
+            $this->logger->warning('Route configured for ToggleUserAccountSubscriber does not exist.', [
+                'route' => $this->loginRouteName,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 }

@@ -90,6 +90,10 @@ final class WlindablaUserBundle extends AbstractBundle
                         ->scalarNode('login')
                             ->defaultValue('@WlindablaUser/security/login.html.twig')
                         ->end()
+                        ->scalarNode('toggle_user_account')
+                            ->info('Twig template rendered by ToggleUserAccountSubscriber when an account is enabled/disabled.')
+                            ->defaultValue('email/profile/toggle_user_account.html.twig')
+                        ->end()
                     ->end()
                 ->end()
             ->end();
