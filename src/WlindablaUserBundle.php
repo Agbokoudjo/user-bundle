@@ -61,6 +61,15 @@ final class WlindablaUserBundle extends AbstractBundle
                         ->end()
                     ->end()
                 ->end()
+                ->arrayNode('templates')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->scalarNode('email_verification')
+                            ->info('Twig template rendered by UserAccountEmailVerificationSubscriber.')
+                            ->defaultValue('email/profile/admin_account_confirmation.html.twig')
+                        ->end()
+                    ->end()
+                ->end()
             ->end();
     }
 
@@ -75,7 +84,9 @@ final class WlindablaUserBundle extends AbstractBundle
         $container->parameters()
             ->set('wlindabla_user.classes.user', $config['classes']['user'])
             ->set('wlindabla_user.default_role', $config['default_role'])
-            ->set('wlindabla_user.security.user_cache_ttl', $config['security']['user_cache_ttl']);
+            ->set('wlindabla_user.security.user_cache_ttl', $config['security']['user_cache_ttl'])
+            ->set('wlindabla_user.templates', $config['templates']);
+            ;
     }
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void

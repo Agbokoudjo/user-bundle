@@ -4,3 +4,6 @@ invalid_token:
     already_used: 'Ce lien de vérification a déjà été utilisé.'
     user_not_found: 'Aucun compte ne correspond à ce lien de vérification.'
     email_already_verified: 'Cette adresse email est déjà vérifiée.'
+
+verification_email:
+    subject: 'Votre compte %site_name% a été créé'

@@ -16,30 +16,36 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\Infrastructure\EventSubscriber;
 
-use Wlindabla\MailingBundle\Mailing\MailerManagerInterface; 
-use Wlindabla\MailingBundle\Mailing\PriorityInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use Wlindabla\MailingBundle\Mailing\MailerManagerInterface;
+use Wlindabla\MailingBundle\Mailing\PriorityInterface;
 use Wlindabla\ShareServiceBundle\Security\Encryption\IdEncryptionInterface;
 use Wlindabla\UserBundle\Domain\User\Event\UserAccountEmailVerificationEvent;
+use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 
 /**
- * Subscriber pour gérer les notifications de verification de comptes utilisateurs.
- * intruction pour claude ai composer require wlindabla/mailing-bundle et  https://github.com/Agbokoudjo/mailing-bundle
- * @internal Ce subscriber est appelé automatiquement par l'EventDispatcher
+ * Sends the account-verification email when a UserAccountEmailVerificationEvent
+ * is dispatched.
+ *
+ * @internal called automatically by the EventDispatcher
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package App\Infrastructure\EventListener\User
+ * @package <https://github.com/Agbokoudjo/>
  */
 final readonly class UserAccountEmailVerificationSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private MailerManagerInterface $mailerManager ,
+        private MailerManagerInterface $mailerManager,
         private UrlGeneratorInterface $router,
         private ParameterBagInterface $params,
-        private IdEncryptionInterface $idEncriptionService
-    ) {}
-    
+        private IdEncryptionInterface $idEncryptionService,
+        private TemplateRegistryInterface $templateRegistry,
+        private TranslatorInterface $translator,
+    ) {
+    }
+
     public static function getSubscribedEvents(): array
     {
         return [
@@ -47,38 +53,35 @@ final readonly class UserAccountEmailVerificationSubscriber implements EventSubs
         ];
     }
 
-    public function onUserAccountCreated(UserAccountEmailVerificationEvent $event):void{
+    public function onUserAccountCreated(UserAccountEmailVerificationEvent $event): void
+    {
+        $encryptedId = $this->idEncryptionService->encryptId($event->getUserId());
 
-        $idEncription=$this->idEncriptionService->encryptId($event->getUserId());
-        $confirmationUrl=$this->router->generate(
-            'app.verify.email',[
-                'token' => $event->getRawToken(),
-                'id'=>$idEncription
-            ],
-            UrlGeneratorInterface::ABSOLUTE_URL
+        $confirmationUrl = $this->router->generate(
+            'app.verify.email',
+            ['token' => $event->getRawToken(), 'id' => $encryptedId],
+            UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
         $siteName = $this->params->get('app.site_name');
 
-        $subject = \sprintf('Votre compte %s a été créé', $siteName);
+        $subject = $this->translator->trans(
+            'verification_email.subject',
+            ['%site_name%' => $siteName],
+            'WlindablaUserBundle',
+        );
 
-        /***
-         * A cet niveau claude Ai devrait me dire comment comment on doit configurer le template 
-         * pour que le developpeur surcharge le template dans on projet ,
-         * mais le bundle doit livrer deux format(fr et en anglais ) par default le developpeur devrait lir la documentation
-         * et configurer son surcharge et le bundle devrait prendra ça en compte
-         */
         $this->mailerManager->notifyBySystem(
             $event->getEmail(),
             $subject,
-            'email/profile/admin_account_confirmation.html.twig',
+            $this->templateRegistry->get('email_verification'),
             [
                 'recipientEmail' => $event->getEmail(),
-                'username'=> $event->getUsername(),
+                'username' => $event->getUsername(),
                 'confirmationUrl' => $confirmationUrl,
                 'siteName' => $siteName,
-            ], 
-            PriorityInterface::PRIORITY_HIGH
+            ],
+            PriorityInterface::PRIORITY_HIGH,
         );
     }
 }
