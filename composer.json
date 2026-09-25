@@ -20,7 +20,8 @@
         "doctrine/orm": "^3.7",
         "doctrine/doctrine-bundle": "^3.3",
         "odolbeau/phone-number-bundle": "^4.2",
-        "symfony/validator": "^8.1"
+        "symfony/validator": "^8.1",
+        "wlindabla/mailing-bundle": "^1.0"
     },
     "autoload": {
     "psr-4": { "Wlindabla\\UserBundle\\": "src/" }

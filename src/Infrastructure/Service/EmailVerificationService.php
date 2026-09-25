@@ -89,19 +89,18 @@ final class EmailVerificationService implements EmailVerificationInterface
             $this->asyncMethodDispatcher->dispatch(
                 LoggerInterface::class,
                 'info',
-                [
-                    'Token manquant ou compte déjà vérifié',
-                    [
-                        'user_id' => $user->getId(),
-                        'has_token' => $hashedToken !== null,
-                        'has_requested_at' => $requestedAt !== null,
-                    ]
-                ]
+                ['Token manquant ou compte déjà vérifié', [
+                    'user_id' => $user->getId(),
+                    'has_token' => $hashedToken !== null,
+                    'has_requested_at' => $requestedAt !== null,
+                ]],
             );
 
-            throw InvalidTokenException::alreadyUsedToken(
-                $user->getEmailVerifiedAt() ?? new \DateTimeImmutable()
-            );
+            if (null !== $user->getEmailVerifiedAt()) {
+                throw InvalidTokenException::alreadyUsedToken($user->getEmailVerifiedAt());
+            }
+
+            throw InvalidTokenException::invalidToken('No verification was ever requested for this user');
         }
 
         //  Vérification de l'expiration du token

@@ -24,7 +24,6 @@ use Wlindabla\ShareServiceBundle\Security\Hash\TokenHasherInterface;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Domain\User\Event\UserAccountEmailVerificationEvent;
 use Wlindabla\UserBundle\Domain\User\Exception\EmailAlreadyVerifiedException;
-use Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 
 /**
@@ -43,7 +42,7 @@ final class SecureTokenService
         private readonly TokenGeneratorInterface $tokenGenerator,
         private readonly TokenHasherInterface $tokenHasher,
         private readonly EventDispatcherInterface $eventBusDispatcher,
-        private UserManagerInterface $userManager,
+        private readonly UserManagerInterface $userManager,
     ) {}
 
     /**
@@ -90,8 +89,6 @@ final class SecureTokenService
 
             // 6. Persistance en base de données
             $this->userManager->save($user);
-
-            if($user->isEmailVerified()){ return ;}
             
             // 7. Déclenchement de l'événement pour envoi d'email
             $event = new UserAccountEmailVerificationEvent(
@@ -102,7 +99,7 @@ final class SecureTokenService
             );
             $this->eventBusDispatcher->dispatch($event);
 
-        } catch (\Exception|RuntimeException|InvalidTokenException $exception) {
+        } catch (\Exception $exception) {
             throw $exception;
         }
     }
