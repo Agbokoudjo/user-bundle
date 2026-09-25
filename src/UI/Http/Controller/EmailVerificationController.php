@@ -41,12 +41,13 @@ use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 final class EmailVerificationController extends AbstractController
 {
     public function __construct(
-        private readonly EmailVerificationInterface $verificationService,
-        private readonly TemplateRegistryInterface $templateRegistry,
-        private readonly TranslatorInterface $translator,
-        private readonly ?string $loginRouteName = null,
-        private readonly ?string $homeRouteName = null,
-        private readonly ?LoggerInterface $logger = null,
+    private readonly EmailVerificationInterface $verificationService,
+    private readonly TemplateRegistryInterface $templateRegistry,
+    private readonly TranslatorInterface $translator,
+    private readonly ?string $loginRouteName = null,
+    private readonly ?string $homeRouteName = null,
+    private readonly ?string $siteName = null,
+    private readonly ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -135,6 +136,7 @@ final class EmailVerificationController extends AbstractController
         return $this->render($this->templateRegistry->get('email_verification_result'), [
             'login_url' => $this->safeGenerateUrl($this->loginRouteName),
             'home_url' => $this->safeGenerateUrl($this->homeRouteName),
+            'site_name' => $this->siteName,
         ]);
     }
 

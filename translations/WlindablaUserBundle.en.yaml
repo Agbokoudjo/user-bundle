@@ -16,3 +16,16 @@ email_verification:
     user_not_found: 'No account matches this verification link.'
     invalid: 'The verification link is invalid. Please try again.'
     unexpected_error: 'An error occurred. Please try again later or contact support.'
+    page_title: 'Email verification result'
+    link_login: 'Log in'
+    link_home: 'Back to home'
+    
+account_confirmation:
+    page_title: 'Account confirmation'
+    title: 'Your <strong>%site_name%</strong> account has been created'
+    greeting: 'Hi <strong>%username%</strong>,'
+    body: 'We confirm that your account for <strong>%site_name%</strong> has been successfully created.'
+    action_required: 'Before you can log in, you must <strong>verify and activate your email address <span style="color:#0ec5b2; font-weight: 600;">%email%</span></strong> by clicking the link below.'
+    cta: 'Confirm my account'
+    link_notice: 'This confirmation link will expire soon for security reasons. If you run into any issue, copy and paste the following URL into your browser:'
+    footer: 'This is an automated message from <strong>%site_name%</strong>.<br>Please do not reply directly to this email.'

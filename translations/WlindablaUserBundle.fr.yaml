@@ -16,3 +16,16 @@ email_verification:
     user_not_found: 'Aucun compte ne correspond à ce lien de vérification.'
     invalid: 'Le lien de vérification est invalide. Veuillez réessayer.'
     unexpected_error: 'Une erreur est survenue. Veuillez réessayer plus tard ou contacter le support.'
+    page_title: 'Compte rendu de vérification d''email'
+    link_login: 'Se connecter'
+    link_home: 'Retour à l''accueil'
+    
+account_confirmation:
+    page_title: 'Confirmation de compte'
+    title: 'Création de votre compte <strong>%site_name%</strong>'
+    greeting: 'Salut <strong>%username%</strong>,'
+    body: 'Nous vous confirmons que votre compte pour l''application <strong>%site_name%</strong> a été créé avec succès.'
+    action_required: 'Avant de pouvoir vous connecter, vous devez <strong>vérifier et activer votre adresse e-mail <span style="color:#0ec5b2; font-weight: 600;">%email%</span></strong> en cliquant sur le lien ci-dessous.'
+    cta: 'Confirmer mon compte'
+    link_notice: 'Ce lien de confirmation expirera bientôt pour des raisons de sécurité. Si vous rencontrez des problèmes, copiez et collez l''URL suivante dans votre navigateur :'
+    footer: 'Ceci est un message automatique du système <strong>%site_name%</strong>.<br>Merci de ne pas répondre directement à cet e-mail.'

@@ -21,6 +21,7 @@ return static function (ContainerConfigurator $container): void {
     $services->set(EmailVerificationController::class)
         ->arg('$loginRouteName', '%wlindabla_user.routes.login%')
         ->arg('$homeRouteName', '%wlindabla_user.routes.home%')
+        ->arg('$siteName', '%app.site_name%')
         ->autowire()
         ->tag('controller.service_arguments');
-}
+};
