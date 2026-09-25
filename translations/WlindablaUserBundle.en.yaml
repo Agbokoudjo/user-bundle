@@ -29,3 +29,10 @@ account_confirmation:
     cta: 'Confirm my account'
     link_notice: 'This confirmation link will expire soon for security reasons. If you run into any issue, copy and paste the following URL into your browser:'
     footer: 'This is an automated message from <strong>%site_name%</strong>.<br>Please do not reply directly to this email.'
+
+login:
+    page_title: 'Log in'
+    already_authenticated: 'You are already logged in.'
+    username_label: 'Username'
+    password_label: 'Password'
+    submit: 'Log in'

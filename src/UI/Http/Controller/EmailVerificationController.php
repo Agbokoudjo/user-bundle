@@ -21,10 +21,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException;
 use Wlindabla\UserBundle\Domain\User\Service\EmailVerificationInterface;
+use Wlindabla\UserBundle\Infrastructure\Routing\GeneratesOptionalRouteUrlTrait;
 use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 
 /**
@@ -40,6 +40,8 @@ use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 )]
 final class EmailVerificationController extends AbstractController
 {
+    use GeneratesOptionalRouteUrlTrait ;
+
     public function __construct(
     private readonly EmailVerificationInterface $verificationService,
     private readonly TemplateRegistryInterface $templateRegistry,
@@ -138,23 +140,5 @@ final class EmailVerificationController extends AbstractController
             'home_url' => $this->safeGenerateUrl($this->homeRouteName),
             'site_name' => $this->siteName,
         ]);
-    }
-
-    private function safeGenerateUrl(?string $routeName): ?string
-    {
-        if (null === $routeName) {
-            return null;
-        }
-
-        try {
-            return $this->generateUrl($routeName);
-        } catch (RouteNotFoundException $e) {
-            $this->logger?->warning('Route configured for EmailVerificationController does not exist.', [
-                'route' => $routeName,
-                'error' => $e->getMessage(),
-            ]);
-
-            return null;
-        }
     }
 }

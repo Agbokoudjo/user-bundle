@@ -19,7 +19,7 @@ email_verification:
     page_title: 'Compte rendu de vérification d''email'
     link_login: 'Se connecter'
     link_home: 'Retour à l''accueil'
-    
+
 account_confirmation:
     page_title: 'Confirmation de compte'
     title: 'Création de votre compte <strong>%site_name%</strong>'
@@ -29,3 +29,10 @@ account_confirmation:
     cta: 'Confirmer mon compte'
     link_notice: 'Ce lien de confirmation expirera bientôt pour des raisons de sécurité. Si vous rencontrez des problèmes, copiez et collez l''URL suivante dans votre navigateur :'
     footer: 'Ceci est un message automatique du système <strong>%site_name%</strong>.<br>Merci de ne pas répondre directement à cet e-mail.'
+
+login:
+    page_title: 'Connexion'
+    already_authenticated: 'Vous êtes déjà connecté.'
+    username_label: 'Identifiant'
+    password_label: 'Mot de passe'
+    submit: 'Se connecter'
