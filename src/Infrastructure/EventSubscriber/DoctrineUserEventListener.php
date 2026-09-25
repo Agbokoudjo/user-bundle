@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+
 /*
  * This file is part of the project by AGBOKOUDJO Franck.
  *
@@ -21,16 +22,16 @@ use Doctrine\ORM\Events;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
 use Wlindabla\ShareServiceBundle\Messenger\QueueHandler\AsyncMethodDispatcherInterface;
 use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\UpdateUserProfileHandler;
-use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface ;
+use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 use Wlindabla\UserBundle\Domain\User\Service\UpdatePasswordUserServiceInterface;
 use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInterface;
 
 /**
- * cet listener ecoute les event de dodfctrine pour de declencher cette action
- * il est appeler uniquement lors de de la creation d'un utilisateur en ligne de commande symfony ou lors de l'inscription d'utilisateur sans l'ecran de sonataAdmin
- * 
- * car lorsque en utilisant la dependances de sonataAdmin dans les projets recent on a constater les listenerer de doctrine sont netraliser 
- * par les evenements de hooks de sonataAdmin raison pour laquelle on ecrire cettte classe 
+ * Listens to raw Doctrine hooks so user changes are still handled when
+ * SonataAdmin's own persistence events are not the path used (console
+ * commands, registration outside the admin screen, other bundles writing
+ * to the User entity directly).
+ *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
@@ -39,74 +40,118 @@ use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInter
 #[AsDoctrineListener(event: Events::preUpdate, priority: 100)]
 final class DoctrineUserEventListener
 {
-   /**
-     * Délai en millisecondes avant l'exécution de l'async UpdatePasswordUserHandler .
-     * Laisse le temps à Sonata de finaliser son flush + commit BDD.
-     * 45 secondes = largement suffisant dans tous les cas.
+    /**
+     * Fields whose change alone must still invalidate the cached user,
+     * even when username/email haven't changed — enabling/disabling an
+     * account or changing its roles must take effect without waiting for
+     * the cache TTL.
+     */
+    private const array CACHE_SENSITIVE_FIELDS = ['enabled', 'roles'];
+
+    /**
+     * Fields whose change is worth recomputing canonical fields/slug for
+     * via UpdateUserProfileHandler.
+     */
+    private const array PROFILE_SENSITIVE_FIELDS = ['username', 'email'];
+
+    /**
+     * Delay in milliseconds before running the async UpdatePasswordUserHandler.
+     * Gives Sonata time to finish its flush + DB commit. 45 seconds is
+     * comfortably enough in every case observed so far.
      */
     private const int UPDATE_PASSWORD_SYNC_DELAY_MS = 45000;
 
     public function __construct(
         private readonly AsyncMethodDispatcherInterface $asyncMethodDispatcher,
         private readonly CacheUserProviderInterface $userProvider,
-        private readonly EntityManagerInterface $entityManager
-        ) {}
+        private readonly EntityManagerInterface $entityManager,
+    ) {
+    }
 
     final public function postPersist(LifecycleEventArgs $args): void
     {
         $entity = $args->getObject();
-        if (!$entity instanceof BaseUserInterface) return;
+
+        if (!$entity instanceof BaseUserInterface) {
+            return;
+        }
 
         $this->dispatchUpdateCommand($entity);
     }
 
-    final public function preUpdate(LifecycleEventArgs $args):void {
+    final public function preUpdate(LifecycleEventArgs $args): void
+    {
+        $entity = $args->getObject();
 
-        $adminUser=$args->getObject() ;
-        if (!($adminUser instanceof BaseUserInterface)) return;
+        if (!$entity instanceof BaseUserInterface) {
+            return;
+        }
 
-        $plainPassword = $adminUser->getPlainPassword();
+        $plainPassword = $entity->getPlainPassword();
+
         if ($plainPassword) {
             $this->asyncMethodDispatcher->dispatch(
                 UpdatePasswordUserServiceInterface::class,
                 'handle',
-                [
-                    $adminUser->getId(),
-                    $plainPassword
-                ],
+                [$entity->getId(), $plainPassword],
                 new \DateTimeImmutable(
                     \sprintf('+%d milliseconds', self::UPDATE_PASSWORD_SYNC_DELAY_MS),
-                    new \DateTimeZone('UTC')
-                )
+                    new \DateTimeZone('UTC'),
+                ),
             );
         }
     }
 
     final public function postUpdate(LifecycleEventArgs $args): void
     {
-        $entity=$args->getObject();
-        if (!$entity instanceof BaseUserInterface) return;
+        $entity = $args->getObject();
 
+        if (!$entity instanceof BaseUserInterface) {
+            return;
+        }
 
-        // Ne redéclenche UpdateUserProfileHandler QUE si username/email ont
-        // RÉELLEMENT changé — pas sur chaque update de l'entité (token,
-        // mot de passe, slug...). C'est ce filtre qui manquait : la boucle
-        // venait de SecureTokenService::generateEmailConfirmationToken()
-        // (confirmationToken/tokenRequestedAt changent à chaque appel,
-        // sans rapport avec les champs canoniques) redéclenchant ce même
-        // handler en cascade, diagnostiqué le 28/07.
         $changeSet = $this->entityManager->getUnitOfWork()->getEntityChangeSet($entity);
-        if (!isset($changeSet['username']) && !isset($changeSet['email'])) {
+
+        // Cache invalidation is checked independently of the profile-sync
+        // guard below: enabled/roles must take effect immediately even on
+        // an update that doesn't touch username/email.
+        if ($this->hasAnyChangedField($changeSet, self::CACHE_SENSITIVE_FIELDS)) {
+            $this->userProvider->invalidateUserCache($entity->getId());
+        }
+
+        // dispatchUpdateCommand() re-canonicalizes username/email and
+        // regenerates the slug — only needed when those fields actually
+        // changed, not on every update (token, password, slug...). This
+        // filter is what was missing before: SecureTokenService::
+        // generateEmailConfirmationToken() (confirmationToken/
+        // tokenRequestedAt changing on every call, unrelated to canonical
+        // fields) was re-triggering this same handler in a loop,
+        // diagnosed on 2026-07-28 across several projects.
+        if (!$this->hasAnyChangedField($changeSet, self::PROFILE_SENSITIVE_FIELDS)) {
             return;
         }
 
         $this->dispatchUpdateCommand($entity);
         $this->userProvider->invalidateUserCache($entity->getId());
     }
-    
+
+    /**
+     * @param array<string, mixed> $changeSet
+     * @param list<string>         $fields
+     */
+    private function hasAnyChangedField(array $changeSet, array $fields): bool
+    {
+        foreach ($fields as $field) {
+            if (isset($changeSet[$field])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function dispatchUpdateCommand(BaseUserInterface $entity): void
     {
-        
         $this->asyncMethodDispatcher->dispatch(UpdateUserProfileHandler::class, 'handle', [$entity->getId()]);
     }
 }
