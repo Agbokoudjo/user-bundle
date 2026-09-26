@@ -85,3 +85,6 @@ password_reset_email:
 access_denied:
     title: 'Accès refusé'
     message: 'Vous n''avez pas les droits nécessaires pour effectuer cette action.'
+
+entity_in_use:
+    title: 'Suppression impossible'

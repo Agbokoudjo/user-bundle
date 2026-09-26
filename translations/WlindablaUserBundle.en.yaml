@@ -85,3 +85,6 @@ password_reset_email:
 access_denied:
     title: 'Access denied'
     message: 'You do not have the required permissions to perform this action.'
+
+entity_in_use:
+    title: 'Cannot delete'
