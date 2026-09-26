@@ -81,3 +81,7 @@ password_reset_request:
     invalid_email: 'Please enter a valid email address.'
 password_reset_email:
     subject: 'Reset your password - %site_name%'
+
+access_denied:
+    title: 'Access denied'
+    message: 'You do not have the required permissions to perform this action.'

@@ -81,3 +81,7 @@ password_reset_request:
     invalid_email: 'Veuillez saisir une adresse email valide.'
 password_reset_email:
     subject: 'Réinitialisation de votre mot de passe - %site_name%'
+
+access_denied:
+    title: 'Accès refusé'
+    message: 'Vous n''avez pas les droits nécessaires pour effectuer cette action.'
