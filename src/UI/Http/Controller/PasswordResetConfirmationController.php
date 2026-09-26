@@ -14,92 +14,76 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace App\UI\Http\Controller;
+namespace Wlindabla\UserBundle\UI\Http\Controller;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException;
 use Wlindabla\UserBundle\Domain\User\Service\PasswordResetInterface;
+use Wlindabla\UserBundle\UI\Http\Controller\OutcomePageRenderer;
 
 /**
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
+#[AsController]
 #[Route(
-    '/reset-password/confirm/{token}/{id}',
+    '%wlindabla_user.password_reset.confirm_path%',
     name: 'app_password_reset_confirm',
     methods: ['GET'],
-    requirements: [
-        'token' => '[a-zA-Z0-9]{32,64}',
-    ],
+    requirements: ['token' => '[a-zA-Z0-9]{32,64}'],
 )]
-final class PasswordResetConfirmationController extends AbstractController
+final class PasswordResetConfirmationController extends AbstractController implements RenderResponseInterface
 {
-    private const string LOGIN_ROUTE = 'app_admin_user_login';
-
+    public const string ROUTE_NAME = 'app_password_reset_confirm';
+    
     public function __construct(
         private readonly PasswordResetInterface $passwordResetService,
+        private readonly OutcomePageRenderer $outcomePageRenderer,
+        private readonly TranslatorInterface $translator,
         private readonly ?LoggerInterface $logger = null,
-    ) {}
+    ) {
+    }
 
     public function __invoke(string $token, int $id): Response
     {
         try {
             $this->passwordResetService->confirmReset($token, $id);
 
-            $this->addFlash(
-                'success',
-                'Votre demande est confirmée ! Un mot de passe temporaire vient de vous être envoyé par email : connectez-vous avec, puis changez-le depuis votre profil.'
-            );
-
-            return $this->render('email/security/checkEmailpassword_reset_confirm.html.twig', [
-                'page_login_url' => self::LOGIN_ROUTE,
-            ]);
+            $this->addFlash('success', $this->translator->trans('password_reset.confirmed', [], 'WlindablaUserBundle'));
         } catch (InvalidTokenException $e) {
-            return $this->handleInvalidToken($e);
+            $this->handleInvalidToken($e);
         } catch (\Throwable $e) {
-            $this->logger?->critical('Erreur inattendue lors de la confirmation de reset password', [
+            $this->logger?->critical('Unexpected error while confirming a password reset.', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            $this->addFlash(
-                'danger',
-                '⚠️ Une erreur est survenue. Veuillez réessayer plus tard ou contacter le support.'
-            );
-
-            return $this->render('email/security/checkEmailpassword_reset_confirm.html.twig', [
-                'page_redirection_url' => 'app_home',
-                'page_label' => 'Aller à la page d\'accueil',
-            ]);
+            $this->addFlash('danger', $this->translator->trans('password_reset.unexpected_error', [], 'WlindablaUserBundle'));
         }
+
+        return $this->outcomePageRenderer->render($this);
     }
 
-    private function handleInvalidToken(InvalidTokenException $e): Response
+    private function handleInvalidToken(InvalidTokenException $e): void
     {
-        if ($e->isExpired()) {
-            $this->addFlash(
-                'warning',
-                'Ce lien de réinitialisation a expiré. Merci de refaire une demande de mot de passe oublié.'
-            );
-        } elseif ($e->isAlreadyUsed()) {
-            $this->addFlash(
-                'warning',
-                'Ce lien a déjà été utilisé. Si besoin, refaites une demande de mot de passe oublié.'
-            );
-        } elseif ($e->isUserNotFound()) {
-            $this->addFlash('danger', '❌ ' . $e->getMessage());
-        } else {
-            $this->addFlash(
-                'danger',
-                '❌ Le lien de réinitialisation est invalide. Veuillez réessayer.'
-            );
-        }
+        $key = match (true) {
+            $e->isExpired() => 'password_reset.expired',
+            $e->isAlreadyUsed() => 'password_reset.already_used',
+            $e->isUserNotFound() => 'password_reset.user_not_found',
+            default => 'password_reset.invalid',
+        };
 
-        return $this->render('email/security/checkEmailpassword_reset_confirm.html.twig', [
-            'page_login_url' => self::LOGIN_ROUTE,
-        ]);
+        $this->addFlash($e->isExpired() || $e->isAlreadyUsed() ? 'warning' : 'danger', $this->translator->trans($key, [], 'WlindablaUserBundle'));
+    }
+
+   
+    public function renderResponse(string $view, array $parameters = [], ?Response $response = null): Response
+    {
+        return $this->render($view,$parameters, $response) ;
     }
 }

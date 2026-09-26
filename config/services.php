@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Wlindabla\UserBundle\Infrastructure\EventSubscriber\ToggleUserAccountSubscriber;
+use Wlindabla\UserBundle\Infrastructure\Validator\Constraint\NotDisposableEmail;
+use Wlindabla\UserBundle\Infrastructure\Validator\Constraint\NotDisposableEmailValidator;
 use Wlindabla\UserBundle\UI\Http\Controller\Admin\AdminFormLoginController;
 use Wlindabla\UserBundle\UI\Http\Controller\EmailVerificationController;
 
@@ -37,4 +39,8 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$loginRouteName', '%wlindabla_user.routes.login%')
         ->autowire()
         ->tag('subscriber.service_arguments');
+   
+    $services
+    ->set(NotDisposableEmailValidator::class)
+        ->tag('validator.constraint_validator', ['alias' => NotDisposableEmail::class]);
 };

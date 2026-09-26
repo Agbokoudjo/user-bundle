@@ -18,7 +18,6 @@ namespace Wlindabla\UserBundle\Infrastructure\Routing;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Generates a URL for a route that may not be configured, or may not
@@ -32,16 +31,20 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
+// Infrastructure/Routing/GeneratesOptionalRouteUrlTrait.php — signature corrigée
 trait GeneratesOptionalRouteUrlTrait
 {
-    private function safeGenerateUrl(?string $routeName, ?LoggerInterface $logger = null): ?string
-    {
+    private function safeGenerateUrl(
+        ?string $routeName,
+        \Symfony\Component\Routing\Generator\UrlGeneratorInterface $urlGenerator,
+        ?LoggerInterface $logger = null,
+    ): ?string {
         if (null === $routeName) {
             return null;
         }
 
         try {
-            return $this->generateUrl($routeName);
+            return $urlGenerator->generate($routeName);
         } catch (RouteNotFoundException $e) {
             $logger?->warning('Route configured for a WlindablaUserBundle controller does not exist.', [
                 'route' => $routeName,
@@ -51,6 +54,4 @@ trait GeneratesOptionalRouteUrlTrait
             return null;
         }
     }
-
-    abstract protected function generateUrl(string $route, array $parameters = [], int $referenceType = UrlGeneratorInterface::ABSOLUTE_PATH): string ;
 }

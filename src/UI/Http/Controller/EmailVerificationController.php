@@ -21,6 +21,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException;
 use Wlindabla\UserBundle\Domain\User\Service\EmailVerificationInterface;
@@ -46,6 +47,7 @@ final class EmailVerificationController extends AbstractController
     private readonly EmailVerificationInterface $verificationService,
     private readonly TemplateRegistryInterface $templateRegistry,
     private readonly TranslatorInterface $translator,
+    private readonly  UrlGeneratorInterface $urlGenerator,
     private readonly ?string $loginRouteName = null,
     private readonly ?string $homeRouteName = null,
     private readonly ?string $siteName = null,
@@ -136,8 +138,8 @@ final class EmailVerificationController extends AbstractController
     private function renderResult(): Response
     {
         return $this->render($this->templateRegistry->get('email_verification_result'), [
-            'login_url' => $this->safeGenerateUrl($this->loginRouteName),
-            'home_url' => $this->safeGenerateUrl($this->homeRouteName),
+            'login_url' => $this->safeGenerateUrl($this->loginRouteName,$this->urlGenerator,$this->logger),
+            'home_url' => $this->safeGenerateUrl($this->homeRouteName,$this->urlGenerator,$this->logger),
             'site_name' => $this->siteName,
         ]);
     }

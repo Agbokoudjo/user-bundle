@@ -66,3 +66,18 @@ temporary_password_email:
     signature: 'Regards,<br>The %site_name% team'
     footer: 'This is an automated email. Please do not reply.'
     rights_reserved: 'All rights reserved.'
+
+password_reset:
+    confirmed: 'Your request is confirmed! A temporary password has just been sent to you by email: log in with it, then change it from your profile.'
+    expired: 'This reset link has expired. Please submit a new password reset request.'
+    already_used: 'This link has already been used. If needed, submit a new password reset request.'
+    user_not_found: 'No account matches this reset link.'
+    invalid: 'This reset link is invalid. Please try again.'
+    unexpected_error: 'An error occurred. Please try again later or contact support.'
+    request_sent: 'If an account exists with this address, a confirmation email has just been sent to you.'
+    too_many_attempts: 'Too many attempts. Please try again later.'
+password_reset_request:
+    username_label: 'Email address'
+    invalid_email: 'Please enter a valid email address.'
+password_reset_email:
+    subject: 'Reset your password - %site_name%'

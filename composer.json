@@ -22,7 +22,8 @@
         "odolbeau/phone-number-bundle": "^4.2",
         "symfony/validator": "^8.1",
         "wlindabla/mailing-bundle": "^1.0",
-        "symfony/security-bundle": "^8.1"
+        "symfony/security-bundle": "^8.1",
+        "symfony/rate-limiter": "^8.1"
     },
     "autoload": {
     "psr-4": { "Wlindabla\\UserBundle\\": "src/" }

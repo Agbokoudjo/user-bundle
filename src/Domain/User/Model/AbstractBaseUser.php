@@ -307,4 +307,9 @@ abstract class AbstractBaseUser implements BaseUserInterface
     {
         $this->slug = $slug;
     }
+
+    public function isAccountNonLocked(): bool
+    {
+        return true;
+    }
 }

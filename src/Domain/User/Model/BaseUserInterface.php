@@ -106,6 +106,20 @@ interface BaseUserInterface extends  \Stringable
 
     public function isPasswordRequestNonExpired(int $ttl): bool;
 
+    /**
+     * Whether the account is currently locked (e.g. after repeated failed
+     * login attempts, or an administrative lock). Not the same thing as
+     * isEnabled(): a disabled account is deliberately deactivated, a
+     * locked account is temporarily blocked pending some condition
+     * (cooldown, manual unlock).
+     *
+     * The base implementation (AbstractBaseUser) always returns true — no
+     * project is forced to implement account locking to use the bundle.
+     * A project that wants real lockout behavior (e.g. after N failed
+     * attempts) adds its own field/logic and overrides this method on its
+     * concrete User entity.
+     */
+    public function isAccountNonLocked(): bool;
 
     public function setLastLogin(?\DateTimeInterface $time = null): void;
 

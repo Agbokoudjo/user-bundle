@@ -14,7 +14,7 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace Wlindabla\UserBundle\Infrastructure\Form;
+namespace Wlindabla\UserBundle\Infrastructure\Validator;
 
 /**
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>

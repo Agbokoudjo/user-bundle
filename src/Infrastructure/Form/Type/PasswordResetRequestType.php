@@ -22,25 +22,35 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\NotBlank;
-use Wlindabla\UserBundle\Infrastructure\Form\EmailValidate;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use Wlindabla\UserBundle\Infrastructure\Validator\Constraint\NotDisposableEmail;
+use Wlindabla\UserBundle\Infrastructure\Validator\EmailValidate;
 
 /**
- * Formulaire public "Mot de passe oublié" — reprend les mêmes conventions
- * data-* (form_validator JS) que le formulaire de login et le formulaire
+ * Public "forgot password" form. No custom validation messages: Symfony's
+ * own NotBlank/Email constraints already ship translations for dozens of
+ * locales — overriding them with hardcoded strings would mean maintaining
+ * our own translations for text the framework already provides.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
 final class PasswordResetRequestType extends AbstractType
 {
+    public function __construct(
+        private readonly TranslatorInterface $translator,
+    ) {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->add('username', EmailType::class, [
-            'label' => 'Adresse email',
+            'label' => 'password_reset_request.username_label',
             'mapped' => false,
             'constraints' => [
-                new NotBlank(message: 'Veuillez saisir votre adresse email.'),
-                new Email(message: 'Veuillez saisir une adresse email valide.'),
+                new NotBlank(),
+                new Email(),
+                new NotDisposableEmail(),
             ],
             'attr' => [
                 'placeholder' => 'Ex: nom@exemple.com',
@@ -52,7 +62,7 @@ final class PasswordResetRequestType extends AbstractType
                 'data-escapestrip-html-and-php-tags' => 'true',
                 'data-event-validate-blur' => 'blur',
                 'data-event-validate-input' => 'input',
-                'data-error-message-input' => 'Veuillez saisir une adresse email valide.',
+                'data-error-message-input' => $this->translator->trans('password_reset_request.invalid_email', [], 'WlindablaUserBundle'),
                 'data-host-blacklist' => json_encode(EmailValidate::DATA_HOST_BLACKLIST),
                 'class' => 'login-input',
             ],
@@ -65,6 +75,7 @@ final class PasswordResetRequestType extends AbstractType
             'data_class' => null,
             'csrf_protection' => true,
             'csrf_token_id' => 'password_reset_request',
+            'translation_domain' => 'WlindablaUserBundle',
         ]);
     }
 }
