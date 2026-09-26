@@ -94,6 +94,9 @@ final class WlindablaUserBundle extends AbstractBundle
                             ->info('Twig template rendered by ToggleUserAccountSubscriber when an account is enabled/disabled.')
                             ->defaultValue('email/profile/toggle_user_account.html.twig')
                         ->end()
+                        ->scalarNode('temporary_password')
+                            ->defaultValue('@WlindablaUser/email/profile/temporary_password.html.twig')
+                        ->end()
                     ->end()
                 ->end()
             ->end();

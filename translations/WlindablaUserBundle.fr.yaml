@@ -53,3 +53,16 @@ toggle_account_email:
     footer_note: 'Note : ceci est un email automatique, merci de ne pas y répondre directement. Veuillez utiliser notre adresse de support habituelle si vous avez des questions.'
     subject_activated: 'Votre compte %site_name% a été activé'
     subject_deactivated: 'Votre compte %site_name% a été désactivé'
+
+temporary_password_email:
+    page_title: 'Régénération de mot de passe'
+    heading: 'Réinitialisation du mot de passe'
+    greeting: 'Salut %username%,'
+    body: 'Nous avons traité votre demande de mot de passe temporaire pour votre compte %site_name%. Cette réinitialisation a été effectuée par un administrateur.'
+    password_intro: 'Votre nouveau mot de passe temporaire est :'
+    action_required: '⚠️ Action immédiate requise : ce mot de passe est temporaire. Par mesure de sécurité, vous devez le changer dès votre première connexion.'
+    cta: 'Accéder à mon compte'
+    not_requested: 'Si vous n''avez pas demandé cette réinitialisation, veuillez contacter immédiatement le support de %site_name%.'
+    signature: 'Cordialement,<br>L''équipe %site_name%'
+    footer: 'Ceci est un e-mail automatique. Veuillez ne pas y répondre.'
+    rights_reserved: 'Tous droits réservés.'

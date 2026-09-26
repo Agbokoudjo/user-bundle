@@ -14,27 +14,27 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace App\Infrastructure\EventSubscriber;
+namespace Wlindabla\UserBundle\Infrastructure\EventSubscriber;
 
-use App\Domain\User\Event\UpdatePasswordUserEvent;
-use App\Infrastructure\Security\Provider\UserProvider;
-use App\Infrastructure\Service\Mailing\MailerManagerInterface;
-use App\Infrastructure\Service\Mailing\PriorityInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use Wlindabla\MailingBundle\Mailing\MailerManagerInterface;
+use Wlindabla\MailingBundle\Mailing\PriorityInterface;
+use Wlindabla\UserBundle\Domain\User\Event\UpdatePasswordUserEvent;
 use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInterface;
+use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 
 /**
- * Subscriber pour gérer les notifications changements de mots de passe de comptes utilisateurs.
- * 
- * Envoie automatiquement un email à l'utilisateur pour l'informer du changement
- * de mots de passe de son compte 
+ * Sends an email to notify a user that their password was regenerated
+ * (e.g. by an administrator, via a temporary password).
  *
- * @internal Ce subscriber est appelé automatiquement par l'EventDispatcher
+ * @internal called automatically by the EventDispatcher
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package App\Infrastructure\Listener\User
+ * @package <https://github.com/Agbokoudjo/>
  */
 final class UpdatePasswordUserSubscriber implements EventSubscriberInterface
 {
@@ -43,62 +43,74 @@ final class UpdatePasswordUserSubscriber implements EventSubscriberInterface
         private readonly ParameterBagInterface $parameterBag,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly LoggerInterface $logger,
-        private CacheUserProviderInterface $userProvider
-    ) {}
+        private readonly CacheUserProviderInterface $userProvider,
+        private readonly TemplateRegistryInterface $templateRegistry,
+        private readonly TranslatorInterface $translator,
+        private readonly ?string $loginRouteName = null,
+    ) {
+    }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents(): array
     {
         return [
-            UpdatePasswordUserEvent::class => 'onUpdatePasswordUserEvent'
+            UpdatePasswordUserEvent::class => 'onUpdatePasswordUserEvent',
         ];
     }
 
-    /**
-     * Gère l'événement de changement de mots de passe du compte utilisateur.
-     *
-     * Envoie un email de notification à l'utilisateur concerné.
-     *
-     * @param UpdatePasswordUserEvent $event L'événement contenant les informations du compte
-     * 
-     * @return void
-     */
     public function onUpdatePasswordUserEvent(UpdatePasswordUserEvent $event): void
     {
         $user = $event->getUser();
 
         try {
             $siteName = $this->parameterBag->get('app.site_name');
-            $loginUrl = $this->urlGenerator->generate(
-                'app_admin_user_login',
-                [],
-                UrlGeneratorInterface::ABSOLUTE_URL
+
+            $subject = $this->translator->trans(
+                'temporary_password_email.subject',
+                ['%site_name%' => $siteName],
+                'WlindablaUserBundle',
             );
 
             $this->mailerManager->notifyBySystem(
                 $user->getEmail(),
-                \sprintf('Nouveau Mot de Passe Temporaire - %s',$siteName),
-                'email/profile/regenerate_tempory_password_user.html.twig',
+                $subject,
+                $this->templateRegistry->get('temporary_password'),
                 [
-                'username' => $user->getUsername(),
-                'url_login' => $loginUrl,
-                'NAME_SITE' => $siteName,
-                'password_user'=>$event->getGeneratePassword()
-            ],
-                PriorityInterface::PRIORITY_NORMAL
+                    'username' => $user->getUsername(),
+                    'url_login' => $this->generateLoginUrl(),
+                    'site_name' => $siteName,
+                    'password_user' => $event->getGeneratePassword(),
+                ],
+                PriorityInterface::PRIORITY_NORMAL,
             );
 
-            $this->logger?->info('Email de changement de mots de passe envoyer', [
-                'user_email' => $user->getEmail()
+            $this->userProvider->invalidateUserCache($user->getId());
+
+            $this->logger->info('Temporary password email sent.', [
+                'user_email' => $user->getEmail(),
             ]);
-            $this->userProvider->invalidateUserCache($user->getId()) ;
-        } catch (\Exception $e) {
-            $this->logger?->error('Échec de l\'envoi de l\'email de changement de mots de passe envoyer', [
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to send the temporary password email.', [
                 'user_email' => $user->getEmail(),
                 'error' => $e->getMessage(),
             ]);
+        }
+    }
+
+    private function generateLoginUrl(): ?string
+    {
+        if (null === $this->loginRouteName) {
+            return null;
+        }
+
+        try {
+            return $this->urlGenerator->generate($this->loginRouteName, [], UrlGeneratorInterface::ABSOLUTE_URL);
+        } catch (RouteNotFoundException $e) {
+            $this->logger->warning('Route configured for UpdatePasswordUserSubscriber does not exist.', [
+                'route' => $this->loginRouteName,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
         }
     }
 }

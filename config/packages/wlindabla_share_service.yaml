@@ -8,3 +8,4 @@ wlindabla_share_service:
             - Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ApplyEmailVerificationHandler
             - Wlindabla\UserBundle\Domain\User\Application\CommandHandler\GenerateTemporaryPasswordHandler
             - Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ToggleUserAccountHandler
+            - Wlindabla\UserBundle\Infrastructure\Service\PasswordResetMailerService

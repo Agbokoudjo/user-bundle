@@ -53,3 +53,16 @@ toggle_account_email:
     footer_note: 'Note: this is an automated email, please do not reply directly. Use our usual support address if you have questions.'
     subject_activated: 'Your %site_name% account has been activated'
     subject_deactivated: 'Your %site_name% account has been deactivated'
+
+temporary_password_email:
+    page_title: 'Password regeneration'
+    heading: 'Password reset'
+    greeting: 'Hi %username%,'
+    body: 'We have processed your temporary password request for your %site_name% account. This reset was performed by an administrator.'
+    password_intro: 'Your new temporary password is:'
+    action_required: '⚠️ Immediate action required: this password is temporary. For security reasons, you must change it on your first login.'
+    cta: 'Access my account'
+    not_requested: 'If you did not request this reset, please contact %site_name% support immediately.'
+    signature: 'Regards,<br>The %site_name% team'
+    footer: 'This is an automated email. Please do not reply.'
+    rights_reserved: 'All rights reserved.'
