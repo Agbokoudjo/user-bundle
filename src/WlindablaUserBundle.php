@@ -134,6 +134,22 @@ final class WlindablaUserBundle extends AbstractBundle
                         ->integerNode('max_duration_hours')->defaultValue(24)->end()
                     ->end()
                 ->end()
+                ->arrayNode('session_control')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        // ... inactivity_hours / max_duration_hours déjà là
+                        ->scalarNode('firewall_name')
+                            ->info('Name of the security firewall protecting the area where single-session policy applies (e.g. "main", "admin"). Required for SessionControlListener to know which requests to check.')
+                            ->isRequired()
+                            ->cannotBeEmpty()
+                        ->end()
+                        ->arrayNode('excluded_routes')
+                            ->info('Route names to skip even inside the protected firewall (login, logout, session-conflict page, 2FA pages).')
+                            ->scalarPrototype()->end()
+                            ->defaultValue([])
+                        ->end()
+                    ->end()
+                ->end()
             ->end();
     }
 

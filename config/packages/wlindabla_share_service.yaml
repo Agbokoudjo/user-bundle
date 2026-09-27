@@ -10,3 +10,4 @@ wlindabla_share_service:
             - Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ToggleUserAccountHandler
             - Wlindabla\UserBundle\Infrastructure\Service\PasswordResetMailerService
             - Psr\Log\LoggerInterface
+            - Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface
