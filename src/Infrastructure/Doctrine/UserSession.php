@@ -17,8 +17,6 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\Infrastructure\Doctrine;
 
 use Doctrine\ORM\Mapping as ORM;
-use Gedmo\Mapping\Annotation as Gedmo;
-use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
 use Wlindabla\UserBundle\Domain\UserSession\Model\AbstractUserSession;
@@ -43,11 +41,8 @@ use Wlindabla\UserBundle\Domain\UserSession\Model\AbstractUserSession;
 // #[ORM\Index(columns: ['last_activity_at'], name: 'idx_user_session_last_activity')]
 // #[ORM\Index(columns: ['active'],           name: 'idx_user_session_active')]
 #[ORM\MappedSuperclass]
-#[Gedmo\SoftDeleteable]
 abstract class UserSession extends AbstractUserSession
 {
-    use SoftDeleteableEntity;
-
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
