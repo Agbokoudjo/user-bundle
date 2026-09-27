@@ -22,9 +22,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\ShareServiceBundle\Messenger\QueueHandler\AsyncMethodDispatcherInterface;
-use Wlindabla\UserBundle\Domain\UserSession\Application\Persistance\UserSessionManagerInterface;
+use Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
 use Wlindabla\UserBundle\Infrastructure\Routing\GeneratesOptionalRouteUrlTrait;
 use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
@@ -51,6 +52,7 @@ final class SessionConflictController extends AbstractController
         private readonly UserSessionManagerInterface $sessionManager,
         private readonly TemplateRegistryInterface $templateRegistry,
         private readonly TranslatorInterface $translator,
+        private readonly UrlGeneratorInterface $urlGenerator,
         private readonly string $kernelEnvironment,
         private readonly ?string $homeRouteName = null,
         private readonly ?LoggerInterface $logger = null,
@@ -86,7 +88,7 @@ final class SessionConflictController extends AbstractController
 
             $this->addFlash('warning', $this->translator->trans('session_conflict.error', [], 'WlindablaUserBundle'));
 
-            return $this->redirect($this->safeGenerateUrl($this->homeRouteName, $this->logger) ?? '/');
+            return $this->redirect($this->safeGenerateUrl($this->homeRouteName,$this->urlGenerator, $this->logger) ?? '/');
         }
     }
 }

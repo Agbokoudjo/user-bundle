@@ -18,13 +18,13 @@ namespace Wlindabla\UserBundle\Infrastructure\Persistance;
 
 use Symfony\Component\Lock\LockFactory;
 use Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface;
+use Wlindabla\UserBundle\Domain\UserSession\Application\Persistance\UserSessionRepositoryInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
 use Wlindabla\UserBundle\Domain\UserSession\Model\UserSessionInterface;
-use Wlindabla\UserBundle\Infrastructure\Doctrine\Repository\UserSessionRepository;
 
 /**
- * Orchestrates session operations between the database (Repository) and
- * Redis (session store). The Repository only knows Doctrine; this service
+ * Orchestrates session operations between the database (repository) and
+ * Redis (session store). The repository only knows Doctrine; this service
  * coordinates both infrastructures.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
@@ -33,13 +33,13 @@ use Wlindabla\UserBundle\Infrastructure\Doctrine\Repository\UserSessionRepositor
 final class UserSessionManager implements UserSessionManagerInterface
 {
     public function __construct(
-        private readonly UserSessionRepository $repository,
+        private readonly UserSessionRepositoryInterface $repository,
         private readonly LockFactory $lockFactory,
         private readonly \Redis $redis,
         private readonly string $redisSessionPrefix,
     ) {
     }
-
+    
     public function createSession(
         string $userIdentifier,
         string $sessionId,

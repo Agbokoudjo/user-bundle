@@ -20,6 +20,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Cache\CacheItemPoolInterface;
+use Wlindabla\UserBundle\Domain\UserSession\Application\Persistance\UserSessionRepositoryInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
 use Wlindabla\UserBundle\Domain\UserSession\Model\UserSessionInterface;
 
@@ -46,7 +47,7 @@ use Wlindabla\UserBundle\Domain\UserSession\Model\UserSessionInterface;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-abstract class AbstractUserSessionRepository extends ServiceEntityRepository
+abstract class AbstractUserSessionRepository extends ServiceEntityRepository implements UserSessionRepositoryInterface
 {
     private const string CACHE_PREFIX = 'wlindabla_user_session';
     private const int CACHE_TTL = 3600;

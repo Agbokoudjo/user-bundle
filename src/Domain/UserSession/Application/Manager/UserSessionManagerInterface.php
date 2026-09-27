@@ -16,8 +16,8 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\Domain\UserSession\Application\Manager;
 
-use App\WlindablaUserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
-use App\WlindablaUserBundle\Domain\UserSession\Model\UserSessionInterface;
+use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
+use Wlindabla\UserBundle\Domain\UserSession\Model\UserSessionInterface;
 
 /**
  * Contrat du service de gestion des sessions utilisateur uniques.
