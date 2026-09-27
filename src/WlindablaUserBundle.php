@@ -122,6 +122,18 @@ final class WlindablaUserBundle extends AbstractBundle
                         ->end()
                     ->end()
                 ->end()
+                ->arrayNode('session_control')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->scalarNode('redis_session_prefix')
+                            ->info('MUST match the prefix configured for RedisSessionHandler in your services.yaml, or revoked sessions will never actually be destroyed in Redis.')
+                            ->isRequired()
+                            ->cannotBeEmpty()
+                        ->end()
+                        ->integerNode('inactivity_hours')->defaultValue(4)->end()
+                        ->integerNode('max_duration_hours')->defaultValue(24)->end()
+                    ->end()
+                ->end()
             ->end();
     }
 

@@ -137,4 +137,6 @@ interface BaseUserInterface extends  \Stringable
     public function getSlug(): ?string;
 
     public function setSlug(?string $slug): void;
+
+    public function getUserIdentifier() ;
 }

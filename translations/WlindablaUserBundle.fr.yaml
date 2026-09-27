@@ -88,3 +88,10 @@ access_denied:
 
 entity_in_use:
     title: 'Suppression impossible'
+
+session_revoked:
+    conflict: 'Votre session a été fermée car une connexion a été détectée sur un autre appareil ou navigateur.'
+    expired_inactivity: 'Pour la sécurité de vos données, votre session a été automatiquement fermée après une période d''inactivité prolongée. Merci de vous reconnecter.'
+    expired_max_duration: 'Pour la sécurité de vos données, votre session a été automatiquement fermée après %hours% heures de connexion continue. Merci de vous reconnecter pour poursuivre votre travail.'
+    manual_logout: 'Vous avez été déconnecté. Merci de vous reconnecter.'
+    security_email_changed: 'Votre adresse email a été modifiée. Pour votre sécurité, toutes vos sessions ont été fermées. Merci de vous reconnecter avec votre nouvelle adresse.'

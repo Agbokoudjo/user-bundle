@@ -23,7 +23,9 @@
         "symfony/validator": "^8.1",
         "wlindabla/mailing-bundle": "^1.0",
         "symfony/security-bundle": "^8.1",
-        "symfony/rate-limiter": "^8.1"
+        "symfony/rate-limiter": "^8.1",
+        "symfony/scheduler": "^8.1",
+        "symfony/lock": "^8.1"
     },
     "autoload": {
     "psr-4": { "Wlindabla\\UserBundle\\": "src/" }
@@ -33,5 +35,8 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^13.3"
-    }
+    },
+    "suggest": {
+    "symfony/scheduler": "To automatically clean up expired user sessions (Infrastructure/Scheduler/SessionCleanupSchedule)."
+}
 }

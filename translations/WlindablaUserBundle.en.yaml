@@ -88,3 +88,10 @@ access_denied:
 
 entity_in_use:
     title: 'Cannot delete'
+
+session_revoked:
+    conflict: 'Your session was closed because a login was detected on another device or browser.'
+    expired_inactivity: 'For the security of your data, your session was automatically closed after a prolonged period of inactivity. Please log in again.'
+    expired_max_duration: 'For the security of your data, your session was automatically closed after %hours% hours of continuous connection. Please log in again to continue your work.'
+    manual_logout: 'You have been logged out. Please log in again.'
+    security_email_changed: 'Your email address has been changed. For your security, all your sessions have been closed. Please log in again with your new address.'
