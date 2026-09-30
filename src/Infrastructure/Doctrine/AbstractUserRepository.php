@@ -24,7 +24,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Wlindabla\ShareServiceBundle\Similarity\IdentityNormalizer;
-use Wlindabla\UserBundle\Domain\User\Application\Manager\UserFindDuplicatesRepositoryInterface;
+use Wlindabla\UserBundle\Domain\User\Model\Persistance\UserFindDuplicatesRepositoryInterface;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 use Wlindabla\UserBundle\Domain\User\Model\Persistance\UserRepositoryInterface;
 

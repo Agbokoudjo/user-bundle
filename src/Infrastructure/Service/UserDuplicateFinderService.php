@@ -17,7 +17,7 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\Infrastructure\Service;
 
 use Wlindabla\ShareServiceBundle\Similarity\IdentitySimilarityChecker;
-use Wlindabla\UserBundle\Domain\User\Application\Manager\UserFindDuplicatesRepositoryInterface;
+use Wlindabla\UserBundle\Domain\User\Model\Persistance\UserFindDuplicatesRepositoryInterface;
 
 /**
  * Détecte qu'un username soumis (création manuelle d'un compte admin,

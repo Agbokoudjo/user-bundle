@@ -13,7 +13,7 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace Wlindabla\UserBundle\Domain\User\Application\Manager;
+namespace Wlindabla\UserBundle\Domain\User\Model\Persistance;
 
 /**
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>

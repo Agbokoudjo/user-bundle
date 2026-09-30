@@ -22,27 +22,34 @@ use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Domain\User\Event\UpdatePasswordUserEvent;
 use Wlindabla\UserBundle\Domain\User\Service\UpdatePasswordUserServiceInterface;
 
+/**
+ * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * @package <https://github.com/Agbokoudjo/>
+ */
 final readonly class GenerateTemporaryPasswordHandler
 {
     public function __construct(
         private EventBusInterface $eventBus,
         private UserManagerInterface $userManager,
         private UpdatePasswordUserServiceInterface $updatePasswordService,
-        private GenerateTemporaryPasswordService $generatePasswordService){}
+        private GenerateTemporaryPasswordService $generatePasswordService,
+    ) {
+    }
 
-    public function process(int|string $userId):void{
-        try {
-            $plainTemporyPasswordUser = $this->generatePasswordService->generateTemporaryPassword();
+    public function process(int|string $userId): void
+    {
+        $plainTemporaryPassword = $this->generatePasswordService->generateTemporaryPassword();
 
-            $this->updatePasswordService->handle($userId, $plainTemporyPasswordUser) ;
-            
-            $user = $this->userManager->find($userId);
-            
-            $this->eventBus->dispatch(
-                new UpdatePasswordUserEvent($user, $plainTemporyPasswordUser)
-            );
-        } catch (\Throwable $th) {
-            throw $th;
+        $this->updatePasswordService->handle($userId, $plainTemporaryPassword);
+
+        $user = $this->userManager->find($userId);
+
+        if (null === $user) {
+            // The user was deleted between updatePasswordService->handle()
+            // and this read — nothing left to notify.
+            return;
         }
-    }  
+
+        $this->eventBus->dispatch(new UpdatePasswordUserEvent($user, $plainTemporaryPassword));
+    }
 }

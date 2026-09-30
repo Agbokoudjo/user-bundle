@@ -143,8 +143,7 @@ final class DoctrineUserManager implements UserManagerInterface,UserManagerDoctr
     public function save(BaseUserInterface $entity, bool $andFlush = true): void
     {
         // Canonicalisation basique requise par l'écosystème SonataUser
-        $entity->setUsernameCanonical($this->canonicalFieldsUpdater->canonicalizeUsername($entity->getUsername()));
-        $$entity->setEmailCanonical($this->canonicalFieldsUpdater->canonicalizeEmail($entity->getEmail()));
+        $this->canonicalFieldsUpdater->updateCanonicalFields($entity);
         
         $this->repository()->save($entity,$andFlush) ;
     }
