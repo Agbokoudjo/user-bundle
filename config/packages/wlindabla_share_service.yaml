@@ -9,5 +9,9 @@ wlindabla_share_service:
             - Wlindabla\UserBundle\Domain\User\Application\CommandHandler\GenerateTemporaryPasswordHandler
             - Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ToggleUserAccountHandler
             - Wlindabla\UserBundle\Infrastructure\Service\PasswordResetMailerService
-            - Psr\Log\LoggerInterface
             - Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface
+            - Wlindabla\UserBundle\Domain\LoggerLoginUser\Application\Manager\LoggerLoginUserManagerInterface
+            - Wlindabla\UserBundle\Domain\TwoFactorAuth\Service\TwoFactorCodeServiceInterface
+            - App\WlindablaUserBundle\Domain\TwoFactorAuth\Application\Persistance\TwoFactorCodeManagerInterface
+            - Wlindabla\UserBundle\Domain\LoggerLoginUser\Application\Manager\LoggerLoginUserManagerInterface
+            - Psr\Log\LoggerInterface

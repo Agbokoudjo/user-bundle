@@ -26,7 +26,7 @@ use Wlindabla\UserBundle\Domain\User\Application\Manager\UserFindDuplicatesRepos
  *
  * pré-sélection indexée (pg_trgm) puis confirmation fine (IdentitySimilarityChecker).
  */
-final class SonataUserDuplicateFinder
+final class UserDuplicateFinderService
 {
     public function __construct(
         private readonly UserFindDuplicatesRepositoryInterface $userRepository,

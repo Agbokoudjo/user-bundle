@@ -14,7 +14,9 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace Wlindabla\UserBundle\Domain\User\Application\Manager;
+namespace Wlindabla\UserBundle\Domain\User\Model\Persistance;
+
+use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 
 /**
  * Generic, storage-agnostic read contract for a repository of T. Framework
@@ -31,14 +33,14 @@ namespace Wlindabla\UserBundle\Domain\User\Application\Manager;
 interface UserRepositoryInterface
 {
     /**
-     * @phpstan-return class-string<T>
+     * @phpstan-return class-string<BaseUserInterface>
      */
     public function getClass(): string;
 
     /**
      * @return object[]
      *
-     * @phpstan-return T[]
+     * @phpstan-return BaseUserInterface[]
      */
     public function findAll(): array;
 
@@ -46,21 +48,33 @@ interface UserRepositoryInterface
      * @param array<string, mixed>                           $criteria
      * @param array<string, 'asc'|'ASC'|'desc'|'DESC'>|null $orderBy
      *
-     * @return object[]
+     * @return BaseUserInterface[]
      *
-     * @phpstan-return T[]
+     * @phpstan-return BaseUserInterface[]
      */
-    public function findBy(array $criteria, ?array $orderBy = null, ?int $limit = null, ?int $offset = null): array;
+    public function findBy(
+        array $criteria, 
+        ?array $orderBy = null, 
+        ?int $limit = null, 
+        ?int $offset = null): array;
 
     /**
      * @param array<string, mixed> $criteria
      *
-     * @phpstan-return T|null
+     * @phpstan-return BaseUserInterface|null
      */
     public function findOneBy(array $criteria): ?object;
 
     /**
-     * @phpstan-return T|null
+     * @phpstan-return BaseUserInterface|null
      */
     public function find(mixed $id): ?object;
+
+    public function save(BaseUserInterface $entity, bool $andFlush = true): void ;
+
+    public function delete(BaseUserInterface $entity, bool $andFlush = true): void ;
+
+    public function getReference(int|string $id): BaseUserInterface ;
+
+    public function findOneByUsernameOrEmail(string $usernameCanonical,string $emailCanonical): ?BaseUserInterface ;
 }

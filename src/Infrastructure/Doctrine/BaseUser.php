@@ -137,6 +137,30 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
     #[Groups(['user:read'])]
     protected ?PhoneNumber $phone = null;
 
+    /**
+     * Dernière validation réussie d'un code MFA — posé exclusivement par
+     * TwoFactorAuthController::verify(). Rattaché au COMPTE plutôt qu'à
+     * UserSession volontairement : une réauthentification remember-me crée
+     * une nouvelle ligne UserSession à chaque fois (nouvel identifiant de
+     * session PHP), ce qui ferait perdre la fraîcheur MFA à chaque
+     * redémarrage de session PHP si elle y était rattachée. Ici, elle
+     * survit à n'importe quel changement de cookie/session.
+     */
+    #[Groups(['user:cache', 'user:security'])]
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    protected ?\DateTimeImmutable $twoFactorValidatedAt = null;
+
+    /**
+     * Pouls d'activité admin — mis à jour (avec throttle, cf.
+     * TwoFactorAuthListener) à chaque requête admin qui passe le contrôle
+     * MFA. Sert à mesurer l'INACTIVITÉ glissante plutôt qu'une horloge fixe
+     * depuis le login : une session active en continu ne redemande jamais
+     * de code, une session endormie plus de 2h en redemande un.
+     */
+    #[Groups(['user:cache', 'user:security'])]
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    protected ?\DateTimeImmutable $twoFactorLastCheckedAt = null;
+
 
     /**
      * Version normalisée (Unicode, sans accents/ponctuation, minuscule) de
@@ -214,4 +238,20 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
         $this->avatarUpdatedAt = $avatarUpdatedAt;
     }
 
+    /**
+     * Pose les deux champs à "maintenant" (UTC) en une seule fois — appelé
+     * exclusivement par TwoFactorAuthController::verify() à la validation
+     * réussie d'un code.
+     */
+    public function markTwoFactorValidated(): void
+    {
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $this->twoFactorValidatedAt = $now;
+        $this->twoFactorLastCheckedAt = $now;
+    }
+
+    public function getTwoFactorValidatedAt(): ?\DateTimeInterface { return $this->twoFactorValidatedAt; }
+    public function setTwoFactorValidatedAt(?\DateTimeInterface $twoFactorValidatedAt): void { $this->twoFactorValidatedAt = $twoFactorValidatedAt; }
+    public function getTwoFactorLastCheckedAt(): ?\DateTimeInterface { return $this->twoFactorLastCheckedAt; }
+    public function setTwoFactorLastCheckedAt(?\DateTimeInterface $twoFactorLastCheckedAt): void { $this->twoFactorLastCheckedAt = $twoFactorLastCheckedAt; }
 }

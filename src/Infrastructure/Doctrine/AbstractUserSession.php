@@ -19,7 +19,7 @@ namespace Wlindabla\UserBundle\Infrastructure\Doctrine;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
-use Wlindabla\UserBundle\Domain\UserSession\Model\AbstractUserSession;
+use Wlindabla\UserBundle\Domain\UserSession\Model\BaseUserSession;
 
 /**
  * Doctrine mapping for a user session. Extend this class in your
@@ -28,7 +28,7 @@ use Wlindabla\UserBundle\Domain\UserSession\Model\AbstractUserSession;
  *
  *   #[ORM\Entity]
  *   #[ORM\Table(name: 'user_sessions')]
- *   class UserSession extends \Wlindabla\UserBundle\Infrastructure\Doctrine\UserSession {}
+ *   class BaseUserSession extends \Wlindabla\UserBundle\Infrastructure\Doctrine\UserSession {}
  *
  * A soft-deleted (revoked) session is kept for audit — ignored by
  * SessionControlListener via its `active` flag, not actually removed.
@@ -41,7 +41,7 @@ use Wlindabla\UserBundle\Domain\UserSession\Model\AbstractUserSession;
 // #[ORM\Index(columns: ['last_activity_at'], name: 'idx_user_session_last_activity')]
 // #[ORM\Index(columns: ['active'],           name: 'idx_user_session_active')]
 #[ORM\MappedSuperclass]
-abstract class UserSession extends AbstractUserSession
+abstract class AbstractUserSession extends BaseUserSession
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]

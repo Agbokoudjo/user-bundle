@@ -12,20 +12,26 @@
         }
     ],
     "require": {
+        "php": ">=8.3",
         "symfony/http-kernel": "^6.4|^7.4|^8.0",
         "symfony/config": "^6.4|^7.4|^8.0",
         "symfony/dependency-injection": "^6.4|^7.4|^8.0",
         "symfony/security-core": "^6.4|^7.4|^8.0",
+        "symfony/security-bundle": "^6.4|^7.4|^8.0",
+        "symfony/validator": "^6.4|^7.4|^8.0",
+        "symfony/rate-limiter": "^6.4|^7.4|^8.0",
+        "symfony/lock": "^6.4|^7.4|^8.0",
+        "symfony/twig-bundle": "^6.4|^7.4|^8.0",
+        "symfony/translation": "^6.4|^7.4|^8.0",
+        "symfony/messenger": "^6.4|^7.4|^8.0",
+        "symfony/serializer": "^6.4|^7.4|^8.0",
+        "symfony/password-hasher": "^6.4|^7.4|^8.0",
+        "doctrine/orm": "^2.17|^3.0",
+        "doctrine/doctrine-bundle": "^2.11|^3.0",
         "wlindabla/share-service-bundle": "^1.0",
-        "doctrine/orm": "^3.7",
-        "doctrine/doctrine-bundle": "^3.3",
-        "odolbeau/phone-number-bundle": "^4.2",
-        "symfony/validator": "^8.1",
         "wlindabla/mailing-bundle": "^1.0",
-        "symfony/security-bundle": "^8.1",
-        "symfony/rate-limiter": "^8.1",
-        "symfony/scheduler": "^8.1",
-        "symfony/lock": "^8.1"
+        "vich/uploader-bundle": "^3.0",
+        "odolbeau/phone-number-bundle": "^4.2"
     },
     "autoload": {
     "psr-4": { "Wlindabla\\UserBundle\\": "src/" }

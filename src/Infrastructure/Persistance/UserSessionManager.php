@@ -18,7 +18,7 @@ namespace Wlindabla\UserBundle\Infrastructure\Persistance;
 
 use Symfony\Component\Lock\LockFactory;
 use Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface;
-use Wlindabla\UserBundle\Domain\UserSession\Application\Persistance\UserSessionRepositoryInterface;
+use Wlindabla\UserBundle\Domain\UserSession\Model\Persistance\UserSessionRepositoryInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
 use Wlindabla\UserBundle\Domain\UserSession\Model\UserSessionInterface;
 

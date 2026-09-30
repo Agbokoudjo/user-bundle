@@ -21,7 +21,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Wlindabla\UserBundle\Infrastructure\Routing\GeneratesOptionalRouteUrlTrait;
 use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
-use Wlindabla\UserBundle\UI\Http\Controller\RenderResponseInterface;
 
 /**
  * Renders the shared "outcome" page used by every controller that reacts

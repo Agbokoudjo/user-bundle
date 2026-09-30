@@ -20,7 +20,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Cache\CacheItemPoolInterface;
-use Wlindabla\UserBundle\Domain\UserSession\Application\Persistance\UserSessionRepositoryInterface;
+use Wlindabla\UserBundle\Domain\UserSession\Model\Persistance\UserSessionRepositoryInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
 use Wlindabla\UserBundle\Domain\UserSession\Model\UserSessionInterface;
 
@@ -40,7 +40,7 @@ use Wlindabla\UserBundle\Domain\UserSession\Model\UserSessionInterface;
  *   {
  *       public function __construct(ManagerRegistry $registry, CacheItemPoolInterface $cache)
  *       {
- *           parent::__construct($registry, UserSession::class, $cache);
+ *           parent::__construct($registry, AbstractUserSession::class, $cache);
  *       }
  *   }
  *
@@ -54,7 +54,7 @@ abstract class AbstractUserSessionRepository extends ServiceEntityRepository imp
     private const int ACTIVITY_TTL = 3600; // at most 1 DB flush per hour
 
     /**
-     * @param class-string $entityClass FQCN of your concrete UserSession entity
+     * @param class-string $entityClass FQCN of your concrete AbstractUserSession entity
      */
     public function __construct(
         ManagerRegistry $registry,

@@ -100,4 +100,6 @@ interface UserManagerInterface
      * @phpstan-param BaseUserInterface $entity
      */
     public function delete(BaseUserInterface $entity, bool $andFlush = true): void;
+
+    public function findOneByUsernameOrEmail(string $username, string $email): ?BaseUserInterface ;
 }

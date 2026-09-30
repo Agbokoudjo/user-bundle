@@ -29,7 +29,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\UserBundle\Domain\User\Service\PasswordResetInterface;
 use Wlindabla\UserBundle\Infrastructure\Form\Type\PasswordResetRequestType;
 use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
-use Wlindabla\UserBundle\UI\Http\Controller\OutcomePageRenderer;
 
 /**
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>

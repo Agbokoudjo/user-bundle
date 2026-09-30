@@ -26,7 +26,7 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Wlindabla\ShareServiceBundle\Similarity\IdentityNormalizer;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserFindDuplicatesRepositoryInterface;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
-use Wlindabla\UserBundle\Domain\User\Application\Manager\UserRepositoryInterface;
+use Wlindabla\UserBundle\Domain\User\Model\Persistance\UserRepositoryInterface;
 
 /**
  * Base Doctrine repository for the user entity.
@@ -88,6 +88,32 @@ implements UserFindDuplicatesRepositoryInterface,UserRepositoryInterface
         private readonly TagAwareCacheInterface $tagAwareCache,
     ) {
         parent::__construct($managerRegistry, $entityClass);
+    }
+
+    public function save(BaseUserInterface $entity, bool $andFlush = true): void
+    {
+        $_em=$this->getEntityManager() ;
+        $_em->persist($entity);
+
+        if ($andFlush) {
+            $_em->flush();
+        }
+    }
+
+    public function delete(BaseUserInterface $entity, bool $andFlush = true): void
+    {
+        $_em=$this->getEntityManager() ;
+        $_em->remove($entity);
+
+        if ($andFlush) {
+            $_em->flush();
+        }
+    }
+
+    public function getReference(int|string $id): BaseUserInterface
+    {
+        /** @var BaseUserInterface */
+        return $this->getEntityManager()->getReference($this->getClass()::class, $id);
     }
 
     // -----------------------------------------------------------------
@@ -315,5 +341,21 @@ implements UserFindDuplicatesRepositoryInterface,UserRepositoryInterface
             // Swallowed on purpose: a cache invalidation failure must never
             // block the application. Worth logging if this ever fires.
         }
+    }
+
+     /**
+     * @throws NonUniqueResultException
+     */
+    public function findOneByUsernameOrEmail(string $usernameCanonical, string $emailCanonical): ?BaseUserInterface
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.usernameCanonical =:usernameCanonical')
+            ->orWhere('u.emailCanonical =:emailCanonical')
+            ->setParameter('usernameCanonical', $usernameCanonical)
+            ->setParameter('emailCanonical', $emailCanonical)
+            ->orderBy('u.createdAt', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }

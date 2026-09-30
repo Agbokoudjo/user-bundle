@@ -33,7 +33,7 @@ use Wlindabla\ShareServiceBundle\Messenger\QueueHandler\AsyncMethodDispatcherInt
 use Wlindabla\ShareServiceBundle\Security\Browser\DeviceFingerprintUserAgent;
 use Wlindabla\ShareServiceBundle\Security\Encryption\IdEncryptionInterface;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
-use Wlindabla\UserBundle\Domain\UserSession\Application\Persistance\UserSessionManagerInterface;
+use Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
 
 /**
@@ -69,10 +69,10 @@ final readonly class SessionControlListener
         private Security $security,
         private TranslatorInterface $translator,
         private string $firewallName,
+        private int $maxDurationHours,
         /** @var list<string> */
-        private array $excludedRoutes = [],
-    ) {
-    }
+        private array $excludedRoutes = []
+    ) {}
 
     public function __invoke(RequestEvent $event): void
     {
@@ -194,7 +194,11 @@ final readonly class SessionControlListener
         BaseUserInterface $user,
         UserSessionRevokedReason $reason,
     ): Response {
-        $message = $this->translator->trans($reason->getTranslationKey(), [], 'WlindablaUserBundle');
+        $translationParameters = UserSessionRevokedReason::EXPIRED_MAX_DURATION === $reason
+            ? ['%hours%' => $this->maxDurationHours]
+            : [];
+
+        $message = $this->translator->trans($reason->getTranslationKey(), $translationParameters, 'WlindablaUserBundle');
 
         if ($request->isXmlHttpRequest()) {
             return new JsonResponse(['error' => $reason->value, 'message' => $message], Response::HTTP_UNAUTHORIZED);

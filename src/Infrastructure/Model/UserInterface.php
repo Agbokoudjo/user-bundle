@@ -18,6 +18,7 @@ namespace Wlindabla\UserBundle\Infrastructure\Model;
 
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface as SecurityUserInterface;
+use Wlindabla\UserBundle\Infrastructure\Model\TwoFactorCodeForUserInterface;
 use Wlindabla\UserBundle\Infrastructure\Model\UserIdentityNormalizerInterface;
 
 /**
@@ -26,7 +27,7 @@ use Wlindabla\UserBundle\Infrastructure\Model\UserIdentityNormalizerInterface;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-interface UserInterface extends SecurityUserInterface, PasswordAuthenticatedUserInterface,UserIdentityNormalizerInterface
+interface UserInterface extends SecurityUserInterface, PasswordAuthenticatedUserInterface,UserIdentityNormalizerInterface , TwoFactorCodeForUserInterface
 {
     
 }

@@ -18,7 +18,6 @@ namespace Wlindabla\UserBundle\Domain\UserSession\Model;
 
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
-use Wlindabla\UserBundle\Domain\UserSession\Model\UserSessionInterface;
 
 /**
  * Classe de base pour les sessions utilisateur.
@@ -29,7 +28,7 @@ use Wlindabla\UserBundle\Domain\UserSession\Model\UserSessionInterface;
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  */
-abstract class AbstractUserSession implements UserSessionInterface, \Stringable
+abstract class BaseUserSession implements UserSessionInterface, \Stringable
 {
     protected int|string|null $id = null;
 

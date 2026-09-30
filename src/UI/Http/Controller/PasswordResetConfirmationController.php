@@ -24,7 +24,6 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException;
 use Wlindabla\UserBundle\Domain\User\Service\PasswordResetInterface;
-use Wlindabla\UserBundle\UI\Http\Controller\OutcomePageRenderer;
 
 /**
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>

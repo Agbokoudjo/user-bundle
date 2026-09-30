@@ -16,12 +16,13 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\Infrastructure\Doctrine;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectRepository;
+use InvalidArgumentException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
+use Wlindabla\UserBundle\Domain\User\Model\Persistance\UserRepositoryInterface;
 use Wlindabla\UserBundle\Domain\User\Service\CanonicalFieldsUpdaterInterface;
 use Wlindabla\UserBundle\Infrastructure\Persistance\UserManagerDoctrineReference;
 
@@ -41,19 +42,16 @@ use Wlindabla\UserBundle\Infrastructure\Persistance\UserManagerDoctrineReference
  */
 final class DoctrineUserManager implements UserManagerInterface,UserManagerDoctrineReference
 {
-    private ?ObjectRepository $repository = null;
-
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        private readonly UserRepositoryInterface $repository,
         private readonly CanonicalFieldsUpdaterInterface $canonicalFieldsUpdater,
-        private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly string $userClass,
+        private readonly UserPasswordHasherInterface $passwordHasher
     ) {
     }
 
-    private function repository(): ObjectRepository
+    private function repository(): UserRepositoryInterface
     {
-        return $this->repository ??= $this->entityManager->getRepository($this->userClass);
+        return $this->repository ;
     }
     
     /**
@@ -65,7 +63,16 @@ final class DoctrineUserManager implements UserManagerInterface,UserManagerDoctr
      */
     public function getModelRepository(): ObjectRepository
     {
-        return $this->repository();
+        if($this->repository instanceof ObjectRepository){
+            return $this->repository ;
+        }
+       
+        throw new InvalidArgumentException("
+                Convenience accessor for services that don't need a full  EntityManager. 
+                If your repository extends AbstractUserRepository, the returned object also implements
+                Wlindabla\UserBundle\Domain\User\Model\Persistance\UserRepositoryInterface
+                ");
+        
     }
 
     public function updatePassword(BaseUserInterface $user): void
@@ -102,6 +109,14 @@ final class DoctrineUserManager implements UserManagerInterface,UserManagerDoctr
         ]);
     }
 
+    public function findOneByUsernameOrEmail(string $username, string $email): ?BaseUserInterface{
+        
+         return $this->repository()->findOneByUsernameOrEmail(
+                usernameCanonical :$this->canonicalFieldsUpdater->canonicalizeUsername($username),
+                emailCanonical : $this->canonicalFieldsUpdater->canonicalizeEmail($email)
+        );
+    }
+
     public function findUserByUsernameOrEmail(string $usernameOrEmail): ?BaseUserInterface
     {
         if (false !== filter_var($usernameOrEmail, \FILTER_VALIDATE_EMAIL)) {
@@ -127,25 +142,21 @@ final class DoctrineUserManager implements UserManagerInterface,UserManagerDoctr
 
     public function save(BaseUserInterface $entity, bool $andFlush = true): void
     {
-        $this->entityManager->persist($entity);
-
-        if ($andFlush) {
-            $this->entityManager->flush();
-        }
+        // Canonicalisation basique requise par l'écosystème SonataUser
+        $entity->setUsernameCanonical($this->canonicalFieldsUpdater->canonicalizeUsername($entity->getUsername()));
+        $$entity->setEmailCanonical($this->canonicalFieldsUpdater->canonicalizeEmail($entity->getEmail()));
+        
+        $this->repository()->save($entity,$andFlush) ;
     }
 
     public function delete(BaseUserInterface $entity, bool $andFlush = true): void
     {
-        $this->entityManager->remove($entity);
-
-        if ($andFlush) {
-            $this->entityManager->flush();
-        }
+        $this->repository()->delete($entity,$andFlush) ;
     }
 
     public function getClass(): string
     {
-        return $this->userClass;
+        return $this->repository()->getClass();
     }
 
     public function findAll(): array
@@ -175,7 +186,7 @@ final class DoctrineUserManager implements UserManagerInterface,UserManagerDoctr
      */
     public function create(): BaseUserInterface
     {
-        return new ($this->userClass)();
+        return new ($this->getClass())();
     }
 
     /**
@@ -185,6 +196,6 @@ final class DoctrineUserManager implements UserManagerInterface,UserManagerDoctr
     public function getReference(int|string $id): BaseUserInterface
     {
         /** @var BaseUserInterface */
-        return $this->entityManager->getReference($this->userClass, $id);
+        return $this->repository()->getReference($id);
     }
 }
