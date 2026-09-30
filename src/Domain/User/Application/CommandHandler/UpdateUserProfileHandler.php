@@ -53,7 +53,6 @@ final readonly class UpdateUserProfileHandler
             $user->setSlug(sha1($slugHash));
         }
 
-        $this->userManager->updatePassword($user);
-        $this->userManager->save($user);
+        $this->userManager->save($user,true);
     }
 }
