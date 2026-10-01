@@ -26,7 +26,6 @@ use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum\TwoFactorAuthKey;
@@ -62,7 +61,7 @@ final class TwoFactorAuthController extends AbstractController
         private readonly TemplateRegistryInterface $templateRegistry,
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
-         private readonly \Symfony\Component\Routing\Generator\UrlGeneratorInterface $urlGenerator,
+        private readonly \Symfony\Component\Routing\Generator\UrlGeneratorInterface $urlGenerator,
         private readonly ?string $loginRouteName = null,
         private readonly ?string $homeRouteName = null,
     ) {}
@@ -248,5 +247,22 @@ final class TwoFactorAuthController extends AbstractController
         }
 
         return $this->redirect($url);
+    }
+
+    private function jsonOrRedirect(Request $request, bool $success, string $message, string $route): Response
+    {
+        if ($request->isXmlHttpRequest()) {
+            return new JsonResponse([
+                'success' => $success,
+                'message' => $message,
+                'redirect' => $this->generateUrl($route),
+            ], $success ? Response::HTTP_OK : Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (!$success) {
+            $this->addFlash('danger', $message);
+        }
+
+        return $this->redirectToRoute($route);
     }
 }
