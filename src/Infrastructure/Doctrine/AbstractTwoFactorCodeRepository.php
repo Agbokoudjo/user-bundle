@@ -16,18 +16,20 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\Infrastructure\Doctrine;
 
-use App\Infrastructure\Doctrine\Repository\TwoFactorCodeRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum\TwoFactorCodeStatus;
+use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\Persistance\TwoFactorCodeRepositoryInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\TwoFactorCodeInterface;
 
 /**
- * Persistance des codes MFA.
+ * MFA code persistence. Extend it in your application on your own
+ * TwoFactorCode entity.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * @package <https://github.com/Agbokoudjo/>
  */
-final class AbstractTwoFactorCodeRepository extends ServiceEntityRepository implements TwoFactorCodeRepositoryInterface
+abstract class AbstractTwoFactorCodeRepository extends ServiceEntityRepository implements TwoFactorCodeRepositoryInterface
 {
     public function __construct(ManagerRegistry $registry,string $entityClass)
     {
@@ -65,11 +67,11 @@ final class AbstractTwoFactorCodeRepository extends ServiceEntityRepository impl
 
     public function save(TwoFactorCodeInterface $code, bool $flush = true): void
     {
-        $em = $this->getEntityManager();
-        $em->persist($code);
+        $entityManager = $this->getEntityManager();
+        $entityManager->persist($code);
 
         if ($flush) {
-            $em->flush();
+            $entityManager->flush();
         }
     }
 
@@ -82,10 +84,10 @@ final class AbstractTwoFactorCodeRepository extends ServiceEntityRepository impl
     {
         $pendingCodes = $this->findBy([
             'userIdentifier' => $userIdentifier,
-            'status'         => TwoFactorCodeStatus::PENDING,
+            'status' => TwoFactorCodeStatus::PENDING,
         ]);
 
-        if (empty($pendingCodes)) {
+        if ([] === $pendingCodes) {
             return;
         }
 

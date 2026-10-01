@@ -16,7 +16,6 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\UI\Http\Controller;
 
-use App\UI\Http\EventSubscriber\TwoFactorAuthListener;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Target;
@@ -35,6 +34,7 @@ use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInterface;
 use Wlindabla\UserBundle\UI\Http\Controller\Trait\ResolvesManagedCurrentUserTrait;
+use Wlindabla\UserBundle\UI\Http\EventSubscriber\TwoFactorAuthListener;
 /**
  * Écran de saisie du second facteur (13 chiffres + 7 lettres, envoyé
  * par email). Ces trois routes sont volontairement EXCLUES de

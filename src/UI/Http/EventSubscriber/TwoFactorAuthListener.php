@@ -14,14 +14,10 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace App\UI\Http\EventSubscriber;
+namespace Wlindabla\UserBundle\UI\Http\EventSubscriber;
 
-use App\Domain\TwoFactorAuth\Application\Persistance\TwoFactorCodeManagerInterface;
-use App\Domain\User\Model\BaseUserInterface;
-use App\Infrastructure\Doctrine\Entity\SonataUser;
-use App\Infrastructure\Persistance\UserManagerInterface;
-use App\Infrastructure\Queue\AsyncMethodDispatcherInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Bundle\SecurityBundle\Security\FirewallMap;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -31,66 +27,35 @@ use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Wlindabla\ShareServiceBundle\Messenger\QueueHandler\AsyncMethodDispatcherInterface;
+use Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface;
+use Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum\TwoFactorAuthKey;
+use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
+use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 
 /**
- * Gardien du second facteur — bloque l'accès aux routes Sonata tant que
- * l'utilisateur authentifié n'a pas validé son code MFA.
+ * Second-factor guard — blocks access to the protected firewall's routes
+ * until the authenticated user has validated their MFA code.
  *
- * Priorité 7, AVANT SessionControlListener (repriorisé à 6) : tant que le
- * code n'est pas validé, aucune UserSession (session unique) ne doit être
- * créée pour ce navigateur — c'est ce qui permet à la finalisation de
- * SessionControlListener::onMarkPendingSession de ne se produire qu'après
- * la redirection vers le tableau de bord, une fois le 2FA passé.
+ * Guarded by the security firewall (wlindabla_user.session_control.firewall_name,
+ * reused — this must be the same perimeter SessionControlListener protects),
+ * not by a route name prefix — unlike the previous Sonata-coupled version.
  *
- * Piège évité : la route de l'écran de code elle-même est exclue du
- * contrôle, sous peine de boucle de redirection infinie.
+ * Priority 7, BEFORE SessionControlListener (priority 6): while the code
+ * isn't validated, no UserSession (single-session policy) should be
+ * created for this browser.
+ *
+ * Typed against this bundle's own UserInterface (which extends
+ * TwoFactorCodeForUserInterface), never a concrete project entity — any
+ * project's User class works as long as it implements this bundle's
+ * interfaces.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * @package <https://github.com/Agbokoudjo/>
  */
 #[AsEventListener(event: KernelEvents::REQUEST, priority: 7)]
 final readonly class TwoFactorAuthListener
 {
-    /**
-     * Clé de session : présence = 2FA en attente de validation pour cette session PHP.
-     */
-    public const string PENDING_2FA = '_2fa_pending';
-
-    /**
-     * Fenêtre d'inactivité glissante — au-delà, la fraîcheur MFA est
-     * considérée périmée même si le plafond absolu n'est pas atteint.
-     * Mesurée entre SonataUser::$twoFactorLastCheckedAt et maintenant,
-     * PAS depuis le dernier login : une session active en continu ne
-     * redemande jamais de code.
-     */
-    private const int INACTIVITY_THRESHOLD_SECONDS = 2 * 3600; // 2h
-
-    /**
-     * Plafond absolu depuis SonataUser::$twoFactorValidatedAt — s'applique
-     * même en cas d'activité continue ininterrompue, pour border le risque
-     * dans le temps quoi qu'il arrive.
-     */
-    private const int ABSOLUTE_CAP_SECONDS = 24 * 3600; // 24h
-
-    /**
-     * Throttle d'écriture de $twoFactorLastCheckedAt : pas une mise à jour
-     * en base à CHAQUE requête (coûteux en mode worker FrankenPHP à fort
-     * trafic), une seule au plus toutes les 5 minutes suffit à la
-     * précision recherchée pour la fenêtre d'inactivité de 2h ci-dessus.
-     */
-    private const int ACTIVITY_TOUCH_THROTTLE_SECONDS = 5 * 60; // 5 min
-
-    /**
-     * Routes accessibles à un utilisateur authentifié mais dont le 2FA
-     * est encore en attente (écran de code, renvoi, déconnexion).
-     */
-    private const array ALLOWED_ROUTES_WHILE_PENDING = [
-        'app_two_factor_show',
-        'app_two_factor_verify',
-        'app_two_factor_resend',
-        'sonata_user_admin_security_logout',
-        'app_admin_user_login',
-    ];
-
     public function __construct(
         private TokenStorageInterface $tokenStorage,
         private RouterInterface $router,
@@ -98,7 +63,15 @@ final readonly class TwoFactorAuthListener
         private AsyncMethodDispatcherInterface $asyncMethodDispatcher,
         private UserManagerInterface $userManager,
         private LoggerInterface $logger,
-    ) {}
+        private FirewallMap $firewallMap,
+        private string $firewallName,
+        private int $inactivityThresholdSeconds,
+        private int $absoluteCapSeconds,
+        private int $activityTouchThrottleSeconds,
+        /** @var list<string> */
+        private array $allowedRoutesWhilePending = [],
+    ) {
+    }
 
     public function __invoke(RequestEvent $event): void
     {
@@ -107,40 +80,51 @@ final readonly class TwoFactorAuthListener
         }
 
         $request = $event->getRequest();
-        $route   = $request->attributes->get('_route');
 
-        if (\in_array($route, self::ALLOWED_ROUTES_WHILE_PENDING, true)) {
+        $firewallConfig = $this->firewallMap->getFirewallConfig($request);
+
+        if (null === $firewallConfig || $this->firewallName !== $firewallConfig->getName()) {
             return;
         }
 
-        // Seules les routes admin (Sonata + login JSON) sont concernées.
-        if (!str_starts_with($route ?? '', 'sonata_') && $route !== 'app_admin_user_login') {
+        $route = $request->attributes->get('_route');
+
+        if (\in_array($route, $this->allowedRoutesWhilePending, true)) {
             return;
         }
 
         $token = $this->tokenStorage->getToken();
-        if ($token === null) {
+
+        if (null === $token) {
             return;
         }
 
         $user = $token->getUser();
-        if (!$user instanceof BaseUserInterface) {
+
+        if (!$user instanceof UserInterface) {
+            $this->logger->warning('Unexpected user type for MFA freshness check — denying by caution (fail closed).', [
+                'user_class' => $user ? $user::class : 'null',
+            ]);
+
+            $event->setResponse($this->buildRedirectResponse($request));
+            $event->stopPropagation();
+
             return;
         }
 
         $session = $request->getSession();
 
-        if ($session->get(self::PENDING_2FA, false)) {
-            // Le flag peut être périmé (code déjà validé/expiré côté BDD) —
-            // on retire le flag de session s'il n'y a plus rien à valider.
-            if ($this->twoFactorCodeManager->findActivePending($user->getUserIdentifier()) === null) {
-                $session->remove(self::PENDING_2FA);
+        if ($session->get(TwoFactorAuthKey::PENDING_2FA->value, false)) {
+            // The flag may be stale (code already validated/expired in DB)
+            // — remove it if there's nothing left to validate.
+            if (null === $this->twoFactorCodeManager->findActivePending($user->getUserIdentifier())) {
+                $session->remove(TwoFactorAuthKey::PENDING_2FA->value);
 
                 return;
             }
 
-            $this->logger->info('Accès bloqué : 2FA en attente de validation', [
-                'user'  => $user->getUserIdentifier(),
+            $this->logger->info('Access blocked: MFA pending validation.', [
+                'user' => $user->getUserIdentifier(),
                 'route' => $route,
             ]);
 
@@ -150,27 +134,16 @@ final readonly class TwoFactorAuthListener
             return;
         }
 
-        // Pas de flag en session : soit déjà validé plus tôt dans cette
-        // même session PHP (cas normal), soit — c'est le trou qu'on ferme
-        // ici — authentifié SILENCIEUSEMENT par remember-me, qui ne
-        // déclenche jamais INTERACTIVE_LOGIN et donc ne pose jamais ce
-        // flag. Dans les deux cas, on retombe désormais sur la fraîcheur
-        // persistée sur le compte lui-même (SonataUser::$twoFactorValidatedAt),
-        // qui elle survit à un changement de session PHP.
-        if (!$user instanceof SonataUser) {
-            $this->logger->warning('Type utilisateur inattendu pour la vérification de fraîcheur MFA — accès refusé par prudence (fail closed).', [
-                'user' => $user->getUserIdentifier(),
-            ]);
-
-            $event->setResponse($this->buildRedirectResponse($request));
-            $event->stopPropagation();
-
-            return;
-        }
-
+        // No flag in session: either already validated earlier in this
+        // same PHP session (normal case), or — the gap this closes —
+        // silently authenticated via remember-me, which never triggers
+        // INTERACTIVE_LOGIN and so never sets this flag. Either way, we
+        // now fall back to the freshness persisted on the account itself
+        // (UserInterface::getTwoFactorValidatedAt()), which survives a PHP
+        // session change.
         if (!$this->isTwoFactorFresh($user)) {
-            $this->logger->info('Accès bloqué : fraîcheur MFA expirée (inactivité > 2h ou plafond de 24h dépassé).', [
-                'user'  => $user->getUserIdentifier(),
+            $this->logger->info('Access blocked: MFA freshness expired (inactivity or absolute cap).', [
+                'user' => $user->getUserIdentifier(),
                 'route' => $route,
             ]);
 
@@ -186,16 +159,14 @@ final readonly class TwoFactorAuthListener
     }
 
     /**
-     * La fraîcheur MFA de $user est-elle encore valide, selon les deux
-     * règles indépendantes (la première qui échoue invalide la fraîcheur) :
-     * - fenêtre d'inactivité glissante (INACTIVITY_THRESHOLD_SECONDS) ;
-     * - plafond absolu depuis la dernière validation (ABSOLUTE_CAP_SECONDS).
+     * Two independent rules, the first one to fail invalidates freshness:
+     * - sliding inactivity window;
+     * - absolute cap since the last validation.
      *
-     * Absence de l'une ou l'autre date (jamais validé, ou compte créé
-     * avant l'introduction de ce mécanisme) → toujours considéré périmé,
-     * fail closed.
+     * Missing either date (never validated, or an account created before
+     * this mechanism existed) → always considered stale, fail closed.
      */
-    private function isTwoFactorFresh(SonataUser $user): bool
+    private function isTwoFactorFresh(UserInterface $user): bool
     {
         $validatedAt = $user->getTwoFactorValidatedAt();
         $lastCheckedAt = $user->getTwoFactorLastCheckedAt();
@@ -206,54 +177,50 @@ final readonly class TwoFactorAuthListener
 
         $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 
-        $inactivitySeconds = $now->getTimestamp() - $lastCheckedAt->getTimestamp();
-        if ($inactivitySeconds > self::INACTIVITY_THRESHOLD_SECONDS) {
+        if (($now->getTimestamp() - $lastCheckedAt->getTimestamp()) > $this->inactivityThresholdSeconds) {
             return false;
         }
 
-        $totalElapsedSeconds = $now->getTimestamp() - $validatedAt->getTimestamp();
-
-        return $totalElapsedSeconds <= self::ABSOLUTE_CAP_SECONDS;
+        return ($now->getTimestamp() - $validatedAt->getTimestamp()) <= $this->absoluteCapSeconds;
     }
 
     /**
-     * Déclenche un nouveau défi MFA — même mécanisme que
-     * LoginSubscriber::onRequireTwoFactor(), mais appelable ici pour le cas
-     * remember-me qui ne passe jamais par INTERACTIVE_LOGIN. Le flag est
-     * posé AVANT l'envoi du code, pour les mêmes raisons de fail-closed que
-     * dans LoginSubscriber (cf. son docblock).
+     * Triggers a new MFA challenge — same mechanism as
+     * LoginSubscriber::onRequireTwoFactor(), but callable here for the
+     * remember-me case which never goes through INTERACTIVE_LOGIN. The
+     * flag is set BEFORE sending, for the same fail-closed reasons as in
+     * LoginSubscriber.
      */
-    private function forceChallenge(Request $request, SonataUser $user): void
+    private function forceChallenge(Request $request, UserInterface $user): void
     {
-        $request->getSession()->set(self::PENDING_2FA, true);
+        $request->getSession()->set(TwoFactorAuthKey::PENDING_2FA->value, true);
 
         try {
             $this->asyncMethodDispatcher->dispatch(
                 TwoFactorCodeManagerInterface::class,
-                'generateAndSend',
-                [$user->getUserIdentifier(), $request->getClientIp(), 'remember_me_refresh']
+                'generateAndSendAsync',
+                [$user->getUserIdentifier(), $request->getClientIp(), 'remember_me_refresh'],
             );
         } catch (\Throwable $e) {
-            $this->logger->critical('Échec de la génération/envoi du code MFA (revalidation périodique).', [
-                'user'  => $user->getUserIdentifier(),
+            $this->logger->critical('Failed to generate/send the MFA code (periodic revalidation).', [
+                'user' => $user->getUserIdentifier(),
                 'error' => $e->getMessage(),
             ]);
         }
     }
 
     /**
-     * Met à jour le pouls d'activité, avec throttle — cf. docblock de
-     * ACTIVITY_TOUCH_THROTTLE_SECONDS. Volontairement silencieux en cas
-     * d'erreur de sauvegarde : un échec ici ne doit jamais bloquer une
-     * requête déjà légitimement autorisée à passer.
+     * Updates the activity heartbeat, throttled. Deliberately silent on
+     * save failure: an error here must never block an already-legitimate
+     * request.
      */
-    private function touchTwoFactorActivity(SonataUser $user): void
+    private function touchTwoFactorActivity(UserInterface $user): void
     {
         $lastCheckedAt = $user->getTwoFactorLastCheckedAt();
         $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 
         if (null !== $lastCheckedAt
-            && ($now->getTimestamp() - $lastCheckedAt->getTimestamp()) < self::ACTIVITY_TOUCH_THROTTLE_SECONDS
+            && ($now->getTimestamp() - $lastCheckedAt->getTimestamp()) < $this->activityTouchThrottleSeconds
         ) {
             return;
         }
@@ -262,8 +229,8 @@ final readonly class TwoFactorAuthListener
             $user->setTwoFactorLastCheckedAt($now);
             $this->userManager->save($user);
         } catch (\Throwable $e) {
-            $this->logger->error('Échec de la mise à jour du pouls d\'activité MFA (non bloquant).', [
-                'user'  => $user->getUserIdentifier(),
+            $this->logger->error('Failed to update the MFA activity heartbeat (non-blocking).', [
+                'user' => $user->getUserIdentifier(),
                 'error' => $e->getMessage(),
             ]);
         }
@@ -273,9 +240,9 @@ final readonly class TwoFactorAuthListener
     {
         if ($request->isXmlHttpRequest()) {
             return new JsonResponse([
-                'success'           => false,
+                'success' => false,
                 'twoFactorRequired' => true,
-                'redirect'          => $this->router->generate('app_two_factor_show'),
+                'redirect' => $this->router->generate('app_two_factor_show'),
             ], Response::HTTP_UNAUTHORIZED);
         }
 

@@ -101,7 +101,7 @@ final class LoginSubscriber implements EventSubscriberInterface
         try {
             $this->asyncMethodDispatcher->dispatch(
                 TwoFactorCodeManagerInterface::class,
-                'generateAndSend',
+                'generateAndSendAsync',
                 [$user->getUserIdentifier(), $request->getClientIp(), 'login'],
             );
         } catch (\Throwable $e) {

@@ -14,9 +14,8 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace App\WlindablaUserBundle\Infrastructure\Persistance;
+namespace Wlindabla\UserBundle\Infrastructure\Persistance;
 
-use App\Infrastructure\Doctrine\Repository\TwoFactorCodeRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Wlindabla\ShareServiceBundle\Security\Generator\MfaCodeGeneratorInterface;
@@ -26,17 +25,16 @@ use Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum\TwoFactorCodeStatus;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception\InvalidTwoFactorCodeException;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception\TwoFactorCodeLockedException;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception\TwoFactorSendThrottledException;
+use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\Persistance\TwoFactorCodeRepositoryInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\TwoFactorCodeInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Service\TwoFactorCodeServiceInterface;
 
 /**
- * Orchestre le cycle de vie complet du code MFA envoyé par email :
- * génération, hachage, persistance, envoi, vérification.
- *
- * Le hachage réutilise TokenHasherInterface (bcrypt/argon2, déjà utilisé
- * par PasswordResetService) — jamais le code en clair en base.
+ * Orchestrates the full lifecycle of the email MFA code: generation,
+ * hashing, persistence, sending, verification.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * @package <https://github.com/Agbokoudjo/>
  */
 final class TwoFactorCodeManager implements TwoFactorCodeManagerInterface
 {
@@ -49,76 +47,81 @@ final class TwoFactorCodeManager implements TwoFactorCodeManagerInterface
         private readonly ParameterBagInterface $params,
     ) {}
 
+    /**
+     * guardSendRateLimit() is deliberately NOT wrapped in the try/catch
+     * below — TwoFactorSendThrottledException must propagate to the
+     * caller exactly as this interface's docblock promises. Wrapping it
+     * here previously swallowed the exception into a silent null return,
+     * which made the 429 response path in TwoFactorAuthController::resend()
+     * unreachable.
+     */
     public function generateAndSend(string $userIdentifier, ?string $ipAddress, string $context = 'login'): ?TwoFactorCodeInterface
     {
+        $this->guardSendRateLimit($userIdentifier);
+
+        return $this->createCodeAndSend($userIdentifier, $ipAddress, $context);
+    }
+
+    public function generateAndSendAsync(string $userIdentifier, ?string $ipAddress, string $context = 'login'): void {
         try {
-            $this->guardSendRateLimit($userIdentifier);
-
-            return $this->createCodeAndSend($userIdentifier,$ipAddress,$context) ;
-            
+            $this->generateAndSend($userIdentifier, $ipAddress, $context);
         } catch (\Throwable $e) {
-            $this->logger?->critical('Échec de la génération/envoi du code MFA à la connexion', [
-                'user'  => $userIdentifier,
+            $this->logger->critical('Failed to generate/send the MFA code (periodic revalidation).', [
+                'user' => $userIdentifier,
                 'error' => $e->getMessage(),
             ]);
-
-            return null ;
-        }
-
-       
-    }
-
-    public function createCodeAndSend(string $userIdentifier, ?string $ipAddress, string $context = 'login'):?TwoFactorCodeInterface{
-         try {
-        // Un seul code PENDING actif à la fois : les précédents sont invalidés.
-        $this->invalidatePending($userIdentifier);
-
-        $plainCode = $this->codeGenerator->generate();
-
-        $code = new ($this->repository->getClass())();
-        $code->setUserIdentifier($userIdentifier);
-        $code->setCodeHash($this->tokenHasher->hash($plainCode));
-        $code->setStatus(TwoFactorCodeStatus::PENDING);
-        $code->setExpiresAt(new \DateTimeImmutable(
-            '+' . TwoFactorCodeInterface::DEFAULT_TTL_MINUTES . ' minutes',
-            new \DateTimeZone('UTC'),
-        ));
-
-        $code->setIpAddress($ipAddress);
-        $code->setCreatedAt(new \DateTimeImmutable('now', new \DateTimeZone('UTC')));
-        $code->setLastSentAt(new \DateTimeImmutable('now', new \DateTimeZone('UTC')));
-
-        $this->repository->save($code);
-
-        $this->logger->info('Code MFA généré et envoyé', [
-            'user'    => $userIdentifier,
-            'context' => $context,
-            'ip'      => $ipAddress,
-        ]);
-
-        /**
-         * @var string
-         */
-        $siteName=$this->params->get('app.site_name') ;
-
-        $this->twoFactorCodeService->sendCodeByEmail($userIdentifier,$plainCode,$context,$siteName,$ipAddress) ;
-
-        return $code;
-        } catch (\Throwable $e) {
-            $this->logger?->critical('Échec de la génération/envoi du code MFA à la connexion', [
-                'user'  => $userIdentifier,
-                'error' => $e->getMessage(),
-            ]);
-
-            return null ;
         }
     }
 
+    private function createCodeAndSend(string $userIdentifier, ?string $ipAddress, string $context = 'login'): ?TwoFactorCodeInterface
+    {
+        try {
+            // Only one active PENDING code at a time: previous ones are invalidated.
+            $this->invalidatePending($userIdentifier);
+
+            $plainCode = $this->codeGenerator->generate();
+
+            $code = new ($this->repository->getClass())();
+            $code->setUserIdentifier($userIdentifier);
+            $code->setCodeHash($this->tokenHasher->hash($plainCode));
+            $code->setStatus(TwoFactorCodeStatus::PENDING);
+            $code->setExpiresAt(new \DateTimeImmutable(
+                '+'.TwoFactorCodeInterface::DEFAULT_TTL_MINUTES.' minutes',
+                new \DateTimeZone('UTC'),
+            ));
+            $code->setIpAddress($ipAddress);
+            $code->setCreatedAt(new \DateTimeImmutable('now', new \DateTimeZone('UTC')));
+            $code->setLastSentAt(new \DateTimeImmutable('now', new \DateTimeZone('UTC')));
+
+            $this->repository->save($code);
+
+            $this->logger->info('MFA code generated and sent.', [
+                'user' => $userIdentifier,
+                'context' => $context,
+                'ip' => $ipAddress,
+            ]);
+
+            /** @var string $siteName */
+            $siteName = $this->params->get('app.site_name');
+
+            $this->twoFactorCodeService->sendCodeByEmail($userIdentifier, $plainCode, $context, $siteName, $ipAddress);
+
+            return $code;
+        } catch (\Throwable $e) {
+            $this->logger->critical('Failed to generate/send the MFA code.', [
+                'user' => $userIdentifier,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+    
     public function verify(string $userIdentifier, string $submittedCode): void
     {
         $code = $this->repository->findLatestPending($userIdentifier);
 
-        if ($code === null) {
+        if (null === $code) {
             throw new InvalidTwoFactorCodeException();
         }
 
@@ -133,16 +136,15 @@ final class TwoFactorCodeManager implements TwoFactorCodeManagerInterface
             throw new InvalidTwoFactorCodeException();
         }
 
-        // Normalisation : le code est composé de chiffres et de lettres
-        // majuscules — on tolère la casse et les espaces de recopie.
+        // Tolerate case and copy-paste spaces: digits + uppercase letters.
         $normalized = strtoupper(str_replace(' ', '', $submittedCode));
 
         if (!$this->tokenHasher->verify($normalized, $code->getCodeHash())) {
             $code->incrementAttempts();
             $this->repository->save($code);
 
-            $this->logger->warning('Tentative de code MFA incorrecte', [
-                'user'     => $userIdentifier,
+            $this->logger->warning('Incorrect MFA code attempt.', [
+                'user' => $userIdentifier,
                 'attempts' => $code->getAttempts(),
             ]);
 
@@ -156,10 +158,9 @@ final class TwoFactorCodeManager implements TwoFactorCodeManagerInterface
         $code->setStatus(TwoFactorCodeStatus::VERIFIED);
         $this->repository->save($code);
 
-        // Empêche la réutilisation d'un code PENDING plus ancien encore valide.
         $this->repository->invalidatePending($userIdentifier);
 
-        $this->logger->info('Code MFA validé avec succès', ['user' => $userIdentifier]);
+        $this->logger->info('MFA code validated successfully.', ['user' => $userIdentifier]);
     }
 
     public function findActivePending(string $userIdentifier): ?TwoFactorCodeInterface
@@ -182,14 +183,14 @@ final class TwoFactorCodeManager implements TwoFactorCodeManagerInterface
     private function guardSendRateLimit(string $userIdentifier): void
     {
         $since = new \DateTimeImmutable(
-            '-' . TwoFactorCodeInterface::DEFAULT_SEND_WINDOW_MINUTES . ' minutes',
+            '-'.TwoFactorCodeInterface::DEFAULT_SEND_WINDOW_MINUTES.' minutes',
             new \DateTimeZone('UTC'),
         );
 
         $sentCount = $this->repository->countSentSince($userIdentifier, $since);
 
         if ($sentCount >= TwoFactorCodeInterface::DEFAULT_MAX_SEND_PER_WINDOW) {
-            $this->logger->warning('Limite de renvoi de code MFA atteinte', ['user' => $userIdentifier]);
+            $this->logger->warning('MFA code resend limit reached.', ['user' => $userIdentifier]);
 
             throw new TwoFactorSendThrottledException();
         }

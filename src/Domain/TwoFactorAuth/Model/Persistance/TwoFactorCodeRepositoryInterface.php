@@ -14,7 +14,7 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace App\Infrastructure\Doctrine\Repository;
+namespace Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\Persistance;
 
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\TwoFactorCodeInterface;
 

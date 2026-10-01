@@ -16,33 +16,46 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager;
 
-use App\WlindablaUserBundle\Domain\TwoFactorAuth\Exception\InvalidTwoFactorCodeException;
-use App\WlindablaUserBundle\Domain\TwoFactorAuth\Exception\TwoFactorCodeLockedException;
-use App\WlindablaUserBundle\Domain\TwoFactorAuth\Exception\TwoFactorSendThrottledException;
+use Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception\InvalidTwoFactorCodeException;
+use Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception\TwoFactorCodeLockedException;
+use Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception\TwoFactorSendThrottledException;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\TwoFactorCodeInterface;
 
 /**
- * Contrat du service d'orchestration du MFA par email.
+ * Contract of the email MFA orchestration service.
  *
- * Les mutations (generateAndSend, verify) sont synchrones : le contrôleur
- * a besoin du résultat immédiatement. Seul l'envoi de l'email est délégué
- * en tâche async par le Mailer (cf SystemMailer::send -> sendAsync).
+ * generateAndSend() and verify() are synchronous: the controller needs
+ * the result immediately. Only the email itself is sent asynchronously,
+ * by the mailer.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * @package <https://github.com/Agbokoudjo/>
  */
 interface TwoFactorCodeManagerInterface
 {
     /**
-     * Génère un nouveau code, invalide les codes PENDING précédents de
-     * l'utilisateur, persiste le hash et déclenche l'envoi de l'email.
+     * Generates a new code, invalidates the user's previous PENDING
+     * codes, persists the hash, and triggers the email.
      *
-     * @throws TwoFactorSendThrottledException
-     *         si la fenêtre de renvoi (3 / 15 min) est dépassée.
+     * Synchronous entry point: used by controllers and any caller that
+     * needs to react to the throttle itself (e.g. return a 429).
+     *
+     * @throws TwoFactorSendThrottledException if the resend window
+     *                                          (3 sends / 15 min) is exceeded
      */
     public function generateAndSend(string $userIdentifier, ?string $ipAddress, string $context = 'login'): ?TwoFactorCodeInterface;
 
     /**
-     * Vérifie le code saisi pour l'utilisateur donné.
+     * Same as generateAndSend(), for use from an asynchronous context
+     * (dispatched via Messenger) where nothing can act on a thrown
+     * TwoFactorSendThrottledException — retrying it would just reproduce
+     * the same, non-transient, rate-limit state. Failures, including the
+     * throttle, are logged here and never thrown.
+     */
+    public function generateAndSendAsync(string $userIdentifier, ?string $ipAddress, string $context = 'login'): void;
+
+    /**
+     * Verifies the submitted code for the given user.
      *
      * @throws InvalidTwoFactorCodeException
      * @throws TwoFactorCodeLockedException
@@ -50,13 +63,13 @@ interface TwoFactorCodeManagerInterface
     public function verify(string $userIdentifier, string $submittedCode): void;
 
     /**
-     * Retourne le code PENDING actif de l'utilisateur, ou null.
+     * Returns the user's active PENDING code, or null.
      */
     public function findActivePending(string $userIdentifier): ?TwoFactorCodeInterface;
 
     /**
-     * Invalide (EXPIRED) tous les codes PENDING d'un utilisateur.
-     * Utilisé à la déconnexion et lors d'une nouvelle demande de code.
+     * Invalidates (EXPIRED) all of a user's PENDING codes. Used at logout
+     * and when a new code is requested.
      */
     public function invalidatePending(string $userIdentifier): void;
 }
