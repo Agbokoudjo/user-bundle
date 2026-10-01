@@ -48,9 +48,8 @@ final class TwoFactorCodeService implements TwoFactorCodeServiceInterface
         ?string $ipAddress,
     ): void {
         $user = $this->userManager->findUserByUsernameOrEmail($userIdentifier);
-
         if (null === $user || null === $user->getEmail()) {
-            $this->logger->error('Cannot send the MFA code: user or email not found.', [
+            $this->logger->critical('Cannot send the MFA code: user or email not found — likely data integrity issue.', [
                 'user' => $userIdentifier,
             ]);
 
