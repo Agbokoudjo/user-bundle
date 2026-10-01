@@ -17,14 +17,33 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception;
 
 /**
- * Levée quand la limite de renvoi (3 envois / 15 min) est dépassée.
+ * Thrown when the resend limit (3 sends / 15 min) is exceeded.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * @package <https://github.com/Agbokoudjo/>
  */
 final class TwoFactorSendThrottledException extends \RuntimeException
 {
-    public function __construct(string $message = 'Trop de demandes de code. Réessayez dans quelques minutes.')
+    public function __construct(
+        string $message = 'Too many code requests. Try again in a few minutes.',
+        private readonly string $translationKey = 'two_factor.send_throttled',
+        /** @var array<string, string> */
+        private readonly array $translationParameters = [],
+        ?\Throwable $previous = null,
+    ) {
+        parent::__construct($message, 0, $previous);
+    }
+
+    public function getTranslationKey(): string
     {
-        parent::__construct($message);
+        return $this->translationKey;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getTranslationParameters(): array
+    {
+        return $this->translationParameters;
     }
 }

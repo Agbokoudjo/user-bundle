@@ -95,3 +95,14 @@ session_revoked:
     expired_max_duration: 'For the security of your data, your session was automatically closed after %hours% hours of continuous connection. Please log in again to continue your work.'
     manual_logout: 'You have been logged out. Please log in again.'
     security_email_changed: 'Your email address has been changed. For your security, all your sessions have been closed. Please log in again with your new address.'
+
+two_factor:
+    invalid_code: 'The code is invalid or has expired.'
+    locked: 'Too many incorrect attempts. Your account is locked — contact an administrator.'
+    send_throttled: 'Too many code requests. Please try again in a few minutes.'
+    session_expired_login: 'Your session has expired, please log in again.'
+    session_expired_retry: 'Your session has expired, please try again.'
+    code_required: 'The code is required.'
+    resend_success: 'A new code has been sent to you.'
+    verified: 'Code verified.'
+    rate_limited: 'Too many requests. Please try again later.'

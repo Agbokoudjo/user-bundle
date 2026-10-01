@@ -95,3 +95,14 @@ session_revoked:
     expired_max_duration: 'Pour la sécurité de vos données, votre session a été automatiquement fermée après %hours% heures de connexion continue. Merci de vous reconnecter pour poursuivre votre travail.'
     manual_logout: 'Vous avez été déconnecté. Merci de vous reconnecter.'
     security_email_changed: 'Votre adresse email a été modifiée. Pour votre sécurité, toutes vos sessions ont été fermées. Merci de vous reconnecter avec votre nouvelle adresse.'
+
+two_factor:
+    invalid_code: 'Code invalide ou expiré.'
+    locked: 'Trop de tentatives incorrectes. Compte verrouillé, contactez un administrateur.'
+    send_throttled: 'Trop de demandes de code. Réessayez dans quelques minutes.'
+    session_expired_login: 'Session expirée, merci de vous reconnecter.'
+    session_expired_retry: 'Session expirée, merci de réessayer.'
+    code_required: 'Le code est obligatoire.'
+    resend_success: 'Un nouveau code vous a été envoyé.'
+    verified: 'Code validé.'
+    rate_limited: 'Trop de demandes. Réessayez plus tard.'

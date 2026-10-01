@@ -22,9 +22,12 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum\TwoFactorAuthKey;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception\InvalidTwoFactorCodeException;
@@ -32,51 +35,57 @@ use Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception\TwoFactorCodeLockedExcep
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception\TwoFactorSendThrottledException;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
+use Wlindabla\UserBundle\Infrastructure\Routing\GeneratesOptionalRouteUrlTrait;
 use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInterface;
+use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 use Wlindabla\UserBundle\UI\Http\Controller\Trait\ResolvesManagedCurrentUserTrait;
-use Wlindabla\UserBundle\UI\Http\EventSubscriber\TwoFactorAuthListener;
+
 /**
- * Écran de saisie du second facteur (13 chiffres + 7 lettres, envoyé
- * par email). Ces trois routes sont volontairement EXCLUES de
- * SessionControlListener (elles ne sont pas préfixées `sonata_`) et
- * explicitement autorisées par TwoFactorAuthListener tant que le 2FA
- * est en attente.
+ * Second-factor entry screen (digits + letters, sent by email). These
+ * three routes are deliberately excluded from SessionControlListener and
+ * explicitly allowed by TwoFactorAuthListener while 2FA is pending (see
+ * wlindabla_user.two_factor.allowed_routes_while_pending).
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * @package <https://github.com/Agbokoudjo/>
  */
+#[AsController]
 final class TwoFactorAuthController extends AbstractController
 {
     use ResolvesManagedCurrentUserTrait;
+    use GeneratesOptionalRouteUrlTrait;
 
     public function __construct(
         private readonly TwoFactorCodeManagerInterface $twoFactorCodeManager,
         private readonly UserManagerInterface $userManager,
         private readonly CacheUserProviderInterface $userProvider,
+        private readonly TemplateRegistryInterface $templateRegistry,
+        private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
+         private readonly \Symfony\Component\Routing\Generator\UrlGeneratorInterface $urlGenerator,
+        private readonly ?string $loginRouteName = null,
+        private readonly ?string $homeRouteName = null,
     ) {}
 
     #[Route('/admin/2fa/show', name: 'app_two_factor_show', methods: ['GET'])]
     public function show(Request $request): Response
     {
-        /**
-         * @var UserInterface|null
-         */
-        $user=$this->getUser() ;
+        /** @var UserInterface|null $user */
+        $user = $this->getUser();
 
-        if ($user === null ) {
-            return $this->redirectToRoute('app_admin_user_login');
+        if (null === $user) {
+            return $this->redirect($this->safeGenerateUrl($this->loginRouteName, $this->urlGenerator, $this->logger) ?? '/');
         }
 
-        // Rien en attente (déjà validé, ou accès direct sans login préalable
-        // au 2FA) → pas de raison d'être ici, retour au tableau de bord
-        // (Sonata redirigera vers le login si nécessaire).
-        if ($this->twoFactorCodeManager->findActivePending($user->getUserIdentifier()) === null
-            && !$request->getSession()->get(TwoFactorAuthListener::PENDING_2FA, false)
+        // Nothing pending (already validated, or a direct hit without
+        // going through login first) → no reason to be here.
+        if (null === $this->twoFactorCodeManager->findActivePending($user->getUserIdentifier())
+            && !$request->getSession()->get(TwoFactorAuthKey::PENDING_2FA->value, false)
         ) {
-            return $this->redirectToRoute('sonata_admin_dashboard'); //Claude Ai va nous suggerer comment faire 
+            return $this->redirect($this->safeGenerateUrl($this->homeRouteName, $this->urlGenerator,$this->logger) ?? '/');
         }
 
-        return $this->render('security/twoFactorAuth.html.twig', [
+        return $this->render($this->templateRegistry->get('two_factor_show'), [
             'username' => $user->getUsername(),
         ]);
     }
@@ -84,75 +93,75 @@ final class TwoFactorAuthController extends AbstractController
     #[Route('/admin/2fa/verify', name: 'app_two_factor_verify', methods: ['POST'])]
     public function verify(Request $request): Response
     {
-        /**
-         * @var UserInterface|null
-         */
-        $user=$this->getUser() ;
+        /** @var UserInterface|null $user */
+        $user = $this->getUser();
 
-        if ($user === null) {
-            return $this->jsonOrRedirect($request, false, 'Session expirée, merci de vous reconnecter.', 'app_admin_user_login');
+        if (null === $user) {
+            return $this->jsonOrRedirectToLogin($request, $this->trans('two_factor.session_expired_login'));
         }
 
         if (!$this->isCsrfTokenValid('two_factor_verify', $request->request->get('_csrf_token'))) {
-            return $this->respondInvalid($request, 'Session expirée, merci de réessayer.');
+            return $this->respondInvalid($request, $this->trans('two_factor.session_expired_retry'));
         }
 
         $submittedCode = trim((string) $request->request->get('code', ''));
 
-        if ($submittedCode === '') {
-            return $this->respondInvalid($request, 'Le code est obligatoire.');
+        if ('' === $submittedCode) {
+            return $this->respondInvalid($request, $this->trans('two_factor.code_required'));
         }
 
         try {
             $this->twoFactorCodeManager->verify($user->getUserIdentifier(), $submittedCode);
         } catch (TwoFactorCodeLockedException $e) {
-            return $this->respondInvalid($request, $e->getMessage(), Response::HTTP_LOCKED);
+            return $this->respondInvalid(
+                $request,
+                $this->translator->trans($e->getTranslationKey(), $e->getTranslationParameters(), 'WlindablaUserBundle'),
+                Response::HTTP_LOCKED,
+            );
         } catch (InvalidTwoFactorCodeException $e) {
-            return $this->respondInvalid($request, $e->getMessage());
+            return $this->respondInvalid(
+                $request,
+                $this->translator->trans($e->getTranslationKey(), $e->getTranslationParameters(), 'WlindablaUserBundle'),
+            );
         }
 
-        // Régénération de l'identifiant de session : un nouvel identifiant
-        // est émis une fois le second facteur validé (piège classique :
-        // ne jamais garder le sessionId antérieur à la validation).
+        // Session ID regeneration: a new one is issued once the second
+        // factor is validated (classic trap: never keep the sessionId
+        // that predates validation).
         $request->getSession()->migrate(true);
         $request->getSession()->remove(TwoFactorAuthKey::PENDING_2FA->value);
 
-        // Fraîcheur MFA persistée sur le COMPTE (pas la session PHP, cf.
-        // docblock de SonataUser::$twoFactorValidatedAt) — c'est cette
-        // valeur que TwoFactorAuthListener revérifiera sur les requêtes
-        // suivantes, y compris celles authentifiées par remember-me.
+        // MFA freshness persisted on the ACCOUNT (not the PHP session) —
+        // this is what TwoFactorAuthListener rechecks on subsequent
+        // requests, including ones authenticated by remember-me.
         //
-        // resolveManagedCurrentUser() recharge $user comme une entité
-        // réellement gérée par Doctrine — cf. son docblock pour le piège
-        // évité (UserProvider::refreshUser() renvoie un objet désérialisé,
-        // jamais géré, dont la persistance directe déclenche une
-        // ré-insertion). Erreur volontairement non bloquante ici : un échec
-        // de rechargement à cet instant précis ne doit jamais casser un
-        // flux de connexion qui vient de réussir sa vérification de code.
+        // resolveManagedCurrentUser() reloads $user as an entity actually
+        // managed by Doctrine — see its own docblock for the pitfall this
+        // avoids. Deliberately non-blocking here: a reload failure at this
+        // exact moment must never break a login flow that just succeeded
+        // its code verification.
         try {
-            $managedUser = $this->resolveManagedCurrentUser($this->userManager,$user);
+            $managedUser = $this->resolveManagedCurrentUser($this->userManager, $user);
             $managedUser->markTwoFactorValidated();
             $this->userManager->save($managedUser);
 
-            // ⚠️ Indispensable : UserProvider::refreshUser() sert un cache
-            // JSON (TTL 7 jours) à CHAQUE requête suivante, y compris la
-            // redirection vers le tableau de bord juste après. Sans cette
-            // invalidation, TwoFactorAuthListener continuerait de voir
-            // l'ancienne valeur (souvent null) de twoFactorValidatedAt et
-            // redemanderait un code en boucle, malgré l'enregistrement
-            // réussi ci-dessus — bug constaté en prod le 20/08.
+            // Required: UserProvider::refreshUser() serves a cached copy
+            // on every subsequent request, including the redirect to the
+            // dashboard right after. Without this invalidation,
+            // TwoFactorAuthListener would keep seeing the old (often null)
+            // twoFactorValidatedAt and loop back to requesting a code,
+            // despite the successful save above.
             $this->userProvider->invalidateUserCache($managedUser->getId());
-
         } catch (\Throwable $e) {
-            $this->logger->error('Impossible de recharger l\'utilisateur courant pour poser la fraîcheur MFA.', [
-                'user'  => $user->getUserIdentifier(),
+            $this->logger->error('Failed to reload the current user to persist MFA freshness.', [
+                'user' => $user->getUserIdentifier(),
                 'error' => $e->getMessage(),
             ]);
         }
 
-        $this->logger->info('2FA validé, session régénérée', ['user' => $user->getUserIdentifier()]);
+        $this->logger->info('2FA validated, session regenerated.', ['user' => $user->getUserIdentifier()]);
 
-        return $this->jsonOrRedirect($request, true, 'Code validé.', 'sonata_admin_dashboard');
+        return $this->jsonOrRedirectHome($request, $this->trans('two_factor.verified'));
     }
 
     #[Route('/admin/2fa/resend', name: 'app_two_factor_resend', methods: ['POST'])]
@@ -161,41 +170,49 @@ final class TwoFactorAuthController extends AbstractController
         #[Target('two_factor_resend')]
         RateLimiterFactoryInterface $resendLimiter,
     ): Response {
-        /**
-         * @var UserInterface|null
-         */
-        $user=$this->getUser() ;
+        /** @var UserInterface|null $user */
+        $user = $this->getUser();
 
-        if ($user === null) {
-            return $this->jsonOrRedirect($request, false, 'Session expirée, merci de vous reconnecter.', 'app_admin_user_login');
+        if (null === $user) {
+            return $this->jsonOrRedirectToLogin($request, $this->trans('two_factor.session_expired_login'));
         }
 
         if (!$this->isCsrfTokenValid('two_factor_resend', $request->headers->get('X-CSRF-Token'))) {
-            return $this->jsonOrRedirect($request, false, 'Session expirée, merci de réessayer.', 'app_two_factor_show');
+            return $this->jsonOrRedirect($request, false, $this->trans('two_factor.session_expired_retry'), 'app_two_factor_show');
         }
-        
-        if ($this->getParameter('app.env') === 'prod') {
-            $limiter = $resendLimiter->create($request->getClientIp());
-            if (false === $limiter->consume(1)->isAccepted()) {
-                throw new TooManyRequestsHttpException(retryAfter: 60, message: 'Trop de demandes. Réessayez plus tard.');
-            }
+
+        $limiter = $resendLimiter->create($request->getClientIp());
+
+        if (!$limiter->consume(1)->isAccepted()) {
+            throw new TooManyRequestsHttpException(retryAfter: 60, message: $this->trans('two_factor.rate_limited'));
         }
 
         try {
             $this->twoFactorCodeManager->generateAndSend($user->getUserIdentifier(), $request->getClientIp(), 'resend');
         } catch (TwoFactorSendThrottledException $e) {
-            return $this->respondInvalid($request, $e->getMessage(), Response::HTTP_TOO_MANY_REQUESTS);
+            return $this->respondInvalid(
+                $request,
+                $this->translator->trans($e->getTranslationKey(), $e->getTranslationParameters(), 'WlindablaUserBundle'),
+                Response::HTTP_TOO_MANY_REQUESTS,
+            );
         }
 
-        $request->getSession()->set(TwoFactorAuthListener::PENDING_2FA, true);
+        $request->getSession()->set(TwoFactorAuthKey::PENDING_2FA->value, true);
+
+        $message = $this->trans('two_factor.resend_success');
 
         if ($request->isXmlHttpRequest()) {
-            return new JsonResponse(['success' => true, 'message' => 'Un nouveau code vous a été envoyé.']);
+            return new JsonResponse(['success' => true, 'message' => $message]);
         }
 
-        $this->addFlash('success', 'Un nouveau code vous a été envoyé.');
+        $this->addFlash('success', $message);
 
         return $this->redirectToRoute('app_two_factor_show');
+    }
+
+    private function trans(string $key): string
+    {
+        return $this->translator->trans($key, [], 'WlindablaUserBundle');
     }
 
     private function respondInvalid(Request $request, string $message, int $status = Response::HTTP_UNPROCESSABLE_ENTITY): Response
@@ -209,20 +226,27 @@ final class TwoFactorAuthController extends AbstractController
         return $this->redirectToRoute('app_two_factor_show');
     }
 
-    private function jsonOrRedirect(Request $request, bool $success, string $message, string $route): Response
+    private function jsonOrRedirectToLogin(Request $request, string $message): Response
     {
+        $url = $this->safeGenerateUrl($this->loginRouteName, $this->urlGenerator,$this->logger) ?? '/';
+
         if ($request->isXmlHttpRequest()) {
-            return new JsonResponse([
-                'success'  => $success,
-                'message'  => $message,
-                'redirect' => $this->generateUrl($route),
-            ], $success ? Response::HTTP_OK : Response::HTTP_UNAUTHORIZED);
+            return new JsonResponse(['success' => false, 'message' => $message, 'redirect' => $url], Response::HTTP_UNAUTHORIZED);
         }
 
-        if (!$success) {
-            $this->addFlash('danger', $message);
+        $this->addFlash('danger', $message);
+
+        return $this->redirect($url);
+    }
+
+    private function jsonOrRedirectHome(Request $request, string $message): Response
+    {
+        $url = $this->safeGenerateUrl($this->homeRouteName, $this->urlGenerator,$this->logger) ?? '/';
+
+        if ($request->isXmlHttpRequest()) {
+            return new JsonResponse(['success' => true, 'message' => $message, 'redirect' => $url], Response::HTTP_OK);
         }
 
-        return $this->redirectToRoute($route);
+        return $this->redirect($url);
     }
 }

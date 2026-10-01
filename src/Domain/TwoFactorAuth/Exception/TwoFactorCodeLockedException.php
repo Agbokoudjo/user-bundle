@@ -17,16 +17,34 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception;
 
 /**
- * Levée quand le nombre maximal de tentatives (5) est atteint.
- * Le déblocage passe par la procédure d'administration existante
- * (pas d'auto-déblocage côté utilisateur).
+ * Thrown when the maximum number of attempts is reached. Unlocking goes
+ * through the existing administration procedure — no user-side self-unlock.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * @package <https://github.com/Agbokoudjo/>
  */
 final class TwoFactorCodeLockedException extends \RuntimeException
 {
-    public function __construct(string $message = 'Trop de tentatives incorrectes. Compte verrouillé, contactez un administrateur.')
+    public function __construct(
+        string $message = 'Too many incorrect attempts. Account locked, contact an administrator.',
+        private readonly string $translationKey = 'two_factor.locked',
+        /** @var array<string, string> */
+        private readonly array $translationParameters = [],
+        ?\Throwable $previous = null,
+    ) {
+        parent::__construct($message, 0, $previous);
+    }
+
+    public function getTranslationKey(): string
     {
-        parent::__construct($message);
+        return $this->translationKey;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getTranslationParameters(): array
+    {
+        return $this->translationParameters;
     }
 }

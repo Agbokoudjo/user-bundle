@@ -17,16 +17,37 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception;
 
 /**
- * Levée quand le code saisi est incorrect ou expiré.
- * Le message reste volontairement générique (jamais de détail sur la cause
- * exacte : évite de révéler à un attaquant s'il approche du bon code).
+ * Thrown when the submitted code is incorrect or expired.
+ *
+ * The message stays deliberately generic — never a detail about the exact
+ * cause, so an attacker can't tell whether they're getting closer to the
+ * right code.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * @package <https://github.com/Agbokoudjo/>
  */
 final class InvalidTwoFactorCodeException extends \RuntimeException
 {
-    public function __construct(string $message = 'Code invalide ou expiré.')
+    public function __construct(
+        string $message = 'The code is invalid or has expired.',
+        private readonly string $translationKey = 'two_factor.invalid_code',
+        /** @var array<string, string> */
+        private readonly array $translationParameters = [],
+        ?\Throwable $previous = null,
+    ) {
+        parent::__construct($message, 0, $previous);
+    }
+
+    public function getTranslationKey(): string
     {
-        parent::__construct($message);
+        return $this->translationKey;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getTranslationParameters(): array
+    {
+        return $this->translationParameters;
     }
 }
