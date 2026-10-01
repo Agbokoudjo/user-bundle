@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+
 /*
  * This file is part of the project by AGBOKOUDJO Franck.
  *
@@ -19,13 +20,14 @@ use Wlindabla\UserBundle\Domain\LoggerLoginUser\Application\Manager\LoggerLoginU
 use Wlindabla\UserBundle\Domain\LoggerLoginUser\Model\LoggerLoginUserInterface;
 use Wlindabla\UserBundle\Domain\LoggerLoginUser\Model\Persistance\LoggerLoginUserRepositoryInterface;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
-use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 
 /**
- * Implémentation Doctrine du contrat de persistance des logs de connexion.
+ * Doctrine implementation of the login log persistence contract.
  *
- * Fait le pont entre le domaine (LoggerLoginUserInterface) et l'infrastructure
- * Doctrine (LoggerLoginUserRepository), à l'image de UserManager/UserSessionManager.
+ * Bridges the domain (LoggerLoginUserInterface) and Doctrine infrastructure
+ * (LoggerLoginUserRepository), the same way UserManager/UserSessionManager
+ * do. Also updates User.lastLogin as part of saving a login log — a
+ * deliberate coupling between the two, not an oversight.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
@@ -34,25 +36,18 @@ final class LoggerLoginUserManager implements LoggerLoginUserManagerInterface
 {
     public function __construct(
         private readonly LoggerLoginUserRepositoryInterface $repository,
-        private readonly UserManagerInterface $userManager
-    ) {}
+        private readonly UserManagerInterface $userManager,
+    ) {
+    }
 
     public function save(LoggerLoginUserInterface $entity, bool $flush = true): LoggerLoginUserInterface
     {
-        if (!$entity instanceof LoggerLoginUserInterface) {
-            throw new \InvalidArgumentException(\sprintf(
-                'Expected instance of %s, got %s.',
-                LoggerLoginUserInterface::class,
-                get_debug_type($entity)
-            ));
-        }
+        $user = $this->userManager->findOneByUsernameOrEmail($entity->getUsername(), $entity->getEmail());
 
-        /**
-         * @var BaseUserInterface|null $user
-         */
-        $user =$this->userManager->findOneByUsernameOrEmail($entity->getUsername(),$entity->getEmail()); 
-        $user->setLastLogin(new \DateTime("now", new \DateTimeZone("UTC")));
-        $this->userManager->save($user,true);
+        if (null !== $user) {
+            $user->setLastLogin(new \DateTime('now', new \DateTimeZone('UTC')));
+            $this->userManager->save($user, true);
+        }
 
         return $this->repository->save($entity, $flush);
     }
@@ -103,21 +98,19 @@ final class LoggerLoginUserManager implements LoggerLoginUserManagerInterface
         string $lastLoginIp,
         string $rawUserAgent,
         string $userAgentLabel,
-        \DateTimeInterface $createdAt
-    ):void {
-        /**
-         * @var LoggerLoginUserInterface
-         */
-         $loggerLoginUser = new ($this->repository->getClassName())(); 
+        \DateTimeInterface $createdAt,
+    ): void {
+        /** @var LoggerLoginUserInterface $loggerLoginUser */
+        $loggerLoginUser = new ($this->repository->getClassName())();
 
-            $loggerLoginUser
-                ->setUsername($username)
-                ->setEmail($email)
-                ->setLastLoginIp($lastLoginIp)
-                ->setUserAgent($rawUserAgent)
-                ->setUserAgentLabel($userAgentLabel)
-                ->setCreatedAt($createdAt) ;
+        $loggerLoginUser
+            ->setUsername($username)
+            ->setEmail($email)
+            ->setLastLoginIp($lastLoginIp)
+            ->setUserAgent($rawUserAgent)
+            ->setUserAgentLabel($userAgentLabel)
+            ->setCreatedAt($createdAt);
 
-        $this->save($loggerLoginUser,true) ;
+        $this->save($loggerLoginUser, true);
     }
 }

@@ -18,7 +18,7 @@ namespace Wlindabla\UserBundle\Infrastructure\Messenger\Handler;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
-use Wlindabla\UserBundle\Domain\UserSession\Model\Persistance\UserSessionRepositoryInterface;
+use Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface;
 use Wlindabla\UserBundle\Infrastructure\Messenger\Message\RevokeInactiveSessionsMessage;
 
 /**
@@ -32,7 +32,7 @@ use Wlindabla\UserBundle\Infrastructure\Messenger\Message\RevokeInactiveSessions
 final class RevokeInactiveSessionsHandler
 {
     public function __construct(
-        private readonly UserSessionRepositoryInterface $sessionManager,
+        private readonly UserSessionManagerInterface $sessionManager,
         private readonly LoggerInterface $logger,
     ) {
     }

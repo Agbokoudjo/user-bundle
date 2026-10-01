@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+
 /*
  * This file is part of the project by AGBOKOUDJO Franck.
  *
@@ -16,25 +17,21 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\Infrastructure\Doctrine;
 
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\Mapping\MappedSuperclass;
 use Wlindabla\UserBundle\Domain\LoggerLoginUser\Model\BaseLoggerLoginUser;
 
 /**
- * Entité Doctrine représentant un enregistrement de connexion utilisateur.
+ * Doctrine entity for a user login record.
  *
- * Cette entité est intentionnellement en LECTURE SEULE après persistance :
- * les logs de connexion constituent un journal d'audit immuable.
- *
- * createdAt/updatedAt sont gérés par TimestampableEntity + DoctrineTimestampableListener
- * (prePersist/preUpdate génériques), aucune écriture manuelle nécessaire.
+ * Intentionally READ-ONLY after persistence: login logs are an immutable
+ * audit trail.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-#[MappedSuperclass]
+#[ORM\MappedSuperclass]
+#[ORM\HasLifecycleCallbacks]
 abstract class AbstractLoggerLoginUser extends BaseLoggerLoginUser
 {
-
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -54,8 +51,8 @@ abstract class AbstractLoggerLoginUser extends BaseLoggerLoginUser
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     protected ?string $userAgentLabel = null;
-    
-     #[ORM\Column(type: "datetime_immutable")]
+
+    #[ORM\Column(type: 'datetime_immutable')]
     protected ?\DateTimeInterface $createdAt = null;
 
     public function getCreatedAt(): ?\DateTimeInterface
@@ -63,21 +60,20 @@ abstract class AbstractLoggerLoginUser extends BaseLoggerLoginUser
         return $this->createdAt;
     }
 
-    public function setCreatedAt(?\DateTimeInterface $createdAt=null): static
+    public function setCreatedAt(?\DateTimeInterface $createdAt = null): static
     {
         $this->createdAt = $createdAt;
 
-        return $this ;
+        return $this;
     }
 
+    #[ORM\PrePersist]
     public function prePersistTimestampable(): void
     {
-        if ($this->createdAt === null) {
-            $this->createdAt = new \DateTimeImmutable("now", new \DateTimeZone("UTC"));
+        if (null === $this->createdAt) {
+            $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         }
     }
-
-    public function __construct() {}
 
     public function getId(): ?int
     {

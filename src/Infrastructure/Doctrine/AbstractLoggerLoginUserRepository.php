@@ -34,7 +34,7 @@ use Wlindabla\UserBundle\Domain\LoggerLoginUser\Model\Persistance\LoggerLoginUse
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-abstract class AbtractLoggerLoginUserRepository extends ServiceEntityRepository implements LoggerLoginUserRepositoryInterface
+abstract class AbstractLoggerLoginUserRepository extends ServiceEntityRepository implements LoggerLoginUserRepositoryInterface
 {
     public function __construct(ManagerRegistry $registry, string $entityClass)
     {

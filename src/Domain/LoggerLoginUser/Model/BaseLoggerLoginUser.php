@@ -18,13 +18,10 @@ namespace Wlindabla\UserBundle\Domain\LoggerLoginUser\Model;
 use Wlindabla\UserBundle\Domain\LoggerLoginUser\Model\LoggerLoginUserInterface;
 
 /**
- * Modèle de domaine de base représentant un enregistrement de connexion utilisateur.
+ * Base domain model for a user login record.
  *
- * Ce modèle est immuable par conception : une tentative de connexion (réussie ou échouée)
- * est un fait historique qui ne doit jamais être modifié après création.
- *
- * createdAt/updatedAt sont volontairement absents : ils sont portés par
- * TimestampableEntity côté entité Doctrine (Infrastructure).
+ * Immutable by design: a login attempt (successful or failed) is a
+ * historical fact that must never be modified after creation.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
