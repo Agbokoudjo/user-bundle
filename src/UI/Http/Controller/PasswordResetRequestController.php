@@ -16,6 +16,7 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\UI\Http\Controller;
 
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,6 +29,7 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\UserBundle\Domain\User\Service\PasswordResetInterface;
 use Wlindabla\UserBundle\Infrastructure\Form\Type\PasswordResetRequestType;
+use Wlindabla\UserBundle\Infrastructure\Routing\GeneratesOptionalRouteUrlTrait;
 use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 
 /**
@@ -37,13 +39,18 @@ use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 #[AsController]
 final class PasswordResetRequestController extends AbstractController implements RenderResponseInterface
 {
+    use GeneratesOptionalRouteUrlTrait;
+    
     public function __construct(
         private readonly PasswordResetInterface $passwordResetService,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly OutcomePageRenderer $outcomePageRenderer,
         private readonly TemplateRegistryInterface $templateRegistry,
         private readonly TranslatorInterface $translator,
+        private readonly \Symfony\Component\Routing\Generator\UrlGeneratorInterface $urlGenerator,
+        private readonly LoggerInterface $logger,
         private readonly ?string $homeRouteName = null,
+        private readonly ?string $logoutRouteName = null
     ) {
     }
 
@@ -81,6 +88,7 @@ final class PasswordResetRequestController extends AbstractController implements
 
         return $this->render($this->templateRegistry->get('password_reset_request'), [
             'form' => $form->createView(),
+            'login_url' => $this->safeGenerateUrl($this->logoutRouteName,$this->urlGenerator, $this->logger),   // réutilise $homeRouteName déjà injecté
         ]);
     }
 

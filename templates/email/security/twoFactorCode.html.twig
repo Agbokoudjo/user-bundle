@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ app.request.locale|default('fr') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code de vérification</title>
+    <title>{{ 'two_factor_email.page_title'|trans({}, 'WlindablaUserBundle') }}</title>
 </head>
 <body>
-
     {% set primary_color = '#0ec5b2' %}
     {% set border_color = '#DDDDDD' %}
     {% set accent_color = '#F5F5F5' %}
@@ -15,16 +14,17 @@
 
         <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid {{ border_color }};">
             <h1 style="color: {{ primary_color }}; font-size: 24px; margin: 0;">
-                Code de vérification — <strong>{{ siteName }}</strong>
+                {{ 'two_factor_email.title'|trans({'%site_name%': site_name}, 'WlindablaUserBundle')|raw }}
             </h1>
         </div>
 
         <div style="padding: 20px 0;">
-            <p style="font-size: 16px; margin-bottom: 20px;">Bonjour <strong>{{ username }}</strong>,</p>
+            <p style="font-size: 16px; margin-bottom: 20px;">
+                {{ 'two_factor_email.greeting'|trans({'%username%': username}, 'WlindablaUserBundle') }}
+            </p>
 
             <p style="margin-bottom: 20px;">
-                Une tentative de connexion à votre compte <strong>{{ siteName }}</strong> vient d'avoir lieu.
-                Pour la confirmer, saisissez le code ci-dessous sur l'écran de vérification.
+                {{ 'two_factor_email.body'|trans({'%site_name%': site_name}, 'WlindablaUserBundle') }}
             </p>
 
             <div style="text-align: center; margin: 30px 0;">
@@ -34,19 +34,18 @@
             </div>
 
             <p style="background-color: {{ accent_color }}; padding: 15px; border-left: 4px solid {{ primary_color }}; margin-bottom: 25px;">
-                Ce code expire dans <strong>{{ ttlMinutes }} minutes</strong>. Tentative effectuée le
-                {{ attemptAt|date('d/m/Y à H:i') }}{% if ipAddress %} depuis l'adresse {{ ipAddress }}{% endif %}.
+                {{ 'two_factor_email.expiry_notice'|trans({'%ttl%': ttlMinutes, '%date%': attemptAt|date('d/m/Y H:i')}, 'WlindablaUserBundle') }}
+                {% if ipAddress %}{{ 'two_factor_email.from_ip'|trans({'%ip%': ipAddress}, 'WlindablaUserBundle') }}{% endif %}
             </p>
 
             <p style="font-size: 14px; margin-top: 30px; color: #666; font-weight: bold;">
-                Si vous n'êtes pas à l'origine de cette connexion, prévenez immédiatement l'administrateur.
+                {{ 'two_factor_email.not_you_warning'|trans({}, 'WlindablaUserBundle') }}
             </p>
         </div>
 
         <div style="border-top: 1px solid {{ border_color }}; padding-top: 15px; text-align: center;">
             <p style="font-size: 12px; color: #888;">
-                Ceci est un message automatique du système <strong>{{ siteName }}</strong>.<br>
-                Merci de ne pas répondre directement à cet e-mail.
+                {{ 'two_factor_email.footer'|trans({'%site_name%': site_name}, 'WlindablaUserBundle')|raw }}
             </p>
         </div>
     </div>

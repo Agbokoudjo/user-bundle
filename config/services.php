@@ -10,9 +10,11 @@ declare(strict_types=1);
  */
 
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Wlindabla\UserBundle\Domain\Permission\Application\Security\AuthorizationCheckerForUserInterface;
 use Wlindabla\UserBundle\Infrastructure\EventSubscriber\ToggleUserAccountSubscriber;
 use Wlindabla\UserBundle\Infrastructure\Messenger\Handler\RevokeInactiveSessionsHandler;
 use Wlindabla\UserBundle\Infrastructure\Scheduler\SessionCleanupSchedule;
+use Wlindabla\UserBundle\Infrastructure\Security\Authorization\AuthorizationCheckerForUser;
 use Wlindabla\UserBundle\Infrastructure\Validator\Constraint\NotDisposableEmail;
 use Wlindabla\UserBundle\Infrastructure\Validator\Constraint\NotDisposableEmailValidator;
 use Wlindabla\UserBundle\UI\Http\Controller\Admin\AdminFormLoginController;
@@ -55,4 +57,8 @@ return static function (ContainerConfigurator $container): void {
             ->set(RevokeInactiveSessionsHandler::class)
                 ->autowire();
     }
+    $services
+     ->set(AuthorizationCheckerForUser::class)
+        ->autowire()
+    ->alias(AuthorizationCheckerForUserInterface::class, AuthorizationCheckerForUser::class);
 };

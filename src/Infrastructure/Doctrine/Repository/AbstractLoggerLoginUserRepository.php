@@ -13,13 +13,14 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace Wlindabla\UserBundle\Infrastructure\Doctrine;
+namespace Wlindabla\UserBundle\Infrastructure\Doctrine\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Wlindabla\UserBundle\Domain\LoggerLoginUser\Model\LoggerLoginUserInterface;
 use Wlindabla\UserBundle\Domain\LoggerLoginUser\Model\Persistance\LoggerLoginUserRepositoryInterface;
+use Wlindabla\UserBundle\Infrastructure\Doctrine\AbstractLoggerLoginUser;
 
 /**
  * Repository Doctrine pour les enregistrements de connexion utilisateur.

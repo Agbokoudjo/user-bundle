@@ -1,113 +1,147 @@
-{#
- * This file is part of the project by AGBOKOUDJO Franck.
- * (c) AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * Adapté pour : eQapitalise — CERRHUD, Cotonou, Bénin.
- *
- * Écran de saisie du second facteur (13 chiffres + 7 lettres, envoyé par
- * email). Étend base.html.twig — volontairement PAS le layout SonataAdmin,
- * puisque l'utilisateur n'est pas encore pleinement autorisé à voir le
- * tableau de bord tant que ce code n'est pas validé.
-#}
-{% extends 'base.html.twig' %}
-
-{% block title %}Vérification en deux étapes — eQapitalise | CERRHUD{% endblock %}
-
-{% block stylesheets %}
-    {{ parent() }}
+<!DOCTYPE html>
+<html lang="{{ app.request.locale|default('fr') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-    {{ vite_entry_link_tags('two_factor', [], 'admin') }}
-{% endblock %}
-
-{% block javascripts %}
-    {{ parent() }}
-    {{ vite_entry_script_tags('two_factor', [], 'admin') }}
-    {{ vite_entry_script_tags('form', [], 'app') }}
-{% endblock %}
-
-{% block body %}
-<div class="app-frontend two-factor-page">
-
-    <div class="two-factor-bg" style="background-image: url({{ asset('assets/images/login_bg.png','admin') }});">
-        <div class="two-factor-overlay"></div>
-    </div>
-
-    <div class="two-factor-wrapper">
-        <div class="two-factor-card">
-
-            <div class="two-factor-header">
-                <img src="{{ asset('assets/images/logo.png','admin') }}"
-                     alt="eQapitalise — CERRHUD"
-                     class="two-factor-logo">
-                <div class="two-factor-icon"><i class="bi bi-shield-fill-exclamation"></i></div>
-                <h1 class="two-factor-title">Vérification en deux étapes</h1>
-                <em class="two-factor-subtitle">
-                    Un code de vérification vient d'être envoyé par email à
-                    <strong>{{ username }}</strong>.
-                </em>
-                <div class="two-factor-divider"></div>
-            </div>
-
-            {% include 'bundles/SonataTwigBundle/FlashMessage/render.html.twig' %}
-
-            <p class="two-factor-hint">
-                Saisissez le code reçu (chiffres et lettres, sans espace). Il expire dans
-                <strong>10 minutes</strong>.
-            </p>
-
-            <form id="two-factor-form"
-                  name="two_factor_form"
-                  class="two-factor-form form-validate"
-                  method="post"
-                  action="{{ path('app_two_factor_verify') }}"
-                  autocomplete="off">
-                <input type="hidden" name="_csrf_token" value="{{ csrf_token('two_factor_verify') }}">
-                <div class="two-factor-field">
-                    <label for="two_factor_code" class="two-factor-label">
-                        <i class="bi bi-key"></i>
-                        Code de vérification
-                    </label>
-                    <input
-                        type="text"
-                        id="two_factor_code"
-                        name="code"
-                        class="two-factor-input"
-                        inputmode="text"
-                        data-type="text"
-                        autocomplete="one-time-code"
-                        maxlength="20"
-                        minlength="20"
-                        pattern="^[0-9A-Z]{20}$"
-                        data-pattern="^[0-9A-Z]{20}$"
-                        placeholder="Ex. 4K7B2Q9138045T1XW26"
-                        required
-                        autofocus
-                    >
-                    <div class="container-div-error-message"></div>
-                </div>
-
-                <button type="submit" class="two-factor-btn">
-                    <span class="two-factor-btn-text">Valider le code</span>
-                </button>
-            </form>
-
-            <div class="two-factor-resend">
-                <span>Vous n'avez rien reçu ?</span>
-                <button type="button" id="two-factor-resend-btn" class="two-factor-resend-btn"
-                        data-resend-url="{{ path('app_two_factor_resend') }}"
-                        data-csrf-token="{{ csrf_token('two_factor_resend') }}">
-                    Renvoyer le code
-                </button>
-                <span id="two-factor-resend-countdown" class="two-factor-resend-countdown"></span>
-            </div>
-
-            <div class="two-factor-footer">
-                <a href="{{ path('sonata_user_admin_security_logout') }}" class="two-factor-logout-link">
-                   <i class="bi bi-box-arrow-right"></i>
-                    Annuler et se déconnecter
-                </a>
-            </div>
-
+    <title>{{ 'two_factor.page_title'|trans({}, 'WlindablaUserBundle') }}</title>
+    <style type="text/css">
+        :root {
+            --primary: #0ec5b2;
+            --background: #f4f6f9;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --danger: #dc3545;
+            --font-family: 'Inter', sans-serif;
+        }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #343a40;
+            text-align: center;
+        }
+        .tfa-box {
+            width: 100%;
+            max-width: 420px;
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 32px 30px;
+        }
+        .tfa-header { margin-bottom: 20px; }
+        .tfa-title { font-size: 1.3rem; font-weight: 700; margin: 0 0 8px; }
+        .tfa-subtitle { font-size: 0.9rem; color: var(--gray); }
+        .tfa-hint { font-size: 0.85rem; color: var(--gray); margin-bottom: 20px; }
+        .tfa-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+            box-sizing: border-box;
+            margin-bottom: 16px;
+        }
+        .tfa-input:focus { outline: none; border-color: var(--primary); }
+        .tfa-submit {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: var(--font-family);
+        }
+        .tfa-resend { margin-top: 20px; font-size: 0.85rem; color: var(--gray); }
+        .tfa-resend button {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: underline;
+            font-family: var(--font-family);
+        }
+        .tfa-footer { margin-top: 20px; }
+        .tfa-footer a { color: var(--gray); font-size: 0.85rem; text-decoration: none; }
+        .alert-danger, .alert-warning, .alert-success {
+            padding: 10px; border-radius: 4px; margin-bottom: 16px; font-size: 0.85rem; text-align: left;
+        }
+        .alert-danger { background-color: #f8d7da; color: #721c24; }
+        .alert-warning { background-color: #fff3cd; color: #856404; }
+        .alert-success { background-color: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="tfa-box">
+        <div class="tfa-header">
+            <p class="tfa-title">{{ 'two_factor.title'|trans({}, 'WlindablaUserBundle') }}</p>
+            <p class="tfa-subtitle">{{ 'two_factor.subtitle'|trans({'%username%': username}, 'WlindablaUserBundle') }}</p>
         </div>
+
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert-{{ label }}">{{ message }}</div>
+            {% endfor %}
+        {% endfor %}
+
+        <p class="tfa-hint">{{ 'two_factor.hint'|trans({}, 'WlindablaUserBundle') }}</p>
+
+        <form id="two-factor-form" method="post" action="{{ path('app_two_factor_verify') }}" autocomplete="off">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('two_factor_verify') }}">
+            <input
+                type="text"
+                id="two_factor_code"
+                name="code"
+                class="tfa-input"
+                autocomplete="one-time-code"
+                maxlength="20"
+                minlength="20"
+                pattern="^[0-9A-Z]{20}$"
+                placeholder="{{ 'two_factor.code_placeholder'|trans({}, 'WlindablaUserBundle') }}"
+                required
+                autofocus
+            >
+            <button type="submit" class="tfa-submit">{{ 'two_factor.submit'|trans({}, 'WlindablaUserBundle') }}</button>
+        </form>
+
+        <div class="tfa-resend">
+            <span>{{ 'two_factor.nothing_received'|trans({}, 'WlindablaUserBundle') }}</span>
+            <button type="button" id="two-factor-resend-btn"
+                    data-resend-url="{{ path('app_two_factor_resend') }}"
+                    data-csrf-token="{{ csrf_token('two_factor_resend') }}">
+                {{ 'two_factor.resend_button'|trans({}, 'WlindablaUserBundle') }}
+            </button>
+        </div>
+
+        {% if logout_url is not null %}
+            <div class="tfa-footer">
+                <a href="{{ logout_url }}">{{ 'two_factor.cancel_logout'|trans({}, 'WlindablaUserBundle') }}</a>
+            </div>
+        {% endif %}
     </div>
-</div>
-{% endblock %}
+
+    <script>
+        document.getElementById('two-factor-resend-btn')?.addEventListener('click', function () {
+            fetch(this.dataset.resendUrl, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': this.dataset.csrfToken },
+            })
+                .then((r) => r.json())
+                .then((data) => { if (data.message) { alert(data.message); } })
+                .catch(() => {});
+        });
+    </script>
+</body>
+</html>

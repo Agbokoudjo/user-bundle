@@ -20,6 +20,7 @@ email_verification:
     link_login: 'Log in'
     link_home: 'Back to home'
     
+    cooldown: 'Please wait %seconds% seconds before requesting a new verification link.'
 account_confirmation:
     page_title: 'Account confirmation'
     title: 'Your <strong>%site_name%</strong> account has been created'
@@ -76,11 +77,27 @@ password_reset:
     unexpected_error: 'An error occurred. Please try again later or contact support.'
     request_sent: 'If an account exists with this address, a confirmation email has just been sent to you.'
     too_many_attempts: 'Too many attempts. Please try again later.'
+
 password_reset_request:
     username_label: 'Email address'
     invalid_email: 'Please enter a valid email address.'
+    page_title: 'Forgot password'
+    title: 'Forgot password'
+    subtitle: 'Receive a confirmation link by email'
+    email_label: 'Email address'
+    submit: 'Send confirmation link'
+    back_to_login: 'Back to login'
+    
 password_reset_email:
     subject: 'Reset your password - %site_name%'
+    page_title: 'Password reset'
+    title: 'Password reset — <strong>%site_name%</strong>'
+    greeting: 'Hi <strong>%username%</strong>,'
+    body: 'You requested a password reset for your <strong>%site_name%</strong> account. If you did not request this, you can safely ignore this email: your current password will remain unchanged.'
+    action_notice: 'To confirm your request, click the button below. A secure temporary password will then be sent to you by email, to use for your next login.'
+    cta: 'Confirm the reset'
+    link_notice: 'This link will expire in 1 hour for security reasons. If you run into any issue, copy and paste the following URL into your browser:'
+    footer: 'This is an automated message from <strong>%site_name%</strong>.<br>Please do not reply directly to this email.'
 
 access_denied:
     title: 'Access denied'
@@ -106,3 +123,59 @@ two_factor:
     resend_success: 'A new code has been sent to you.'
     verified: 'Code verified.'
     rate_limited: 'Too many requests. Please try again later.'
+    page_title: 'Two-factor verification'
+    title: 'Two-factor verification'
+    subtitle: 'A verification code has just been sent by email to %username%.'
+    hint: 'Enter the code you received (digits and letters, no spaces). It expires in 10 minutes.'
+    code_placeholder: 'E.g. 4K7B2Q9138045T1XW26'
+    submit: 'Verify code'
+    nothing_received: 'Didn''t receive anything?'
+    resend_button: 'Resend code'
+    cancel_logout: 'Cancel and log out'
+
+session_conflict:
+    error: 'Unable to display the session conflict page. Please try again.'
+
+two_factor_email:
+    subject: 'Your %site_name% verification code'
+    page_title: 'Verification code'
+    title: 'Verification code — <strong>%site_name%</strong>'
+    greeting: 'Hi <strong>%username%</strong>,'
+    body: 'A login attempt to your <strong>%site_name%</strong> account just occurred. To confirm it, enter the code below on the verification screen.'
+    expiry_notice: 'This code expires in <strong>%ttl% minutes</strong>. Attempt made on %date%.'
+    from_ip: ' from address %ip%.'
+    not_you_warning: 'If you did not initiate this login, notify the administrator immediately.'
+    footer: 'This is an automated message from <strong>%site_name%</strong>.<br>Please do not reply directly to this email.'
+
+user_action:
+    common:
+        warning_title: 'Warning'
+        error_title: 'Error'
+        missing_data_title: 'Missing data'
+        id_required: 'The user ID is required and cannot be empty.'
+        user_not_found: 'No user found with the identifier "%id%".'
+        email_not_verified_title: 'Action blocked: email not verified'
+        email_not_verified: 'The email address "%email%" linked to account "%username%" has not been verified, so this action is blocked. Please click "Resend verification email" to proceed.'
+    resend_verification:
+        already_verified_title: 'Action blocked: email already verified'
+        already_verified: 'The email address "%email%" linked to account "%username%" is already verified, so this action is blocked.'
+        success_title: 'Verification email sent!'
+        success: 'The verification link was resent successfully. Please tell the user to check their inbox or spam folder to confirm their account.'
+        failed_title: 'Sending failed'
+        failed: 'Unable to resend the verification email. Please try again later.'
+    toggle:
+        success_title: 'Operation successful'
+        activated: 'Account activated successfully - %username% (ID: %id%)'
+        deactivated: 'Account deactivated successfully - %username% (ID: %id%)'
+        cannot_deactivate_self: 'You cannot deactivate your own account while logged in with it.'
+        failed: 'An error occurred while updating the status. Please refresh and try again.'
+    regenerate_password:
+        success_title: 'Temporary password generated and sent!'
+        success: 'A new temporary password was generated successfully. A notification was immediately sent to the user''s mailbox so they can log in and change it.'
+        failed_title: 'Reset failed'
+        failed: 'An error occurred while regenerating the password. Please try again.'
+        cannot_regenerate_self: 'You cannot regenerate your own password while logged in. Use "Forgot password" from the login page.'
+    validate_user:
+        title: 'Account creation not processed'
+        already_exists: 'This user already exists in the database. Account creation was blocked.'
+        similar_name: 'Account creation blocked: this user''s name is similar to an existing account.'

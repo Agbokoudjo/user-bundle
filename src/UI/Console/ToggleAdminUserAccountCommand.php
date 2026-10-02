@@ -16,7 +16,6 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\UI\Console;
 
-use App\WlindablaUserBundle\Domain\User\Application\CommandHandler\ToggleUserAccountHandler;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -24,20 +23,21 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Question\Question;
+use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ToggleUserAccountHandler;
 use Wlindabla\UserBundle\Domain\User\Enum\AccountStatus;
 
 /**
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-#[AsCommand(name: 'sonata:user:activate', description: 'Activate a user')]
+#[AsCommand(name: 'app:user:activate', description: 'Activate a user')]
 final class ToggleAdminUserAccountCommand extends Command
 {
     public function __construct(
         private ToggleUserAccountHandler $toggleUserHandlerAccountHandler
     )
     {
-        parent::__construct('sonata:user:activate');
+        parent::__construct('app:user:activate');
     }
 
     public function __invoke(InputInterface $input, OutputInterface $output): int

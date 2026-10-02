@@ -27,16 +27,16 @@ use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 
 /**
- * Réinitialise le mot de passe d'un SonataUser à partir de son email.
+ * Resets a SonataUser's password based on their email address.
  *
- * Usage : php bin/console app:user:reset-password
+ * Usage: php bin/console app:user:reset-password
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
 #[AsCommand(
     name: 'app:user:reset-password',
-    description: 'Réinitialise le mot de passe d\'un utilisateur SonataUser à partir de son email.',
+    description: 'Resets the password of a SonataUser using their email address.',
 )]
 final class ResetUserPasswordCommand extends Command
 {
@@ -52,14 +52,13 @@ final class ResetUserPasswordCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('email', InputArgument::OPTIONAL, 'Email de l\'utilisateur (demandé si omis)')
+            ->addArgument('email', InputArgument::OPTIONAL, 'User email address (prompted if omitted)')
             ->setHelp(
                 <<<'HELP'
-                Cette commande recherche un SonataUser par email et lui
-                attribue un nouveau mot de passe.
+                This command searches for a SonataUser by email and assigns them a new password.
 
                   <info>php %command.full_name%</info>
-                  <info>php %command.full_name% jean.dupont@example.com</info>
+                  <info>php %command.full_name% john.doe@example.com</info>
                 HELP
             );
     }
@@ -67,23 +66,23 @@ final class ResetUserPasswordCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('Réinitialisation du mot de passe — SonataUser');
+        $io->title('Password Reset — SonataUser');
 
         $email = $input->getArgument('email') ?? $io->ask(
-            'Email de l\'utilisateur',
+            'User email address',
             validator: $this->validateNotBlank(...),
         );
 
         $user = $this->userManager->findUserByEmail($email);
 
         if (!$user instanceof UserInterface) {
-            $io->error(\sprintf('Aucun utilisateur trouvé pour l\'email "%s".', $email));
+            $io->error(\sprintf('No user found for email "%s".', $email));
 
             return Command::FAILURE;
         }
 
         $io->text(\sprintf(
-            'Utilisateur trouvé : <info>%s</info> (%s)',
+            'User found: <info>%s</info> (%s)',
             $user->getUsername() ?? '—',
             $user->getEmail() ?? '—',
         ));
@@ -91,40 +90,40 @@ final class ResetUserPasswordCommand extends Command
         $plainPassword = $this->askForNewPassword($io);
 
         if (null === $plainPassword) {
-            $io->warning('Opération annulée : les deux mots de passe saisis ne correspondent pas.');
+            $io->warning('Operation cancelled: the entered passwords do not match.');
 
             return Command::FAILURE;
         }
 
-        if (!$io->confirm(\sprintf('Confirmer la réinitialisation du mot de passe pour "%s" ?', $user->getEmail()), false)) {
-            $io->comment('Opération annulée.');
+        if (!$io->confirm(\sprintf('Confirm password reset for "%s"?', $user->getEmail()), false)) {
+            $io->comment('Operation cancelled.');
 
             return Command::SUCCESS;
         }
 
         $user->setPlainPassword($plainPassword);
         $this->userManager->updatePassword($user);
-        $this->userManager->save($user,true);
+        $this->userManager->save($user, true);
 
-        $io->success(\sprintf('Mot de passe mis à jour pour "%s".', $user->getEmail()));
+        $io->success(\sprintf('Password successfully updated for "%s".', $user->getEmail()));
 
         return Command::SUCCESS;
     }
 
     /**
-     * Demande le nouveau mot de passe (saisie masquée) puis sa confirmation.
-     * Retourne null si les deux saisies ne correspondent pas.
+     * Prompts for the new password (hidden input) and its confirmation.
+     * Returns null if the two inputs do not match.
      */
     private function askForNewPassword(SymfonyStyle $io): ?string
     {
-        $question = new Question('Nouveau mot de passe');
+        $question = new Question('New password');
         $question->setHidden(true);
         $question->setHiddenFallback(false);
         $question->setValidator($this->validatePasswordLength(...));
 
         $plainPassword = $io->askQuestion($question);
 
-        $confirmQuestion = new Question('Confirmer le nouveau mot de passe');
+        $confirmQuestion = new Question('Confirm new password');
         $confirmQuestion->setHidden(true);
         $confirmQuestion->setHiddenFallback(false);
 
@@ -136,7 +135,7 @@ final class ResetUserPasswordCommand extends Command
     private function validateNotBlank(?string $value): string
     {
         if (null === $value || '' === trim($value)) {
-            throw new \RuntimeException('L\'email ne peut pas être vide.');
+            throw new \RuntimeException('The email cannot be empty.');
         }
 
         return $value;
@@ -148,7 +147,7 @@ final class ResetUserPasswordCommand extends Command
 
         if ($length < self::PASSWORD_MIN_LENGTH || $length > self::PASSWORD_MAX_LENGTH) {
             throw new \RuntimeException(\sprintf(
-                'Le mot de passe doit contenir entre %d et %d caractères.',
+                'The password must contain between %d and %d characters.',
                 self::PASSWORD_MIN_LENGTH,
                 self::PASSWORD_MAX_LENGTH,
             ));

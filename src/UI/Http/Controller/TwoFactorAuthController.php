@@ -60,10 +60,11 @@ final class TwoFactorAuthController extends AbstractController
         private readonly CacheUserProviderInterface $userProvider,
         private readonly TemplateRegistryInterface $templateRegistry,
         private readonly TranslatorInterface $translator,
-        private readonly LoggerInterface $logger,
         private readonly \Symfony\Component\Routing\Generator\UrlGeneratorInterface $urlGenerator,
+        private readonly LoggerInterface $logger,
         private readonly ?string $loginRouteName = null,
         private readonly ?string $homeRouteName = null,
+        private readonly ?string $logoutRouteName = null
     ) {}
 
     #[Route('/admin/2fa/show', name: 'app_two_factor_show', methods: ['GET'])]
@@ -86,6 +87,7 @@ final class TwoFactorAuthController extends AbstractController
 
         return $this->render($this->templateRegistry->get('two_factor_show'), [
             'username' => $user->getUsername(),
+            'logout_url' => $this->safeGenerateUrl($this->logoutRouteName,$this->urlGenerator, $this->logger),
         ]);
     }
 

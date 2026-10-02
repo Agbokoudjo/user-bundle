@@ -19,6 +19,7 @@ email_verification:
     page_title: 'Compte rendu de vérification d''email'
     link_login: 'Se connecter'
     link_home: 'Retour à l''accueil'
+    cooldown: 'Veuillez patienter %seconds% secondes avant de demander un nouveau lien de vérification.'
 
 account_confirmation:
     page_title: 'Confirmation de compte'
@@ -79,8 +80,23 @@ password_reset:
 password_reset_request:
     username_label: 'Adresse email'
     invalid_email: 'Veuillez saisir une adresse email valide.'
+    page_title: 'Mot de passe oublié'
+    title: 'Mot de passe oublié'
+    subtitle: 'Recevez un lien de confirmation par email'
+    email_label: 'Adresse email'
+    submit: 'Envoyer le lien de confirmation'
+    back_to_login: 'Retour à la connexion'
+    
 password_reset_email:
     subject: 'Réinitialisation de votre mot de passe - %site_name%'
+    page_title: 'Réinitialisation de mot de passe'
+    title: 'Réinitialisation de mot de passe — <strong>%site_name%</strong>'
+    greeting: 'Bonjour <strong>%username%</strong>,'
+    body: 'Vous avez demandé la réinitialisation du mot de passe de votre compte <strong>%site_name%</strong>. Si vous n''êtes pas à l''origine de cette demande, vous pouvez ignorer cet email sans risque : votre mot de passe actuel restera inchangé.'
+    action_notice: 'Pour confirmer votre demande, cliquez sur le bouton ci-dessous. Un mot de passe temporaire sécurisé vous sera alors envoyé par email, à utiliser pour votre prochaine connexion.'
+    cta: 'Confirmer la réinitialisation'
+    link_notice: 'Ce lien expirera dans 1 heure pour des raisons de sécurité. Si vous rencontrez des problèmes, copiez et collez l''URL suivante dans votre navigateur :'
+    footer: 'Ceci est un message automatique du système <strong>%site_name%</strong>.<br>Merci de ne pas répondre directement à cet e-mail.'
 
 access_denied:
     title: 'Accès refusé'
@@ -106,3 +122,61 @@ two_factor:
     resend_success: 'Un nouveau code vous a été envoyé.'
     verified: 'Code validé.'
     rate_limited: 'Trop de demandes. Réessayez plus tard.'
+    page_title: 'Vérification en deux étapes'
+    title: 'Vérification en deux étapes'
+    subtitle: 'Un code de vérification vient d''être envoyé par email à %username%.'
+    hint: 'Saisissez le code reçu (chiffres et lettres, sans espace). Il expire dans 10 minutes.'
+    code_placeholder: 'Ex. 4K7B2Q9138045T1XW26'
+    submit: 'Valider le code'
+    nothing_received: 'Vous n''avez rien reçu ?'
+    resend_button: 'Renvoyer le code'
+    cancel_logout: 'Annuler et se déconnecter'
+
+session_conflict:
+    error: 'Impossible d''afficher la page de conflit de session. Veuillez réessayer.'
+
+two_factor_email:
+    subject: 'Votre code de vérification %site_name%'
+    page_title: 'Code de vérification'
+    title: 'Code de vérification — <strong>%site_name%</strong>'
+    greeting: 'Bonjour <strong>%username%</strong>,'
+    body: 'Une tentative de connexion à votre compte <strong>%site_name%</strong> vient d''avoir lieu. Pour la confirmer, saisissez le code ci-dessous sur l''écran de vérification.'
+    expiry_notice: 'Ce code expire dans <strong>%ttl% minutes</strong>. Tentative effectuée le %date%.'
+    from_ip: ' depuis l''adresse %ip%.'
+    not_you_warning: 'Si vous n''êtes pas à l''origine de cette connexion, prévenez immédiatement l''administrateur.'
+    footer: 'Ceci est un message automatique du système <strong>%site_name%</strong>.<br>Merci de ne pas répondre directement à cet e-mail.'
+
+user_action:
+    common:
+        warning_title: 'Attention'
+        error_title: 'Erreur'
+        missing_data_title: 'Donnée manquante'
+        id_required: 'L''identifiant utilisateur (ID) est requis et ne peut être vide.'
+        user_not_found: 'Aucun utilisateur trouvé avec l''identifiant "%id%".'
+        email_not_verified_title: 'Action bloquée : email non vérifié'
+        email_not_verified: 'L''adresse email "%email%" associée au compte "%username%" n''a pas été vérifiée. Cette action est donc bloquée. Veuillez cliquer sur "Renvoyer l''email de vérification" pour procéder.'
+    resend_verification:
+        already_verified_title: 'Action bloquée : email déjà vérifié'
+        already_verified: 'L''adresse email "%email%" associée au compte "%username%" est déjà vérifiée. Cette action est donc bloquée.'
+        success_title: 'Email de vérification envoyé !'
+        success: 'Le lien de vérification a été renvoyé avec succès. Veuillez informer l''utilisateur de consulter sa boîte de réception ou ses spams pour confirmer son compte.'
+        failed_title: 'Échec de l''envoi'
+        failed: 'Impossible de renvoyer l''email de vérification. Veuillez réessayer plus tard.'
+    toggle:
+        success_title: 'Opération réussie'
+        activated: 'Compte activé avec succès - %username% (ID: %id%)'
+        deactivated: 'Compte désactivé avec succès - %username% (ID: %id%)'
+        cannot_deactivate_self: 'Impossible de désactiver son propre compte en étant connecté avec.'
+        failed: 'Une erreur est survenue lors de la mise à jour du statut. Veuillez actualiser et réessayer.'
+    regenerate_password:
+        success_title: 'Mot de passe temporaire généré et envoyé !'
+        success: 'Un nouveau mot de passe temporaire a été généré avec succès. Une notification a été immédiatement envoyée à la boîte e-mail de l''utilisateur pour qu''il puisse se connecter et le modifier.'
+        failed_title: 'Échec de la réinitialisation'
+        failed: 'Une erreur est survenue lors de la régénération du mot de passe. Veuillez réessayer.'
+        cannot_regenerate_self: 'Impossible de régénérer son propre mot de passe en étant connecté. Utilisez "Mot de passe oublié" depuis la page de connexion.'
+        
+    validate_user:
+        title: 'Création de compte non traitée'
+        already_exists: 'Cet utilisateur existe déjà dans la base de données. La création de compte a été bloquée.'
+        similar_name: 'Création de compte bloquée : le nom de cet utilisateur est similaire à un compte existant.'
+

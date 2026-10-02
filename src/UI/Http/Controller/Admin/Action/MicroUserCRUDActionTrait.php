@@ -23,6 +23,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Security\Core\User\UserInterface as SymfonySecurityUserInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\ShareServiceBundle\Messenger\QueueHandler\AsyncMethodDispatcherInterface;
 use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\GenerateTemporaryPasswordHandler;
 use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ToggleUserAccountHandler;
@@ -30,6 +31,7 @@ use Wlindabla\UserBundle\Domain\User\Application\Dto\SubmittedUserDto;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Domain\User\Enum\AccountStatus;
 use Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException;
+use Wlindabla\UserBundle\Domain\User\Exception\TokenGenerationCooldownException;
 use Wlindabla\UserBundle\Domain\User\Service\EmailVerificationInterface;
 use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 use Wlindabla\UserBundle\Infrastructure\Service\UserDuplicateFinderService;
@@ -38,6 +40,11 @@ use Wlindabla\UserBundle\Infrastructure\Service\UserDuplicateFinderService;
  * Ready-to-use account-management actions (resend verification, toggle
  * enabled/disabled, regenerate a temporary password) for a user CRUD
  * controller — independent of any specific admin framework.
+ *
+ * i18n: exception messages are English-only (logs / debugging). Every
+ * `title` and `message` sent back to the frontend is translated through
+ * the injected TranslatorInterface, domain `WlindablaUserBundle`
+ * (keys under `user_action.*`, see translations/WlindablaUserBundle.{en,fr}.yaml).
  *
  * Usage with SonataAdmin: `use MicroUserCRUDActionTrait;` in your own CRUD
  * controller extending `Sonata\AdminBundle\Controller\CRUDController`, and
@@ -66,55 +73,79 @@ trait MicroUserCRUDActionTrait
         string|int $id,
         EmailVerificationInterface $verificationService,
         UserManagerInterface $userManager,
+        TranslatorInterface $translator,
     ): JsonResponse {
         if (!$this->isXmlHttpRequest($request) || !$request->isMethod('GET')) {
-            throw new BadRequestHttpException('Requête non autorisée. Veuillez utiliser le canal GET/AJAX approprié.');
+            throw new BadRequestHttpException('Unauthorized request. Please use the appropriate GET/AJAX channel.');
+        }
+
+        if ('' === trim((string) $id)) {
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
+                type: 'danger',
+                titleKey: 'user_action.common.missing_data_title',
+                messageKey: 'user_action.common.id_required',
+                statusCode: Response::HTTP_BAD_REQUEST,
+            );
+        }
+
+        /** @var UserInterface|null $user */
+        $user = $userManager->find($id);
+
+        if (!$user instanceof UserInterface) {
+            return $this->createUserNotFoundResponse($translator, $id);
+        }
+
+        if ($user->isEmailVerified()) {
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
+                type: 'warning',
+                titleKey: 'user_action.resend_verification.already_verified_title',
+                messageKey: 'user_action.resend_verification.already_verified',
+                messageParameters: ['%email%' => $user->getEmail(), '%username%' => $user->getUsername()],
+                statusCode: Response::HTTP_FORBIDDEN,
+            );
         }
 
         try {
-            if ('' === trim((string) $id)) {
-                throw new BadRequestHttpException('L\'identifiant de l\'utilisateur est manquant.');
-            }
-
-            /** @var UserInterface|null $user */
-            $user = $userManager->find($id);
-
-            if (!$user instanceof UserInterface) {
-                return $this->createFlashJsonResponse(
-                    type: 'warning',
-                    title: 'Attention',
-                    message: \sprintf('Aucun utilisateur trouvé avec l\'identifiant "%s".', $id),
-                    statusCode: Response::HTTP_NOT_FOUND,
-                );
-            }
-
-            if ($user->isEmailVerified()) {
-                return $this->createFlashJsonResponse(
-                    type: 'warning',
-                    title: 'Action bloquée : email déjà vérifié',
-                    message: \sprintf(
-                        'L\'adresse email "%s" associée au compte "%s" est déjà vérifiée. Cette action est donc bloquée.',
-                        $user->getEmail(),
-                        $user->getUsername(),
-                    ),
-                    statusCode: Response::HTTP_FORBIDDEN,
-                );
-            }
-
             $verificationService->resendVerificationEmail($id);
-
-            $type = 'success';
-            $title = 'Email de vérification envoyé !';
-            $message = 'Le lien de vérification a été renvoyé avec succès. Veuillez informer l\'utilisateur de consulter sa boîte de réception ou ses spams pour confirmer son compte.';
-            $statusHttp = Response::HTTP_OK;
-        } catch (BadRequestHttpException|InvalidTokenException|\Throwable $e) {
-            $type = 'danger';
-            $title = 'Échec de l\'envoi';
-            $message = $e->getMessage();
-            $statusHttp = Response::HTTP_BAD_REQUEST;
+        } catch (TokenGenerationCooldownException $e) {
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
+                type: 'warning',
+                titleKey: 'user_action.resend_verification.failed_title',
+                messageKey: $e->getTranslationKey(),
+                messageParameters: $e->getTranslationParameters(),
+                statusCode: Response::HTTP_TOO_MANY_REQUESTS,
+            );
+        } catch (InvalidTokenException $e) {
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
+                type: 'warning',
+                titleKey: 'user_action.resend_verification.failed_title',
+                messageKey: $e->getTranslationKey(),
+                messageParameters: $e->getTranslationParameters(),
+                statusCode: $e->isUserNotFound() ? Response::HTTP_NOT_FOUND : Response::HTTP_BAD_REQUEST,
+            );
+        } catch (\Throwable) {
+            // Never leak $e->getMessage() to the frontend: it is an
+            // English technical message, not a translated one.
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
+                type: 'danger',
+                titleKey: 'user_action.resend_verification.failed_title',
+                messageKey: 'user_action.resend_verification.failed',
+                statusCode: Response::HTTP_BAD_REQUEST,
+            );
         }
 
-        return $this->createFlashJsonResponse(type: $type, title: $title, message: $message, statusCode: $statusHttp);
+        return $this->createTranslatedFlashJsonResponse(
+            $translator,
+            type: 'success',
+            titleKey: 'user_action.resend_verification.success_title',
+            messageKey: 'user_action.resend_verification.success',
+            statusCode: Response::HTTP_OK,
+        );
     }
 
     /**
@@ -129,39 +160,26 @@ trait MicroUserCRUDActionTrait
         #[CurrentUser] SymfonySecurityUserInterface $currentUserConnected,
         UserManagerInterface $userManager,
         AsyncMethodDispatcherInterface $asyncMethodDispatcher,
+        TranslatorInterface $translator,
     ): JsonResponse {
         if (!$this->isXmlHttpRequest($request) || !$request->isMethod('PATCH')) {
-            throw new BadRequestHttpException('Requête non autorisée. Veuillez utiliser le canal PATCH/AJAX approprié.');
+            throw new BadRequestHttpException('Unauthorized request. Please use the appropriate PATCH/AJAX channel.');
         }
 
         try {
             if ('' === trim((string) $id)) {
-                throw new BadRequestHttpException('L\'identifiant de l\'utilisateur est manquant.');
+                throw new BadRequestHttpException('The user identifier is missing.');
             }
 
             /** @var UserInterface|null $user */
             $user = $userManager->find($id);
 
             if (!$user instanceof UserInterface) {
-                return $this->createFlashJsonResponse(
-                    type: 'warning',
-                    title: 'Attention',
-                    message: \sprintf('Aucun utilisateur trouvé avec l\'identifiant "%s".', $id),
-                    statusCode: Response::HTTP_NOT_FOUND,
-                );
+                return $this->createUserNotFoundResponse($translator, $id);
             }
 
             if (!$user->isEmailVerified()) {
-                return $this->createFlashJsonResponse(
-                    type: 'danger',
-                    title: 'Action bloquée : email non vérifié',
-                    message: \sprintf(
-                        'L\'adresse email "%s" associée au compte "%s" n\'a pas été vérifiée. Cette action est donc bloquée. Veuillez cliquer sur "Renvoyer l\'email de vérification" pour procéder.',
-                        $user->getEmail(),
-                        $user->getUsername(),
-                    ),
-                    statusCode: Response::HTTP_FORBIDDEN,
-                );
+                return $this->createEmailNotVerifiedResponse($translator, $user, 'danger');
             }
 
             $isEnabled = $this->getStatusFromRequest($request);
@@ -171,10 +189,11 @@ trait MicroUserCRUDActionTrait
                 && $currentUserConnected->getId() === $user->getId()
                 && false === $isEnabled
             ) {
-                return $this->createFlashJsonResponse(
+                return $this->createTranslatedFlashJsonResponse(
+                    $translator,
                     type: 'danger',
-                    title: 'Erreur',
-                    message: 'Impossible de désactiver son propre compte en étant connecté avec.',
+                    titleKey: 'user_action.common.error_title',
+                    messageKey: 'user_action.toggle.cannot_deactivate_self',
                     statusCode: Response::HTTP_BAD_REQUEST,
                 );
             }
@@ -186,17 +205,18 @@ trait MicroUserCRUDActionTrait
 
             return $this->createFlashJsonResponse(
                 type: 'success',
-                title: 'Opération réussie',
-                message: $this->buildSuccessMessage($user, $isEnabled),
+                title: $this->bundleTrans($translator, 'user_action.toggle.success_title'),
+                message: $this->buildSuccessMessage($user, $isEnabled, $translator),
                 statusCode: Response::HTTP_OK,
             );
         } catch (BadRequestHttpException $e) {
             throw $e;
-        } catch (\Throwable $e) {
-            return $this->createFlashJsonResponse(
+        } catch (\Throwable) {
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
                 type: 'danger',
-                title: 'Erreur',
-                message: 'Une erreur est survenue lors de la mise à jour du statut. Veuillez actualiser et réessayer.',
+                titleKey: 'user_action.common.error_title',
+                messageKey: 'user_action.toggle.failed',
                 statusCode: Response::HTTP_INTERNAL_SERVER_ERROR,
             );
         }
@@ -208,16 +228,18 @@ trait MicroUserCRUDActionTrait
         #[CurrentUser] SymfonySecurityUserInterface $currentUserConnected,
         UserManagerInterface $userManager,
         AsyncMethodDispatcherInterface $asyncMethodDispatcher,
+        TranslatorInterface $translator,
     ): JsonResponse {
         if (!$this->isXmlHttpRequest($request) || !$request->isMethod('PATCH')) {
-            throw new BadRequestHttpException('Requête non autorisée. Veuillez utiliser le canal PATCH/AJAX approprié.');
+            throw new BadRequestHttpException('Unauthorized request. Please use the appropriate PATCH/AJAX channel.');
         }
 
         if ('' === trim((string) $id)) {
-            return $this->createFlashJsonResponse(
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
                 type: 'danger',
-                title: 'Donnée manquante',
-                message: 'L\'identifiant utilisateur (ID) est requis et ne peut être vide.',
+                titleKey: 'user_action.common.missing_data_title',
+                messageKey: 'user_action.common.id_required',
                 statusCode: Response::HTTP_BAD_REQUEST,
             );
         }
@@ -226,57 +248,50 @@ trait MicroUserCRUDActionTrait
         $user = $userManager->find($id);
 
         if (!$user instanceof UserInterface) {
-            return $this->createFlashJsonResponse(
-                type: 'warning',
-                title: 'Attention',
-                message: \sprintf('Aucun utilisateur trouvé avec l\'identifiant "%s".', $id),
-                statusCode: Response::HTTP_NOT_FOUND,
-            );
+            return $this->createUserNotFoundResponse($translator, $id);
         }
 
         if (!$user->isEmailVerified()) {
-            return $this->createFlashJsonResponse(
-                type: 'warning',
-                title: 'Action bloquée : email non vérifié',
-                message: \sprintf(
-                    'L\'adresse email "%s" associée au compte "%s" n\'a pas été vérifiée. Cette action est donc bloquée. Veuillez cliquer sur "Renvoyer l\'email de vérification" pour procéder.',
-                    $user->getEmail(),
-                    $user->getUsername(),
-                ),
-                statusCode: Response::HTTP_FORBIDDEN,
-            );
+            return $this->createEmailNotVerifiedResponse($translator, $user, 'warning');
         }
 
         if ($currentUserConnected instanceof UserInterface && $currentUserConnected->getId() === $user->getId()) {
-            return $this->createFlashJsonResponse(
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
                 type: 'danger',
-                title: 'Erreur',
-                message: 'Impossible de régénérer son propre mot de passe en étant connecté. Utilisez "Mot de passe oublié" depuis la page de connexion.',
+                titleKey: 'user_action.common.error_title',
+                messageKey: 'user_action.regenerate_password.cannot_regenerate_self',
                 statusCode: Response::HTTP_BAD_REQUEST,
             );
         }
 
         try {
             $asyncMethodDispatcher->dispatch(GenerateTemporaryPasswordHandler::class, 'process', [$id]);
-
-            $type = 'success';
-            $title = 'Mot de passe temporaire généré et envoyé !';
-            $message = 'Un nouveau mot de passe temporaire a été généré avec succès. Une notification a été immédiatement envoyée à la boîte e-mail de l\'utilisateur pour qu\'il puisse se connecter et le modifier.';
-            $statusHttp = Response::HTTP_OK;
-        } catch (\Throwable $e) {
-            $type = 'danger';
-            $title = 'Échec de la réinitialisation';
-            $message = 'Une erreur est survenue lors de la régénération du mot de passe. Veuillez réessayer.';
-            $statusHttp = Response::HTTP_BAD_REQUEST;
+        } catch (\Throwable) {
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
+                type: 'danger',
+                titleKey: 'user_action.regenerate_password.failed_title',
+                messageKey: 'user_action.regenerate_password.failed',
+                statusCode: Response::HTTP_BAD_REQUEST,
+            );
         }
 
-        return $this->createFlashJsonResponse(type: $type, title: $title, message: $message, statusCode: $statusHttp);
+        return $this->createTranslatedFlashJsonResponse(
+            $translator,
+            type: 'success',
+            titleKey: 'user_action.regenerate_password.success_title',
+            messageKey: 'user_action.regenerate_password.success',
+            statusCode: Response::HTTP_OK,
+        );
     }
 
     /**
      * The frontend consuming this JSON (any stack — HTML/CSS/JS, a mobile
      * app, …) is responsible for rendering it as an actual flash message,
      * e.g. with Bootstrap's Alert component, or @wlindabla/form_validator.
+     *
+     * `title` and `message` must already be translated.
      */
     final protected function createFlashJsonResponse(
         string $type,
@@ -288,13 +303,73 @@ trait MicroUserCRUDActionTrait
     }
 
     /**
+     * Same as createFlashJsonResponse(), but takes translation keys
+     * (domain `WlindablaUserBundle`) and translates them with the given
+     * translator.
+     *
+     * @param array<string, scalar|null> $titleParameters
+     * @param array<string, scalar|null> $messageParameters
+     */
+    final protected function createTranslatedFlashJsonResponse(
+        TranslatorInterface $translator,
+        string $type,
+        string $titleKey,
+        string $messageKey,
+        array $titleParameters = [],
+        array $messageParameters = [],
+        int $statusCode = Response::HTTP_OK,
+    ): JsonResponse {
+        return $this->createFlashJsonResponse(
+            type: $type,
+            title: $this->bundleTrans($translator, $titleKey, $titleParameters),
+            message: $this->bundleTrans($translator, $messageKey, $messageParameters),
+            statusCode: $statusCode,
+        );
+    }
+
+    /**
+     * @param array<string, scalar|null> $parameters
+     */
+    final protected function bundleTrans(TranslatorInterface $translator, string $key, array $parameters = []): string
+    {
+        return $translator->trans($key, $parameters, 'WlindablaUserBundle');
+    }
+
+    final protected function createUserNotFoundResponse(TranslatorInterface $translator, string|int $id): JsonResponse
+    {
+        return $this->createTranslatedFlashJsonResponse(
+            $translator,
+            type: 'warning',
+            titleKey: 'user_action.common.warning_title',
+            messageKey: 'user_action.common.user_not_found',
+            messageParameters: ['%id%' => (string) $id],
+            statusCode: Response::HTTP_NOT_FOUND,
+        );
+    }
+
+    final protected function createEmailNotVerifiedResponse(
+        TranslatorInterface $translator,
+        UserInterface $user,
+        string $type,
+    ): JsonResponse {
+        return $this->createTranslatedFlashJsonResponse(
+            $translator,
+            type: $type,
+            titleKey: 'user_action.common.email_not_verified_title',
+            messageKey: 'user_action.common.email_not_verified',
+            messageParameters: ['%email%' => $user->getEmail(), '%username%' => $user->getUsername()],
+            statusCode: Response::HTTP_FORBIDDEN,
+        );
+    }
+
+    /**
      * @throws BadRequestHttpException if "status" is missing or not a
      *                                  recognizable boolean value
      */
     protected function getStatusFromRequest(Request $request): bool
     {
         if (!$request->getPayload()->has('status')) {
-            throw new BadRequestHttpException('Le paramètre "status" est manquant.');
+            throw new BadRequestHttpException('The "status" parameter is missing.');
         }
 
         $status = $request->getPayload()->get('status');
@@ -315,7 +390,7 @@ trait MicroUserCRUDActionTrait
             }
         }
 
-        throw new BadRequestHttpException(\sprintf('Statut invalide : "%s". Utiliser "true" ou "false".', $status));
+        throw new BadRequestHttpException(\sprintf('Invalid status: "%s". Use "true" or "false".', \is_scalar($status) ? $status : get_debug_type($status)));
     }
 
     final protected function isXmlHttpRequest(Request $request): bool
@@ -325,11 +400,13 @@ trait MicroUserCRUDActionTrait
             || $request->query->getBoolean('_xml_http_request');
     }
 
-    final protected function buildSuccessMessage(UserInterface $user, bool $isEnabled): string
+    final protected function buildSuccessMessage(UserInterface $user, bool $isEnabled, TranslatorInterface $translator): string
     {
-        $action = $isEnabled ? 'Compte activé avec succès' : 'Compte désactivé avec succès';
-
-        return \sprintf('%s - %s (ID: %s)', $action, $user->getUsername(), $user->getId());
+        return $this->bundleTrans(
+            $translator,
+            $isEnabled ? 'user_action.toggle.activated' : 'user_action.toggle.deactivated',
+            ['%username%' => $user->getUsername(), '%id%' => (string) $user->getId()],
+        );
     }
 
     final protected function dispatchToggleUserAccountTask(
@@ -356,6 +433,7 @@ trait MicroUserCRUDActionTrait
      *           $this->userManager,
      *           $this->userDuplicateFinder,
      *           $this->asyncMethodDispatcher,
+     *           $this->translator,
      *       );
      *   }
      */
@@ -364,6 +442,7 @@ trait MicroUserCRUDActionTrait
         UserManagerInterface $userManager,
         UserDuplicateFinderService $userDuplicateFinder,
         AsyncMethodDispatcherInterface $asyncMethodDispatcher,
+        TranslatorInterface $translator,
     ): ?Response {
         /** @var UserInterface|null $existingUser */
         $existingUser = $userManager->findOneByUsernameOrEmail(
@@ -376,7 +455,7 @@ trait MicroUserCRUDActionTrait
                 LoggerInterface::class,
                 'warning',
                 [
-                    'Cet utilisateur existe déjà dans la base de données. La création de compte a été bloquée.',
+                    'This user already exists in the database. Account creation was blocked.',
                     [
                         'email' => $submittedUserDto->submittedUserEmail,
                         'existingAccountId' => $existingUser->getId(),
@@ -384,10 +463,11 @@ trait MicroUserCRUDActionTrait
                 ],
             );
 
-            return $this->createFlashJsonResponse(
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
                 type: 'warning',
-                title: 'Création de compte non traitée',
-                message: 'Cet utilisateur existe déjà dans la base de données. La création de compte a été bloquée.',
+                titleKey: 'user_action.validate_user.title',
+                messageKey: 'user_action.validate_user.already_exists',
                 statusCode: Response::HTTP_CONFLICT,
             );
         }
@@ -399,7 +479,7 @@ trait MicroUserCRUDActionTrait
                 LoggerInterface::class,
                 'warning',
                 [
-                    'Création de compte bloquée : nom similaire à un compte utilisateur existant.',
+                    'Account creation blocked: the name is similar to an existing user account.',
                     [
                         'submittedUsername' => $submittedUserDto->submittedUsername,
                         'submittedEmail' => $submittedUserDto->submittedUserEmail,
@@ -409,10 +489,11 @@ trait MicroUserCRUDActionTrait
                 ],
             );
 
-            return $this->createFlashJsonResponse(
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
                 type: 'warning',
-                title: 'Création de compte non traitée',
-                message: 'Création de compte bloquée : le nom de cet utilisateur est similaire à un compte existant.',
+                titleKey: 'user_action.validate_user.title',
+                messageKey: 'user_action.validate_user.similar_name',
                 statusCode: Response::HTTP_CONFLICT,
             );
         }

@@ -21,32 +21,30 @@ use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 
 /**
- * Recharge l'utilisateur courant ($this->getUser()) comme une entité
- * Doctrine RÉELLEMENT GÉRÉE par l'EntityManager de la requête en cours.
+ * Reloads the current user ($this->getUser()) as a Doctrine entity
+ * TRULY MANAGED by the current request's EntityManager.
  *
- * ⚠️ POURQUOI CE TRAIT EXISTE — ne jamais persister/associer $this->getUser()
- * directement :
+ * ⚠️ WHY THIS TRAIT EXISTS — never persist or associate $this->getUser() directly:
  *
- * UserProvider::refreshUser() (appelé par Symfony Security sur CHAQUE
- * requête pour reconstruire l'utilisateur depuis le token de session)
- * désérialise l'utilisateur depuis un cache JSON — ce qui fabrique un objet
- * PHP tout neuf, jamais chargé ni connu de l'EntityManager de la requête en
- * cours. Cet objet porte un identifiant valide et des données à jour, mais
- * Doctrine ne le reconnaît pas dans son identity map.
+ * UserProvider::refreshUser() (called by Symfony Security on EVERY request
+ * to rebuild the user from the session token) deserializes the user from a JSON cache.
+ * This instantiates a brand new PHP object that has never been loaded by or registered
+ * with the current request's EntityManager. Although this object carries a valid identifier
+ * and up-to-date data, Doctrine does not recognize it in its identity map.
  *
- * Conséquence si on le persiste ou l'associe tel quel à une autre entité
- * (ex. EmailChangeRequest::$requestedBy, EmailChangeValidation::$validator) :
- * Doctrine le traite comme une entité NEUVE et tente une RÉ-INSERTION avec
- * l'ID existant — constaté en developpememnt lors des test le 20/08 sous forme de
- * NotNullConstraintViolationException (colonne phone), symptôme d'un INSERT
- * là où une UPDATE était attendue.
+ * Consequence if persisted or associated as-is with another entity
+ * (e.g., EmailChangeRequest::$requestedBy, EmailChangeValidation::$validator):
+ * Doctrine treats it as a NEW entity and attempts a RE-INSERTION using the existing ID.
+ * This was observed during development testing on 08/20/2024 as a
+ * NotNullConstraintViolationException (phone column), which is a clear symptom
+ * of an INSERT query being executed where an UPDATE or association was expected.
  *
- * Utilisable dans n'importe quelle hiérarchie de contrôleur exposant
- * `getUser()` (Symfony\Bundle\FrameworkBundle\Controller\AbstractController
- * et, par héritage, Sonata\AdminBundle\Controller\CRUDController) —
- * volontairement un trait plutôt qu'une classe de base commune, puisque
- * TwoFactorAuthController et WlindablaAdminCRUDController n'ont pas
- * d'ancêtre commun autre que Symfony lui-même.
+ * Suitable for use in any controller hierarchy exposing `getUser()`
+ * (Symfony\Bundle\FrameworkBundle\Controller\AbstractController and,
+ * through inheritance, Sonata\AdminBundle\Controller\CRUDController).
+ * Intentionally designed as a trait rather than a common base class, since
+ * TwoFactorAuthController and WlindablaAdminCRUDController do not share a common
+ * ancestor other than Symfony itself.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
@@ -54,22 +52,20 @@ use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 trait ResolvesManagedCurrentUserTrait
 {
     /**
-     * @throws AccessDeniedException Si aucun utilisateur n'est authentifié,
-     *                                 ou si son rechargement via find()
-     *                                 échoue (compte supprimé entre-temps,
-     *                                 incohérence de cache, etc.).
+     * @throws AccessDeniedException If no user is authenticated, or if reloading the
+     *                                 user via find() fails (e.g., account deleted in
+     *                                 the meantime, cache inconsistency, etc.).
      */
-    protected function resolveManagedCurrentUser(UserManagerInterface $userManager,UserInterface $currentUser): UserInterface
+    protected function resolveManagedCurrentUser(UserManagerInterface $userManager, UserInterface$currentUser): UserInterface
     {
-
-        if (!$currentUser instanceof UserInterface || null === $currentUser->getId()) {
-            throw new AccessDeniedException('Utilisateur courant introuvable ou invalide.');
+        if (!$currentUser instanceof UserInterface || null ===$currentUser->getId()) {
+            throw new AccessDeniedException('Current user not found or invalid.');
         }
 
         $managedUser = $userManager->find($currentUser->getId());
 
         if (!$managedUser instanceof UserInterface) {
-            throw new AccessDeniedException('Utilisateur courant introuvable ou invalide.');
+            throw new AccessDeniedException('Current user not found or invalid.');
         }
 
         return $managedUser;

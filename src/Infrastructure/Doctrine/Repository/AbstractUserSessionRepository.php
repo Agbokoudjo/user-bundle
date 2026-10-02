@@ -23,7 +23,6 @@ use Psr\Cache\CacheItemPoolInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Model\Persistance\UserSessionRepositoryInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
 use Wlindabla\UserBundle\Domain\UserSession\Model\UserSessionInterface;
-
 /**
  * Single-session-per-user management.
  *

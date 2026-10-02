@@ -24,6 +24,7 @@ use Wlindabla\ShareServiceBundle\Security\Hash\TokenHasherInterface;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Domain\User\Event\UserAccountEmailVerificationEvent;
 use Wlindabla\UserBundle\Domain\User\Exception\EmailAlreadyVerifiedException;
+use Wlindabla\UserBundle\Domain\User\Exception\TokenGenerationCooldownException;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 
 /**
@@ -116,7 +117,7 @@ final class SecureTokenService
     {
         if (empty($user->getEmail())) {
             throw new InvalidArgumentException(
-                'L\'utilisateur doit avoir une adresse email valide pour recevoir un token de confirmation.'
+                'The user must have a valid email address to receive a confirmation token.'
             );
         }
 
@@ -133,7 +134,7 @@ final class SecureTokenService
      *
      * @param BaseUserInterface $user L'utilisateur demandant un token
      * 
-     * @throws RuntimeException Si le délai minimum n'est pas respecté
+     * @throws TokenGenerationCooldownException Si le délai minimum n'est pas respecté
      */
     private function enforceTokenGenerationCooldown(BaseUserInterface $user): void
     {
@@ -150,12 +151,7 @@ final class SecureTokenService
         if ($timeSinceLastRequest < self::TOKEN_GENERATION_COOLDOWN) {
             $remainingTime = self::TOKEN_GENERATION_COOLDOWN - $timeSinceLastRequest;
 
-            throw new RuntimeException(
-                \sprintf(
-                    'Veuillez patienter %d secondes avant de demander un nouveau lien de vérification.',
-                    $remainingTime
-                )
-            );
+            throw new TokenGenerationCooldownException($remainingTime);
         }
     }
 }

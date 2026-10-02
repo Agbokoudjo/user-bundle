@@ -57,20 +57,20 @@ final class TwoFactorCodeService implements TwoFactorCodeServiceInterface
         }
 
         $this->mailerManager->notifyBySystem(
-            $user->getEmail(),
-            $this->translator->trans('two_factor_email.subject', ['%site_name%' => $siteName], 'WlindablaUserBundle'),
-            $this->templateRegistry->get('two_factor_code_email'),
-            [
-                'siteName' => $siteName,
-                'username' => $user->getUsername(),
-                'code' => $plainCode,
-                'ttlMinutes' => TwoFactorCodeInterface::DEFAULT_TTL_MINUTES,
-                'ipAddress' => $ipAddress,
-                'attemptAt' => new \DateTimeImmutable('now', new \DateTimeZone('UTC')),
-                'context' => $context,
-            ],
-            PriorityInterface::PRIORITY_HIGHEST,
-        );
+                $user->getEmail(),
+                $this->translator->trans('two_factor_email.subject', ['%site_name%' => $siteName], 'WlindablaUserBundle'),
+                $this->templateRegistry->get('two_factor_code_email'),
+                [
+                    'site_name' => $siteName,
+                    'username' => $user->getUsername(),
+                    'code' => $plainCode,
+                    'ttlMinutes' => TwoFactorCodeInterface::DEFAULT_TTL_MINUTES,
+                    'ipAddress' => $ipAddress,
+                    'attemptAt' => new \DateTimeImmutable('now', new \DateTimeZone('UTC')),
+                    'context' => $context,
+                ],
+                PriorityInterface::PRIORITY_HIGHEST,
+            );
 
         $this->logger->info('2FA required: code sent.', ['user' => $user->getUserIdentifier()]);
     }
