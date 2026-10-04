@@ -25,6 +25,8 @@ use Symfony\Component\Security\Core\User\UserInterface as SymfonySecurityUserInt
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\ShareServiceBundle\Messenger\QueueHandler\AsyncMethodDispatcherInterface;
+use Wlindabla\UserBundle\Domain\EmailChange\Application\Manager\EmailChangeRequestServiceInterface;
+use Wlindabla\UserBundle\Domain\EmailChange\Model\Persistance\EmailChangeRequestRepositoryInterface;
 use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\GenerateTemporaryPasswordHandler;
 use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ToggleUserAccountHandler;
 use Wlindabla\UserBundle\Domain\User\Application\Dto\SubmittedUserDto;
@@ -35,6 +37,7 @@ use Wlindabla\UserBundle\Domain\User\Exception\TokenGenerationCooldownException;
 use Wlindabla\UserBundle\Domain\User\Service\EmailVerificationInterface;
 use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 use Wlindabla\UserBundle\Infrastructure\Service\UserDuplicateFinderService;
+use Wlindabla\UserBundle\UI\Http\Controller\Trait\ResolvesManagedCurrentUserTrait;
 
 /**
  * Ready-to-use account-management actions (resend verification, toggle
@@ -68,6 +71,8 @@ use Wlindabla\UserBundle\Infrastructure\Service\UserDuplicateFinderService;
  */
 trait MicroUserCRUDActionTrait
 {
+    use ResolvesManagedCurrentUserTrait;
+    
     public function resendEmailVerifyAction(
         Request $request,
         string|int $id,
@@ -499,5 +504,92 @@ trait MicroUserCRUDActionTrait
         }
 
         return null;
+    }
+
+    /**
+     * Vote actions (double validation) on an EmailChangeRequest. Combine with
+     * MicroUserCRUDActionTrait in your own CRUD controller — same usage
+     * pattern, same "authorization is the consuming controller's
+     * responsibility" convention.
+     *
+     * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+     * @package <https://github.com/Agbokoudjo/>
+     */
+    public function approveAction(
+        Request $request,
+        int|string $id,
+        #[CurrentUser] SymfonySecurityUserInterface $currentUserConnected,
+        EmailChangeRequestRepositoryInterface $emailChangeRequestRepository,
+        EmailChangeRequestServiceInterface $emailChangeRequestService,
+        UserManagerInterface $userManager,
+    ): JsonResponse {
+        return $this->handleValidationDecision($request, $id, $currentUserConnected,true, $emailChangeRequestRepository, $emailChangeRequestService, $userManager);
+    }
+
+    public function rejectAction(
+        Request $request,
+        int|string $id,
+        #[CurrentUser] SymfonySecurityUserInterface $currentUserConnected,
+        EmailChangeRequestRepositoryInterface $emailChangeRequestRepository,
+        EmailChangeRequestServiceInterface $emailChangeRequestService,
+        UserManagerInterface $userManager,
+    ): JsonResponse {
+        return $this->handleValidationDecision($request, $id,$currentUserConnected, false, $emailChangeRequestRepository, $emailChangeRequestService, $userManager);
+    }
+
+    private function handleValidationDecision(
+        Request $request,
+        int|string $id,
+        #[CurrentUser] SymfonySecurityUserInterface $currentUserConnected,
+        bool $approved,
+        EmailChangeRequestRepositoryInterface $emailChangeRequestRepository,
+        EmailChangeRequestServiceInterface $emailChangeRequestService,
+        UserManagerInterface $userManager,
+    ): JsonResponse {
+        if (!$this->isXmlHttpRequest($request) || !$request->isMethod('POST')) {
+            throw new BadRequestHttpException('Unauthorized request. Please use the appropriate POST/AJAX channel.');
+        }
+
+        $emailChangeRequest = $emailChangeRequestRepository->find($id);
+
+        if (null === $emailChangeRequest) {
+            return $this->createFlashJsonResponse(
+                type: 'warning',
+                title: 'Request not found',
+                message: \sprintf('No email change request found with identifier "%s".', $id),
+                statusCode: Response::HTTP_NOT_FOUND,
+            );
+        }
+
+        $validator = $this->resolveManagedCurrentUser($userManager,$currentUserConnected);
+        $comment = $request->getPayload()->getString('comment', '');
+
+        try {
+            $emailChangeRequestService->submitValidation(
+                request: $emailChangeRequest,
+                validator: $validator,
+                approved: $approved,
+                comment: '' !== trim($comment) ? trim($comment) : null,
+            );
+
+            $type = 'success';
+            $title = $approved ? 'Approval recorded' : 'Rejection recorded';
+            $message = $approved
+                ? 'Your approval has been recorded. The request will be finalized once the required quorum is reached.'
+                : 'Your rejection has been recorded. The email change request is now closed.';
+            $statusHttp = Response::HTTP_OK;
+        } catch (\DomainException $e) {
+            $type = 'warning';
+            $title = 'Decision could not be recorded';
+            $message = $e->getMessage();
+            $statusHttp = Response::HTTP_CONFLICT;
+        } catch (\Throwable $e) {
+            $type = 'danger';
+            $title = 'Validation failed';
+            $message = 'An error occurred while recording your decision. Please try again.';
+            $statusHttp = Response::HTTP_BAD_REQUEST;
+        }
+
+        return $this->createFlashJsonResponse(type: $type, title: $title, message: $message, statusCode: $statusHttp);
     }
 }

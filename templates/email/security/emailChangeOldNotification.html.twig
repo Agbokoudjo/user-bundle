@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ app.request.locale|default('fr') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demande de changement d'adresse email</title>
+    <title>{{ 'email_change.old_notification_subject'|trans({'%site_name%': site_name}, 'WlindablaUserBundle') }}</title>
 </head>
 <body>
-
     {% set primary_color = '#0ec5b2' %}
     {% set danger_color = '#c0392b' %}
     {% set border_color = '#DDDDDD' %}
@@ -17,27 +16,29 @@
 
         <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid {{ border_color }};">
             <h1 style="color: {{ primary_color }}; font-size: 24px; margin: 0;">
-                Demande de changement d'adresse email — <strong>{{ siteName }}</strong>
+                {{ 'email_change.old_notification_title'|trans({'%site_name%': site_name}, 'WlindablaUserBundle')|raw }}
             </h1>
         </div>
 
         <div style="padding: 20px 0;">
-            <p style="font-size: 16px; margin-bottom: 20px;">Bonjour <strong>{{ targetUsername }}</strong>,</p>
+            <p style="font-size: 16px; margin-bottom: 20px;">
+                {{ 'email_change.greeting'|trans({'%username%': target_username}, 'WlindablaUserBundle') }}
+            </p>
 
             <p style="margin-bottom: 20px;">
-                Une demande de changement d'adresse email a été initiée sur votre compte
-                <strong>{{ siteName }}</strong>{% if requestedByUsername and requestedByUsername != targetUsername %}, par <strong>{{ requestedByUsername }}</strong>{% endif %}.
-                La nouvelle adresse proposée est <strong>{{ newEmail }}</strong>.
+                {% if requested_by_username is not null and requested_by_username != target_username %}
+                    {{ 'email_change.old_notification_body_by_other'|trans({'%site_name%': site_name, '%requested_by%': requested_by_username, '%new_email%': new_email}, 'WlindablaUserBundle')|raw }}
+                {% else %}
+                    {{ 'email_change.old_notification_body_self'|trans({'%site_name%': site_name, '%new_email%': new_email}, 'WlindablaUserBundle')|raw }}
+                {% endif %}
             </p>
 
             <p style="background-color: {{ accent_color }}; padding: 15px; border-left: 4px solid {{ primary_color }}; margin-bottom: 25px;">
-                Si vous êtes à l'origine de cette demande, confirmez-la en cliquant sur le bouton
-                ci-dessous. Le changement ne sera effectif qu'après confirmation depuis <strong>cette</strong>
-                adresse (l'ancienne) <strong>et</strong> depuis la nouvelle adresse.
+                {{ 'email_change.old_notification_action_notice'|trans({}, 'WlindablaUserBundle')|raw }}
             </p>
 
             <div style="text-align: center; margin: 25px 0;">
-                <a href="{{ confirmationUrl }}"
+                <a href="{{ confirmation_url }}"
                    style="background-color: {{ primary_color }};
                           color: #ffffff !important;
                           text-decoration: none;
@@ -46,40 +47,35 @@
                           font-weight: bold;
                           display: inline-block;
                           font-size: 16px;">
-                    Confirmer le changement
+                    {{ 'email_change.confirm_cta'|trans({}, 'WlindablaUserBundle') }}
                 </a>
             </div>
 
             <p style="background-color: {{ danger_bg }}; padding: 15px; border-left: 4px solid {{ danger_color }}; margin-bottom: 25px;">
-                <strong>Vous n'êtes pas à l'origine de cette demande ?</strong><br>
-                Cliquez sur le lien ci-dessous pour l'annuler immédiatement. Votre adresse actuelle
-                ne changera pas, et notre équipe technique sera alertée pour vérification.
+                {{ 'email_change.not_me_notice'|trans({}, 'WlindablaUserBundle')|raw }}
             </p>
 
             <div style="text-align: center; margin: 25px 0;">
-                <a href="{{ notMeUrl }}"
+                <a href="{{ not_me_url }}"
                    style="color: {{ danger_color }} !important;
                           text-decoration: underline;
                           font-weight: bold;
                           font-size: 15px;">
-                    Ce n'était pas moi — annuler cette demande
+                    {{ 'email_change.not_me_cta'|trans({}, 'WlindablaUserBundle') }}
                 </a>
             </div>
 
             <p style="font-size: 14px; margin-top: 30px; color: #666;">
-                Ce lien expirera le {{ expiresAt|date('d/m/Y à H:i', 'UTC') }} (UTC) pour des raisons
-                de sécurité. Si vous rencontrez des problèmes, copiez et collez l'URL suivante dans
-                votre navigateur :
+                {{ 'email_change.link_expiry_notice'|trans({'%date%': expires_at|date('d/m/Y H:i', 'UTC')}, 'WlindablaUserBundle') }}
             </p>
             <p style="font-size: 12px; word-break: break-all; color: {{ primary_color }};">
-                {{ confirmationUrl }}
+                {{ confirmation_url }}
             </p>
         </div>
 
         <div style="border-top: 1px solid {{ border_color }}; padding-top: 15px; text-align: center;">
             <p style="font-size: 12px; color: #888;">
-                Ceci est un message automatique du système <strong>{{ siteName }}</strong>.<br>
-                Merci de ne pas répondre directement à cet e-mail.
+                {{ 'email_change.footer'|trans({'%site_name%': site_name}, 'WlindablaUserBundle')|raw }}
             </p>
         </div>
     </div>

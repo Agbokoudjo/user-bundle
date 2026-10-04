@@ -21,7 +21,6 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Wlindabla\UserBundle\Domain\Permission\Model\AbstractPermissionGroup;
 use Wlindabla\UserBundle\Domain\Permission\Model\PermissionRoleInterface;
-use Wlindabla\UserBundle\Infrastructure\Doctrine\PermissionRole;
 
 /**
  * Doctrine mapping for a permission group. Extend it in your application.
@@ -43,7 +42,7 @@ abstract class PermissionGroup extends AbstractPermissionGroup
     protected ?string $description = null;
 
     /** @var Collection<int, PermissionRoleInterface> */
-    #[ORM\ManyToMany(targetEntity: PermissionRole::class)]
+    #[ORM\ManyToMany(targetEntity: PermissionRoleInterface::class)]
     #[ORM\JoinTable(name: 'permission_group_permission_role')]
     protected Collection $permissions;
 

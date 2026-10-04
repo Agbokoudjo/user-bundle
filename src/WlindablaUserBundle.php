@@ -19,6 +19,9 @@ use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use Wlindabla\UserBundle\Domain\EmailChange\Model\EmailChangeRequestInterface;
+use Wlindabla\UserBundle\Domain\Permission\Model\PermissionGroupInterface;
+use Wlindabla\UserBundle\Domain\Permission\Model\PermissionRoleInterface;
 use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 
 /**
@@ -48,6 +51,24 @@ final class WlindablaUserBundle extends AbstractBundle
                         ->scalarNode('permission_group')->isRequired()->cannotBeEmpty()->end()
                         ->scalarNode('user_permission_role')->isRequired()->cannotBeEmpty()->end()
                         ->scalarNode('user_permission_group')->isRequired()->cannotBeEmpty()->end()
+                        ->scalarNode('email_change_request')->isRequired()->cannotBeEmpty()->end()
+                        ->scalarNode('email_change_validation')->isRequired()->cannotBeEmpty()->end()
+                    ->end()
+                ->end()
+                ->arrayNode('email_change')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->integerNode('token_lifetime')->defaultValue(3600)->end()
+                        ->integerNode('retry_cooldown')->defaultValue(86400)->end()
+                        ->arrayNode('exempt_roles_on_self')
+                            ->info('Roles exempt from double validation when changing their OWN email.')
+                            ->scalarPrototype()->end()
+                            ->defaultValue(['ROLE_SUPER_ADMIN'])
+                        ->end()
+                        ->scalarNode('recovery_initiator_role')
+                            ->info('Role required to initiate a recovery request (lost access to the old address) on behalf of another account.')
+                            ->defaultValue('ROLE_SUPER_ADMIN')
+                        ->end()
                     ->end()
                 ->end()
                 ->scalarNode('default_role')
@@ -123,6 +144,12 @@ final class WlindablaUserBundle extends AbstractBundle
                         ->end()
                         ->scalarNode('two_factor_show')->defaultValue('security/twoFactorAuth.html.twig')->end()
                         ->scalarNode('two_factor_code_email')->defaultValue('email/security/twoFactorCode.html.twig')->end()
+                        ->scalarNode('email_change_old_notification')->defaultValue('@WlindablaUser/email/security/emailChangeOldNotification.html.twig')->end()
+                        ->scalarNode('email_change_new_confirmation')->defaultValue('@WlindablaUser/email/security/emailChangeNewConfirmation.html.twig')->end()
+                        ->scalarNode('email_change_applied')->defaultValue('@WlindablaUser/email/security/emailChangeApplied.html.twig')->end()
+                        ->scalarNode('email_change_not_me_alert')->defaultValue('@WlindablaUser/email/security/emailChangeNotMeAlert.html.twig')->end()
+                        ->scalarNode('email_change_validation_pending')->defaultValue('@WlindablaUser/email/security/emailChangeValidationPending.html.twig')->end()
+                        ->scalarNode('email_change_validation_outcome')->defaultValue('@WlindablaUser/email/security/emailChangeValidationOutcome.html.twig')->end()
                     ->end()
                 ->end()
                 ->arrayNode('password_reset')
@@ -213,10 +240,13 @@ final class WlindablaUserBundle extends AbstractBundle
 
         $container->extension('doctrine', [
             'orm' => [
-                'resolve_target_entities' => [
-                    UserInterface::class => $userClass,
-                ],
-            ],
-        ]);
+             'resolve_target_entities' => [
+                UserInterface::class => $userClass,
+                PermissionRoleInterface::class => $config[0]['classes']['permission_role'] ?? null,
+                PermissionGroupInterface::class => $config[0]['classes']['permission_group'] ?? null,
+                EmailChangeRequestInterface::class => $config[0]['classes']['email_change_request'] ?? null,
+        ],
+    ],
+]);
     }
 }

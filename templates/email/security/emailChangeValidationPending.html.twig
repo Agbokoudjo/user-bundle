@@ -1,62 +1,58 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ app.request.locale|default('fr') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validation requise - changement d'email</title>
+    <title>{{ 'email_change.validation_pending_subject'|trans({'%site_name%': site_name}, 'WlindablaUserBundle') }}</title>
 </head>
 <body>
-
-    {% set primary_color = '#0ec5b2' %}
+    {% set primary_color = is_recovery ? '#c0392b' : '#0ec5b2' %}
     {% set border_color = '#DDDDDD' %}
-    {% set accent_color = '#FFF4E5' %}
-    {% set accent_border = '#C77700' %}
+    {% set accent_color = is_recovery ? '#FBEAE9' : '#FFF4E5' %}
+    {% set accent_border = is_recovery ? '#C0392B' : '#C77700' %}
 
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid {{ border_color }}; border-radius: 8px;">
 
         <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid {{ border_color }};">
             <h1 style="color: {{ primary_color }}; font-size: 24px; margin: 0;">
-                Validation requise — <strong>{{ siteName }}</strong>
+                {% if is_recovery %}⚠️ {% endif %}{{ (is_recovery ? 'email_change.urgent_validation_title' : 'email_change.validation_title')|trans({'%site_name%': site_name}, 'WlindablaUserBundle')|raw }}
             </h1>
         </div>
 
         <div style="padding: 20px 0;">
-            <p style="font-size: 16px; margin-bottom: 20px;">Bonjour,</p>
+            <p style="font-size: 16px; margin-bottom: 20px;">{{ 'email_change.greeting_plain'|trans({}, 'WlindablaUserBundle') }}</p>
 
             <p style="background-color: {{ accent_color }}; padding: 15px; border-left: 4px solid {{ accent_border }}; margin-bottom: 25px;">
-                Une demande de changement d'email attend votre décision (approbation ou rejet).
-                Vous faites partie des personnes habilitées à valider ce type de demande.
+                {{ (is_recovery ? 'email_change.recovery_validation_body' : 'email_change.validation_body')|trans({}, 'WlindablaUserBundle')|raw }}
             </p>
 
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
                 <tr>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Compte concerné</td>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ targetUsername }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">{{ 'email_change.table_target_account'|trans({}, 'WlindablaUserBundle') }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ target_username }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Demandée par</td>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ requestedByUsername }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">{{ 'email_change.table_requested_by'|trans({}, 'WlindablaUserBundle') }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ requested_by_username }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Nouvelle adresse</td>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ newEmail }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">{{ 'email_change.table_new_email'|trans({}, 'WlindablaUserBundle') }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ new_email }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Demandée le</td>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ requestedAt|date('d/m/Y à H:i', 'UTC') }} (UTC)</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">{{ 'email_change.table_requested_at'|trans({}, 'WlindablaUserBundle') }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ requested_at|date('d/m/Y H:i', 'UTC') }} (UTC)</td>
                 </tr>
             </table>
 
             <p style="margin-bottom: 20px;">
-                Merci de vous connecter à votre espace d'administration pour examiner et vous
-                prononcer sur cette demande, dans la rubrique "Changements d'email à valider".
+                {{ 'email_change.validation_instructions'|trans({}, 'WlindablaUserBundle') }}
             </p>
         </div>
 
         <div style="border-top: 1px solid {{ border_color }}; padding-top: 15px; text-align: center;">
             <p style="font-size: 12px; color: #888;">
-                Ceci est un message automatique du système <strong>{{ siteName }}</strong>.<br>
-                Merci de ne pas répondre directement à cet e-mail.
+                {{ 'email_change.footer'|trans({'%site_name%': site_name}, 'WlindablaUserBundle')|raw }}
             </p>
         </div>
     </div>

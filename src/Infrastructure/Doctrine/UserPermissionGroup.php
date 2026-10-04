@@ -18,6 +18,7 @@ namespace Wlindabla\UserBundle\Infrastructure\Doctrine;
 
 use Doctrine\ORM\Mapping as ORM;
 use Wlindabla\UserBundle\Domain\Permission\Model\AbstractUserPermissionGroup;
+use Wlindabla\UserBundle\Domain\Permission\Model\PermissionGroupInterface;
 
 /**
  * Doctrine mapping for a group grant. Extend it in your application:
@@ -40,7 +41,7 @@ abstract class UserPermissionGroup extends AbstractUserPermissionGroup
     #[ORM\Column(type: 'string', length: 64)]
     protected int|string|null $userId = null;
 
-    #[ORM\ManyToOne(targetEntity: PermissionGroup::class)]
+    #[ORM\ManyToOne(targetEntity: PermissionGroupInterface::class)]
     #[ORM\JoinColumn(name: 'permission_group_code', referencedColumnName: 'code', nullable: false, onDelete: 'CASCADE')]
     protected $permissionGroup = null;
 

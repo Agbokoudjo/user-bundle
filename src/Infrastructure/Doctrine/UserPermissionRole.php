@@ -18,6 +18,7 @@ namespace Wlindabla\UserBundle\Infrastructure\Doctrine;
 
 use Doctrine\ORM\Mapping as ORM;
 use Wlindabla\UserBundle\Domain\Permission\Model\AbstractUserPermissionRole;
+use Wlindabla\UserBundle\Domain\Permission\Model\PermissionRoleInterface;
 
 /**
  * Doctrine mapping for a permission grant. Extend it in your application.
@@ -36,7 +37,7 @@ abstract class UserPermissionRole extends AbstractUserPermissionRole
     #[ORM\Column(type: 'integer')]
     protected int|string|null $userId = null;
 
-    #[ORM\ManyToOne(targetEntity: PermissionRole::class)]
+    #[ORM\ManyToOne(targetEntity: PermissionRoleInterface::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     protected $permissionRole = null;
 

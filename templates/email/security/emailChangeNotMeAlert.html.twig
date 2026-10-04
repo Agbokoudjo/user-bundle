@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ app.request.locale|default('fr') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alerte sécurité — tentative de changement d'email signalée</title>
+    <title>{{ 'email_change.not_me_alert_subject'|trans({'%site_name%': site_name}, 'WlindablaUserBundle') }}</title>
 </head>
 <body>
-
     {% set danger_color = '#c0392b' %}
     {% set border_color = '#DDDDDD' %}
     {% set danger_bg = '#FBEAE9' %}
@@ -15,53 +14,48 @@
 
         <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid {{ border_color }};">
             <h1 style="color: {{ danger_color }}; font-size: 24px; margin: 0;">
-                ⚠️ Alerte sécurité — <strong>{{ siteName }}</strong>
+                ⚠️ {{ 'email_change.not_me_alert_title'|trans({'%site_name%': site_name}, 'WlindablaUserBundle')|raw }}
             </h1>
         </div>
 
         <div style="padding: 20px 0;">
-            <p style="font-size: 16px; margin-bottom: 20px;">Bonjour,</p>
+            <p style="font-size: 16px; margin-bottom: 20px;">{{ 'email_change.greeting_plain'|trans({}, 'WlindablaUserBundle') }}</p>
 
             <p style="background-color: {{ danger_bg }}; padding: 15px; border-left: 4px solid {{ danger_color }}; margin-bottom: 25px;">
-                Une demande de changement d'email a été signalée <strong>"Ce n'était pas moi"</strong>
-                par le titulaire de l'ancienne adresse. Ceci peut indiquer une tentative de
-                détournement de compte en cours et mérite une vérification.
+                {{ 'email_change.not_me_alert_body'|trans({}, 'WlindablaUserBundle')|raw }}
             </p>
 
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
                 <tr>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Compte concerné</td>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ targetUsername }} (ID: {{ targetUserId }})</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">{{ 'email_change.table_target_account'|trans({}, 'WlindablaUserBundle') }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ target_username }} (ID: {{ target_user_id }})</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Initiée par</td>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ requestedByUsername }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">{{ 'email_change.table_requested_by'|trans({}, 'WlindablaUserBundle') }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ requested_by_username }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Ancienne adresse</td>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ oldEmail }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">{{ 'email_change.table_old_email'|trans({}, 'WlindablaUserBundle') }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ old_email }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Nouvelle adresse demandée</td>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ newEmail }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">{{ 'email_change.table_new_email_requested'|trans({}, 'WlindablaUserBundle') }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ new_email }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">Demande initiée le</td>
-                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ requestedAt|date('d/m/Y à H:i', 'UTC') }} (UTC)</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }}; font-weight: bold; background-color: #F5F5F5;">{{ 'email_change.table_requested_at'|trans({}, 'WlindablaUserBundle') }}</td>
+                    <td style="padding: 8px; border: 1px solid {{ border_color }};">{{ requested_at|date('d/m/Y H:i', 'UTC') }} (UTC)</td>
                 </tr>
             </table>
 
             <p style="margin-bottom: 20px;">
-                La demande a été automatiquement annulée — aucune action supplémentaire n'est requise
-                pour bloquer ce changement. Une vérification manuelle est recommandée pour identifier
-                l'origine de cette tentative.
+                {{ 'email_change.not_me_alert_footer_notice'|trans({}, 'WlindablaUserBundle') }}
             </p>
         </div>
 
         <div style="border-top: 1px solid {{ border_color }}; padding-top: 15px; text-align: center;">
             <p style="font-size: 12px; color: #888;">
-                Ceci est un message automatique du système <strong>{{ siteName }}</strong>.<br>
-                Merci de ne pas répondre directement à cet e-mail.
+                {{ 'email_change.footer'|trans({'%site_name%': site_name}, 'WlindablaUserBundle')|raw }}
             </p>
         </div>
     </div>

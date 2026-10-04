@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ app.request.locale|default('fr') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmez votre nouvelle adresse email</title>
+    <title>{{ 'email_change.new_confirmation_subject'|trans({'%site_name%': site_name}, 'WlindablaUserBundle') }}</title>
 </head>
 <body>
-
     {% set primary_color = '#0ec5b2' %}
     {% set border_color = '#DDDDDD' %}
     {% set accent_color = '#F5F5F5' %}
@@ -15,28 +14,25 @@
 
         <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid {{ border_color }};">
             <h1 style="color: {{ primary_color }}; font-size: 24px; margin: 0;">
-                Confirmez votre nouvelle adresse — <strong>{{ siteName }}</strong>
+                {{ 'email_change.new_confirmation_title'|trans({'%site_name%': site_name}, 'WlindablaUserBundle')|raw }}
             </h1>
         </div>
 
         <div style="padding: 20px 0;">
-            <p style="font-size: 16px; margin-bottom: 20px;">Bonjour <strong>{{ targetUsername }}</strong>,</p>
+            <p style="font-size: 16px; margin-bottom: 20px;">
+                {{ 'email_change.greeting'|trans({'%username%': target_username}, 'WlindablaUserBundle') }}
+            </p>
 
             <p style="margin-bottom: 20px;">
-                Cette adresse a été proposée comme nouvelle adresse email pour votre compte
-                <strong>{{ siteName }}</strong>. Pour la valider, confirmez en cliquant sur le
-                bouton ci-dessous.
+                {{ 'email_change.new_confirmation_body'|trans({'%site_name%': site_name}, 'WlindablaUserBundle')|raw }}
             </p>
 
             <p style="background-color: {{ accent_color }}; padding: 15px; border-left: 4px solid {{ primary_color }}; margin-bottom: 25px;">
-                Le changement ne sera effectif qu'après confirmation depuis <strong>cette</strong>
-                adresse <strong>et</strong> depuis votre ancienne adresse. Si vous n'êtes pas à
-                l'origine de cette demande, vous pouvez ignorer cet email sans risque : rien ne
-                sera modifié sans les deux confirmations.
+                {{ 'email_change.new_confirmation_notice'|trans({}, 'WlindablaUserBundle')|raw }}
             </p>
 
             <div style="text-align: center; margin: 25px 0;">
-                <a href="{{ confirmationUrl }}"
+                <a href="{{ confirmation_url }}"
                    style="background-color: {{ primary_color }};
                           color: #ffffff !important;
                           text-decoration: none;
@@ -45,24 +41,21 @@
                           font-weight: bold;
                           display: inline-block;
                           font-size: 16px;">
-                    Confirmer cette adresse
+                    {{ 'email_change.confirm_this_address_cta'|trans({}, 'WlindablaUserBundle') }}
                 </a>
             </div>
 
             <p style="font-size: 14px; margin-top: 30px; color: #666;">
-                Ce lien expirera le {{ expiresAt|date('d/m/Y à H:i', 'UTC') }} (UTC) pour des raisons
-                de sécurité. Si vous rencontrez des problèmes, copiez et collez l'URL suivante dans
-                votre navigateur :
+                {{ 'email_change.link_expiry_notice'|trans({'%date%': expires_at|date('d/m/Y H:i', 'UTC')}, 'WlindablaUserBundle') }}
             </p>
             <p style="font-size: 12px; word-break: break-all; color: {{ primary_color }};">
-                {{ confirmationUrl }}
+                {{ confirmation_url }}
             </p>
         </div>
 
         <div style="border-top: 1px solid {{ border_color }}; padding-top: 15px; text-align: center;">
             <p style="font-size: 12px; color: #888;">
-                Ceci est un message automatique du système <strong>{{ siteName }}</strong>.<br>
-                Merci de ne pas répondre directement à cet e-mail.
+                {{ 'email_change.footer'|trans({'%site_name%': site_name}, 'WlindablaUserBundle')|raw }}
             </p>
         </div>
     </div>
