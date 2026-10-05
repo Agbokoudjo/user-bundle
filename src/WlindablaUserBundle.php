@@ -20,8 +20,11 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Wlindabla\UserBundle\Domain\EmailChange\Model\EmailChangeRequestInterface;
+use Wlindabla\UserBundle\Domain\EmailChange\Model\EmailChangeValidationInterface;
 use Wlindabla\UserBundle\Domain\Permission\Model\PermissionGroupInterface;
 use Wlindabla\UserBundle\Domain\Permission\Model\PermissionRoleInterface;
+use Wlindabla\UserBundle\Domain\Permission\Model\UserPermissionGroupInterface;
+use Wlindabla\UserBundle\Domain\Permission\Model\UserPermissionRoleInterface;
 use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 
 /**
@@ -39,214 +42,180 @@ final class WlindablaUserBundle extends AbstractBundle
     {
         $definition->rootNode()
             ->children()
-                ->arrayNode('classes')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->scalarNode('user')
-                            ->info('FQCN of your User entity (extends the bundle base user).')
-                            ->isRequired()
-                            ->cannotBeEmpty()
-                        ->end()
-                        ->scalarNode('permission_role')->isRequired()->cannotBeEmpty()->end()
-                        ->scalarNode('permission_group')->isRequired()->cannotBeEmpty()->end()
-                        ->scalarNode('user_permission_role')->isRequired()->cannotBeEmpty()->end()
-                        ->scalarNode('user_permission_group')->isRequired()->cannotBeEmpty()->end()
-                        ->scalarNode('email_change_request')->isRequired()->cannotBeEmpty()->end()
-                        ->scalarNode('email_change_validation')->isRequired()->cannotBeEmpty()->end()
+            ->arrayNode('classes')
+                ->addDefaultsIfNotSet()
+                ->children()
+                    ->scalarNode('user')->isRequired()->cannotBeEmpty()->end()
+                    ->scalarNode('user_token')->defaultNull()->end()
+                    ->scalarNode('user_session')->defaultNull()->end()
+                    ->scalarNode('logger_login_user')->defaultNull()->end()
+                    ->scalarNode('two_factor_code')->defaultNull()->end()
+                    ->scalarNode('permission_role')->defaultNull()->end()
+                    ->scalarNode('permission_group')->defaultNull()->end()
+                    ->scalarNode('user_permission_role')->defaultNull()->end()
+                    ->scalarNode('user_permission_group')->defaultNull()->end()
+                    ->scalarNode('email_change_request')->defaultNull()->end()
+                    ->scalarNode('email_change_validation')->defaultNull()->end()
+                ->end()
+            ->end()
+            ->scalarNode('default_role')
+                ->info('Role added to every user. Never use ROLE_ADMIN here.')
+                ->defaultValue('ROLE_USER')
+                ->cannotBeEmpty()
+            ->end()
+            ->arrayNode('security')
+                ->addDefaultsIfNotSet()
+                ->children()
+                    ->integerNode('user_cache_ttl')->defaultValue(43200)->min(0)->end()
+                ->end()
+            ->end()
+            ->arrayNode('routes')
+                ->addDefaultsIfNotSet()
+                ->children()
+                    ->scalarNode('login')->defaultValue('wlindabla_user_login')->end()
+                    ->scalarNode('login_path')->defaultValue('/admin/form/login')->end()
+                    ->scalarNode('logout')->defaultNull()->end()
+                    ->scalarNode('home')->defaultNull()->end()
+                ->end()
+            ->end()
+            ->arrayNode('templates')
+                ->addDefaultsIfNotSet()
+                ->children()
+                    ->scalarNode('login')->defaultValue('@WlindablaUser/security/login.html.twig')->end()
+                    ->scalarNode('access_denied')->defaultValue('@WlindablaUser/security/error403.html.twig')->end()
+                    ->scalarNode('outcome_page')->defaultValue('@WlindablaUser/email/security/checkEmail.html.twig')->end()
+                    ->scalarNode('email_verification')->defaultValue('@WlindablaUser/email/profile/admin_account_confirmation.html.twig')->end()
+                    ->scalarNode('email_verification_result')->defaultValue('@WlindablaUser/email/security/checkEmail.html.twig')->end()
+                    ->scalarNode('toggle_user_account')->defaultValue('@WlindablaUser/email/profile/toggle_user_account.html.twig')->end()
+                    ->scalarNode('temporary_password')->defaultValue('@WlindablaUser/email/profile/temporary_password.html.twig')->end()
+                    ->scalarNode('password_reset_request')->defaultValue('@WlindablaUser/security/passwordResetRequest.html.twig')->end()
+                    ->scalarNode('password_reset_email')->defaultValue('@WlindablaUser/email/security/passwordResetRequest.html.twig')->end()
+                    ->scalarNode('two_factor_show')->defaultValue('@WlindablaUser/security/twoFactorAuth.html.twig')->end()
+                    ->scalarNode('two_factor_code_email')->defaultValue('@WlindablaUser/email/security/twoFactorCode.html.twig')->end()
+                    ->scalarNode('email_change_old_notification')->defaultValue('@WlindablaUser/email/security/emailChangeOldNotification.html.twig')->end()
+                    ->scalarNode('email_change_new_confirmation')->defaultValue('@WlindablaUser/email/security/emailChangeNewConfirmation.html.twig')->end()
+                    ->scalarNode('email_change_applied')->defaultValue('@WlindablaUser/email/security/emailChangeApplied.html.twig')->end()
+                    ->scalarNode('email_change_not_me_alert')->defaultValue('@WlindablaUser/email/security/emailChangeNotMeAlert.html.twig')->end()
+                    ->scalarNode('email_change_validation_pending')->defaultValue('@WlindablaUser/email/security/emailChangeValidationPending.html.twig')->end()
+                    ->scalarNode('email_change_validation_outcome')->defaultValue('@WlindablaUser/email/security/emailChangeValidationOutcome.html.twig')->end()
+                ->end()
+            ->end()
+            ->arrayNode('password_reset')
+                ->addDefaultsIfNotSet()
+                ->children()
+                    ->scalarNode('request_path')->defaultValue('/forget-password')->end()
+                    ->scalarNode('confirm_path')->defaultValue('/reset-password/confirm/{token}/{id}')->end()
+                ->end()
+            ->end()
+            ->arrayNode('session_control')
+                ->addDefaultsIfNotSet()
+                ->children()
+                    ->scalarNode('redis_session_prefix')->isRequired()->cannotBeEmpty()->end()
+                    ->integerNode('inactivity_hours')->defaultValue(4)->end()
+                    ->integerNode('max_duration_hours')->defaultValue(24)->end()
+                    ->scalarNode('firewall_name')->isRequired()->cannotBeEmpty()->end()
+                    ->arrayNode('excluded_routes')->scalarPrototype()->end()->defaultValue([])->end()
+                ->end()
+            ->end()
+            ->arrayNode('two_factor')
+                ->addDefaultsIfNotSet()
+                ->children()
+                    ->scalarNode('firewall_name')
+                        ->info('Name of the security firewall protecting the area where 2FA applies. Can differ from session_control.firewall_name if your project needs separate perimeters.')
+                        ->isRequired()
+                        ->cannotBeEmpty()
                     ->end()
+                    ->arrayNode('allowed_routes_while_pending')->scalarPrototype()->end()->defaultValue([])->end()
+                    ->integerNode('inactivity_threshold_seconds')->defaultValue(2 * 3600)->end()
+                    ->integerNode('absolute_cap_seconds')->defaultValue(24 * 3600)->end()
+                    ->integerNode('activity_touch_throttle_seconds')->defaultValue(5 * 60)->end()
                 ->end()
-                ->arrayNode('email_change')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->integerNode('token_lifetime')->defaultValue(3600)->end()
-                        ->integerNode('retry_cooldown')->defaultValue(86400)->end()
-                        ->arrayNode('exempt_roles_on_self')
-                            ->info('Roles exempt from double validation when changing their OWN email.')
-                            ->scalarPrototype()->end()
-                            ->defaultValue(['ROLE_SUPER_ADMIN'])
-                        ->end()
-                        ->scalarNode('recovery_initiator_role')
-                            ->info('Role required to initiate a recovery request (lost access to the old address) on behalf of another account.')
-                            ->defaultValue('ROLE_SUPER_ADMIN')
-                        ->end()
-                    ->end()
+            ->end()
+            ->arrayNode('email_change')
+                ->addDefaultsIfNotSet()
+                ->children()
+                    ->integerNode('token_lifetime')->defaultValue(3600)->end()
+                    ->integerNode('retry_cooldown')->defaultValue(86400)->end()
+                    ->arrayNode('exempt_roles_on_self')->scalarPrototype()->end()->defaultValue(['ROLE_SUPER_ADMIN'])->end()
+                    ->scalarNode('recovery_initiator_role')->defaultValue('ROLE_SUPER_ADMIN')->end()
                 ->end()
-                ->scalarNode('default_role')
-                    ->info('Role added to every user. Never use ROLE_ADMIN here.')
-                    ->defaultValue('ROLE_USER')
-                    ->cannotBeEmpty()
-                ->end()
-                ->arrayNode('security')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->integerNode('user_cache_ttl')
-                            ->info('Seconds a loaded/refreshed user stays cached by UserProvider. Lower it if disabling an account or changing roles must take effect faster than this delay.')
-                            ->defaultValue(43200)
-                            ->min(0)
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('routes')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->scalarNode('login')
-                            ->info('Route name to link back to after actions like email verification. Defaults to the bundle-provided login page; override it if your project has its own login route/controller.')
-                            ->defaultValue('wlindabla_user_login')
-                        ->end()
-                        ->scalarNode('login_path')
-                            ->info('URL path of the bundle-provided login page.')
-                            ->defaultValue('admin/form/login')
-                        ->end()
-                        ->scalarNode('logout')
-                            ->info('Route name for the logout link shown on the 2FA screen. Optional — the link is simply omitted if not configured.')
-                            ->defaultNull()
-                        ->end()
-                        ->scalarNode('home')
-                            ->info('Fallback route name shown on verification error pages. Optional — the link is simply omitted if not configured.')
-                            ->defaultNull()
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('templates')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->scalarNode('two_factor_show')->defaultValue('@WlindablaUser/security/twoFactorAuth.html.twig')->end()
-                        ->scalarNode('two_factor_code_email')->defaultValue('@WlindablaUser/email/security/twoFactorCode.html.twig')->end()
-                        ->scalarNode('password_reset_request')->defaultValue('@WlindablaUser/security/passwordResetRequest.html.twig')->end()
-                        ->scalarNode('password_reset_email')->defaultValue('@WlindablaUser/email/security/passwordResetRequest.html.twig')->end()
-                        ->scalarNode('email_verification')
-                            ->defaultValue('@WlindablaUser/email/profile/admin_account_confirmation.html.twig')
-                        ->end()
-                        ->scalarNode('email_verification_result')
-                            ->defaultValue('@WlindablaUser/email/security/checkEmail.html.twig')
-                        ->end()
-                        ->scalarNode('login')
-                            ->defaultValue('@WlindablaUser/security/login.html.twig')
-                        ->end()
-                        ->scalarNode('toggle_user_account')
-                            ->info('Twig template rendered by ToggleUserAccountSubscriber when an account is enabled/disabled.')
-                            ->defaultValue('email/profile/toggle_user_account.html.twig')
-                        ->end()
-                        ->scalarNode('temporary_password')
-                            ->defaultValue('@WlindablaUser/email/profile/temporary_password.html.twig')
-                        ->end()
-                        ->scalarNode('outcome_page')
-                            ->defaultValue('@WlindablaUser/email/security/checkEmail.html.twig')
-                        ->end()
-                        ->scalarNode('password_reset_request')   // formulaire, pas la page de résultat
-                            ->defaultValue('security/passwordResetRequest.html.twig')
-                        ->end()
-                        ->scalarNode('password_reset_email')
-                            ->defaultValue('@WlindablaUser/email/security/passwordResetRequest.html.twig')
-                        ->end()
-                        ->scalarNode('access_denied')
-                            ->defaultValue('@WlindablaUser/security/error403.html.twig')
-                        ->end()
-                        ->scalarNode('two_factor_show')->defaultValue('security/twoFactorAuth.html.twig')->end()
-                        ->scalarNode('two_factor_code_email')->defaultValue('email/security/twoFactorCode.html.twig')->end()
-                        ->scalarNode('email_change_old_notification')->defaultValue('@WlindablaUser/email/security/emailChangeOldNotification.html.twig')->end()
-                        ->scalarNode('email_change_new_confirmation')->defaultValue('@WlindablaUser/email/security/emailChangeNewConfirmation.html.twig')->end()
-                        ->scalarNode('email_change_applied')->defaultValue('@WlindablaUser/email/security/emailChangeApplied.html.twig')->end()
-                        ->scalarNode('email_change_not_me_alert')->defaultValue('@WlindablaUser/email/security/emailChangeNotMeAlert.html.twig')->end()
-                        ->scalarNode('email_change_validation_pending')->defaultValue('@WlindablaUser/email/security/emailChangeValidationPending.html.twig')->end()
-                        ->scalarNode('email_change_validation_outcome')->defaultValue('@WlindablaUser/email/security/emailChangeValidationOutcome.html.twig')->end()
-                    ->end()
-                ->end()
-                ->arrayNode('password_reset')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->scalarNode('request_path')
-                            ->defaultValue('/forget-password')
-                        ->end()
-                        ->scalarNode('confirm_path')
-                            ->defaultValue('/reset-password/confirm/{token}/{id}')
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('session_control')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->scalarNode('redis_session_prefix')
-                            ->info('MUST match the prefix configured for RedisSessionHandler in your services.yaml, or revoked sessions will never actually be destroyed in Redis.')
-                            ->isRequired()
-                            ->cannotBeEmpty()
-                        ->end()
-                        ->integerNode('inactivity_hours')->defaultValue(4)->end()
-                        ->integerNode('max_duration_hours')->defaultValue(24)->end()
-                    ->end()
-                ->end()
-                ->arrayNode('session_control')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        // ... inactivity_hours / max_duration_hours déjà là
-                        ->scalarNode('firewall_name')
-                            ->info('Name of the security firewall protecting the area where single-session policy applies (e.g. "main", "admin"). Required for SessionControlListener to know which requests to check.')
-                            ->isRequired()
-                            ->cannotBeEmpty()
-                        ->end()
-                        ->arrayNode('excluded_routes')
-                            ->info('Route names to skip even inside the protected firewall (login, logout, session-conflict page, 2FA pages).')
-                            ->scalarPrototype()->end()
-                            ->defaultValue([])
-                        ->end()
-                    ->end()
-                ->end()
-                ->scalarNode('two_factor_show')
-                    ->defaultValue('security/twoFactorAuth.html.twig')
-                ->end()
-                ->arrayNode('two_factor')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->arrayNode('allowed_routes_while_pending')
-                            ->info('Route names reachable while 2FA is pending (the code screen itself, resend, logout, login).')
-                            ->scalarPrototype()->end()
-                            ->defaultValue([])
-                        ->end()
-                        ->integerNode('inactivity_threshold_seconds')->defaultValue(2 * 3600)->end()
-                        ->integerNode('absolute_cap_seconds')->defaultValue(24 * 3600)->end()
-                        ->integerNode('activity_touch_throttle_seconds')->defaultValue(5 * 60)->end()
-                    ->end()
-                ->end()
-            ->end();
+            ->end()
+        ->end();
     }
 
-    /**
-     * @param array{classes: array{user: string}, default_role: string} $config
+        /**
+     * @param array<string, mixed> $config
      */
     public function loadExtension(
         array $config,
         ContainerConfigurator $container,
         ContainerBuilder $builder,
     ): void {
-        $container->parameters()
-            ->set('wlindabla_user.classes.user', $config['classes']['user'])
+        $parameters = $container->parameters();
+
+        foreach ($config['classes'] as $key => $value) {
+            $parameters->set('wlindabla_user.classes.'.$key, $value);
+        }
+
+        $parameters
             ->set('wlindabla_user.default_role', $config['default_role'])
             ->set('wlindabla_user.security.user_cache_ttl', $config['security']['user_cache_ttl'])
             ->set('wlindabla_user.templates', $config['templates'])
             ->set('wlindabla_user.routes.login', $config['routes']['login'])
+            ->set('wlindabla_user.routes.login_path', $config['routes']['login_path'])
+            ->set('wlindabla_user.routes.logout', $config['routes']['logout'])
             ->set('wlindabla_user.routes.home', $config['routes']['home'])
-            ->set('wlindabla_user.login_path', $config['login_path']);
-            ;
+            ->set('wlindabla_user.password_reset.request_path', $config['password_reset']['request_path'])
+            ->set('wlindabla_user.password_reset.confirm_path', $config['password_reset']['confirm_path'])
+            ->set('wlindabla_user.session_control.redis_session_prefix', $config['session_control']['redis_session_prefix'])
+            ->set('wlindabla_user.session_control.inactivity_hours', $config['session_control']['inactivity_hours'])
+            ->set('wlindabla_user.session_control.max_duration_hours', $config['session_control']['max_duration_hours'])
+            ->set('wlindabla_user.session_control.firewall_name', $config['session_control']['firewall_name'])
+            ->set('wlindabla_user.session_control.excluded_routes', $config['session_control']['excluded_routes'])
+            ->set('wlindabla_user.two_factor.firewall_name', $config['two_factor']['firewall_name'])
+            ->set('wlindabla_user.two_factor.allowed_routes_while_pending', $config['two_factor']['allowed_routes_while_pending'])
+            ->set('wlindabla_user.two_factor.inactivity_threshold_seconds', $config['two_factor']['inactivity_threshold_seconds'])
+            ->set('wlindabla_user.two_factor.absolute_cap_seconds', $config['two_factor']['absolute_cap_seconds'])
+            ->set('wlindabla_user.two_factor.activity_touch_throttle_seconds', $config['two_factor']['activity_touch_throttle_seconds'])
+            ->set('wlindabla_user.email_change.token_lifetime', $config['email_change']['token_lifetime'])
+            ->set('wlindabla_user.email_change.retry_cooldown', $config['email_change']['retry_cooldown'])
+            ->set('wlindabla_user.email_change.exempt_roles_on_self', $config['email_change']['exempt_roles_on_self'])
+            ->set('wlindabla_user.email_change.recovery_initiator_role', $config['email_change']['recovery_initiator_role']);
+
+        $container->import('../config/services.php');
     }
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
-        $config = $builder->getExtensionConfig('wlindabla_user');
-        $userClass = $config[0]['classes']['user'] ?? null;
+        $config = $builder->getExtensionConfig('wlindabla_user')[0] ?? [];
+        $classes = $config['classes'] ?? [];
+        $userClass = $classes['user'] ?? null;
 
         if (null === $userClass) {
             return;
         }
 
+        $resolveTargetEntities = [UserInterface::class => $userClass];
+
+        $optionalInterfaceMap = [
+            'permission_role' => PermissionRoleInterface::class,
+            'permission_group' => PermissionGroupInterface::class,
+            'user_permission_role' => UserPermissionRoleInterface::class,
+            'user_permission_group' => UserPermissionGroupInterface::class,
+            'email_change_request' => EmailChangeRequestInterface::class,
+            'email_change_validation' => EmailChangeValidationInterface::class,
+        ];
+
+        foreach ($optionalInterfaceMap as $classKey => $interface) {
+            if (isset($classes[$classKey])) {
+                $resolveTargetEntities[$interface] = $classes[$classKey];
+            }
+        }
+
         $container->extension('doctrine', [
             'orm' => [
-             'resolve_target_entities' => [
-                UserInterface::class => $userClass,
-                PermissionRoleInterface::class => $config[0]['classes']['permission_role'] ?? null,
-                PermissionGroupInterface::class => $config[0]['classes']['permission_group'] ?? null,
-                EmailChangeRequestInterface::class => $config[0]['classes']['email_change_request'] ?? null,
-        ],
-    ],
-]);
+                'resolve_target_entities' => $resolveTargetEntities,
+            ],
+        ]);
     }
 }
