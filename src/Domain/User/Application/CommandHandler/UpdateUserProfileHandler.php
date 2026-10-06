@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\Domain\User\Application\CommandHandler;
 
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
+use Wlindabla\UserBundle\Domain\User\Service\CanonicalFieldsUpdaterInterface;
 
 /**
  * Called by SonataAdmin's own persistence events when the project uses
@@ -31,7 +32,8 @@ use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 final readonly class UpdateUserProfileHandler
 {
     public function __construct(
-        private UserManagerInterface $userManager
+        private UserManagerInterface $userManager,
+        private CanonicalFieldsUpdaterInterface $canonicalFieldsUpdater
     ) {
     }
 
@@ -53,6 +55,7 @@ final readonly class UpdateUserProfileHandler
             $user->setSlug(sha1($slugHash));
         }
 
+        $this->canonicalFieldsUpdater->updateCanonicalFields($user);
         $this->userManager->save($user,true);
     }
 }

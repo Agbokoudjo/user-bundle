@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\Domain\User\Service;
 
 /**
- * Gère la mise à jour sécurisée du mot de passe avec traçabilité.
- * @author AGBOKOUDJO Franck
- */
+* Manages secure password updates with audit logging. 
+* @author AGBOKOUDJO Franck
+*/
 interface UpdatePasswordUserServiceInterface
 {
     public function handle(

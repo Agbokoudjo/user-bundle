@@ -79,8 +79,8 @@ final class PasswordResetRequestController extends AbstractController implements
 
             $this->passwordResetService->requestReset($form->get('username')->getData());
 
-            // Message volontairement générique : ne jamais confirmer/infirmer
-            // l'existence d'un compte (anti-énumération).
+            // Intentionally generic message: never confirm or deny
+            // the existence of an account (anti-enumeration).
             $this->addFlash('success', $this->translator->trans('password_reset.request_sent', [], 'WlindablaUserBundle'));
 
             return $this->outcomePageRenderer->render($this);

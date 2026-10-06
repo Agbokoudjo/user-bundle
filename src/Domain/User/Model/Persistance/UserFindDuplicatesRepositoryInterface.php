@@ -22,18 +22,18 @@ namespace Wlindabla\UserBundle\Domain\User\Model\Persistance;
 interface UserFindDuplicatesRepositoryInterface
 {
     /**
-     * Pré-sélectionne, via l'index GIN pg_trgm, les comptes SonataUser
-     * existants dont le username ressemble le plus à l'identité soumise.
-     *
-     * - opérateur `%` (seul indexable par le GIN pg_trgm), pas la fonction
-     *   similarity() directement dans le WHERE ;
-     * - set_config() plutôt que SET LOCAL, pour accepter un paramètre bindé ;
-     * - la requête complète est englobée dans une transaction explicite
-     *   pour que set_config(..., true) (portée LOCAL) s'applique bien au
-     *   SELECT qui suit, quel que soit le contexte transactionnel appelant.
-     *
-     * @return array<int, array{id: int, username: string, identity_normalized: string, score: float}>
-     */
+    * Pre-selects, using the pg_trgm GIN index, existing SonataUser accounts
+    * whose username most closely resembles the submitted identity. 
+    *
+    * - Uses the `%` operator (the only one indexable by pg_trgm GIN)
+    *   rather than the similarity() function directly in the WHERE clause; 
+    * - Uses set_config() instead of SET LOCAL to allow for a bound parameter; 
+    * - Wraps the entire query in an explicit transaction so that
+    *   set_config(..., true) (LOCAL scope) correctly applies to the
+    *   subsequent SELECT, regardless of the calling transactional context. 
+    *
+    * @return array<int, array{id: int, username: string, identity_normalized: string, score: float}>
+    */
     public function findSimilarCandidates(
         string $rawUsername,
         int $limit = 10,

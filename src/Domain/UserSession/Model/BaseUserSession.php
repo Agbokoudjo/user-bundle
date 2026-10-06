@@ -20,14 +20,14 @@ use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
 
 /**
- * Classe de base pour les sessions utilisateur.
- *
- * Porte toute la logique métier partagée entre les implémentations concrètes.
- * L'entité Doctrine UserSession étend cette classe et y ajoute uniquement
- * les attributs de mapping ORM.
- *
- * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- */
+* Base class for user sessions. 
+*
+* Contains all business logic shared among concrete implementations. 
+* The Doctrine UserSession entity extends this class and adds only
+* the ORM mapping attributes. 
+*
+* @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+*/
 abstract class BaseUserSession implements UserSessionInterface, \Stringable
 {
     protected int|string|null $id = null;

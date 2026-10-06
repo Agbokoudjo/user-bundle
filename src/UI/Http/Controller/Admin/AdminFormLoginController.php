@@ -21,6 +21,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -45,6 +46,7 @@ final class AdminFormLoginController extends AbstractController
     public function __construct(
         private readonly TranslatorInterface $translator,
         private readonly TemplateRegistryInterface $templateRegistry,
+        private readonly UrlGeneratorInterface $urlGenerator,
         private readonly ?CsrfTokenManagerInterface $csrfTokenManager = null,
         private readonly ?LoggerInterface $logger = null,
         private readonly ?string $homeRouteName = null,
@@ -57,7 +59,7 @@ final class AdminFormLoginController extends AbstractController
         if ($this->getUser()) {
             $this->addFlash('info', $this->translator->trans('login.already_authenticated', [], 'WlindablaUserBundle'));
 
-            return $this->redirect($this->safeGenerateUrl($this->homeRouteName, $this->logger) ?? '/');
+            return $this->redirect($this->safeGenerateUrl($this->homeRouteName,$this->urlGenerator, $this->logger) ?? '/');
         }
 
         $csrfToken = null;
@@ -70,6 +72,7 @@ final class AdminFormLoginController extends AbstractController
             'error' => $authenticationUtils->getLastAuthenticationError(),
             'last_username' => $authenticationUtils->getLastUsername(),
             'csrf_token' => $csrfToken,
+            'site_name'=>$this->siteName
         ]);
     }
 }

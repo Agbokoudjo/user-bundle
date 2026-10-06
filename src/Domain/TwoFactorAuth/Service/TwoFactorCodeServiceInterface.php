@@ -17,25 +17,30 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\Domain\TwoFactorAuth\Service;
 
 /**
- * Contrat du service d'orchestration du MFA par email.
+ * Contract for the Email-based MFA orchestration service.
  *
- *l'envoi de l'email est délégué
- * en tâche async par le Mailer (cf SystemMailer::send -> sendAsync).
+ * Note: Email dispatch is delegated asynchronously by the underlying mailer component
+ * (e.g., via SystemMailer::send -> sendAsync).
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  */
 interface TwoFactorCodeServiceInterface
 {
     /**
-     * Génère un nouveau code, invalide les codes PENDING précédents de
-     * l'utilisateur, persiste le hash et déclenche l'envoi de l'email.
+     * Generates a new code, invalidates any existing PENDING codes for the user,
+     * persists the hashed token, and triggers the email notification dispatch.
      *
+     * @param string      $userIdentifier The unique identifier of the user target.
+     * @param string      $plainCode      The plain-text MFA code to be hashed and delivered.
+     * @param string      $context        The operational context triggering the code dispatch.
+     * @param string      $siteName       The application or tenant name displayed in the message.
+     * @param string|null $ipAddress      The client IP address requesting the MFA code, if available.
      */
     public function sendCodeByEmail(
         string $userIdentifier, 
         string $plainCode, 
         string $context,
         string $siteName,
-        ?string $ipAddress): void ;
-
+        ?string $ipAddress
+    ): void;
 }

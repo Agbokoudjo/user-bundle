@@ -19,9 +19,9 @@ namespace Wlindabla\UserBundle\Domain\User\Application\CommandHandler;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 
 /**
- * Applique les changements de vérification d'email à l'utilisateur.
- *
- */
+* Applies email verification changes to the user. 
+*
+*/
 final readonly class ApplyEmailVerificationHandler
 {
     public function __construct(

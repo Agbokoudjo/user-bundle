@@ -23,12 +23,12 @@ use Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManag
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
 
 /**
- * Révoque la ligne UserSession (raison MANUAL_LOGOUT) lors d'une
- * déconnexion volontaire, pour que la politique single-session reste
- * cohérente immédiatement (pas d'attente du scheduler d'inactivité).
- *
- * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- */
+* Revokes the UserSession record (reason: MANUAL_LOGOUT) upon voluntary
+* logout, ensuring the single-session policy remains consistent
+* immediately (without waiting for the inactivity scheduler). 
+*
+* @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+*/
 #[AsEventListener(event: LogoutEvent::class)]
 final readonly class LogoutSubscriber
 {
@@ -50,7 +50,7 @@ final readonly class LogoutSubscriber
         try {
             $this->sessionManager->removeSession($session->getId(), UserSessionRevokedReason::MANUAL_LOGOUT);
         } catch (\Throwable $throwable) {
-            $this->logger->error('Erreur lors de la révocation de session au logout', [
+            $this->logger->error('Error revoking session on logout', [
                 'exception_message' => $throwable->getMessage(),
             ]);
         }

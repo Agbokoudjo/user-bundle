@@ -20,10 +20,6 @@ use Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum\TwoFactorCodeStatus;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\TwoFactorCodeInterface;
 
 /**
- * Implémentation métier commune, indépendante de Doctrine.
- * L'entité d'infrastructure (App\Infrastructure\Doctrine\Entity\TwoFactorCode)
- * n'apporte que le mapping ORM.
- *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  */
 abstract class AbstractTwoFactorCode implements TwoFactorCodeInterface

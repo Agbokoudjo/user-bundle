@@ -19,52 +19,51 @@ namespace Wlindabla\UserBundle\Domain\User\Service;
 use Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException;
 
 /**
- * Interface pour le flux "mot de passe oublié".
+ * Interface contract for the "forgot password" workflow.
  *
- * Flux :
- * 1. L'utilisateur soumet son email/username -> requestReset() génère un token,
- *    le hash, le stocke, puis envoie (en asynchrone) un email de confirmation.
- * 2. L'utilisateur clique sur le lien reçu -> confirmReset() valide le token puis,
- *    par sécurité (utilisateurs du secteur santé), déclenche la génération d'un
- *    mot de passe temporaire envoyé par email (jamais de saisie de mot de passe
- *    en clair depuis un lien email non authentifié).
+ * Workflow overview:
+ * 1. User submits their email or username -> `requestReset()` generates a secure token,
+ *    hashes it, stores it, and triggers an asynchronous confirmation email dispatch.
+ * 2. User clicks the received link -> `confirmReset()` validates the token and,
+ *    for enhanced security (e.g., healthcare sector compliance), generates a temporary
+ *    password dispatched via email (preventing direct, unauthenticated plain-text password
+ *    input from email links).
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package App\Infrastructure\Service
  */
 interface PasswordResetInterface
 {
     /**
-     * Délai minimum entre deux demandes de réinitialisation (en secondes).
-     * Protège contre le spam / l'énumération de comptes.
+     * Minimum cooldown period between two consecutive reset requests (in seconds).
+     * Prevents email spamming and mitigates account enumeration attacks.
      */
     public const int RETRY_COOLDOWN = 60; // 1 minute
 
     /**
-     * Durée de vie du lien de confirmation en secondes (1 heure).
+     * Lifetime duration of the reset confirmation token in seconds (1 hour).
      */
     public const int TOKEN_LIFETIME = 3600;
 
     /**
-     * Traite une demande de réinitialisation de mot de passe.
+     * Processes a password reset request.
      *
-     * Ne lève jamais d'exception pour "utilisateur introuvable" : le comportement
-     * observable côté client doit être identique que le compte existe ou non
-     * (protection contre l'énumération de comptes).
+     * To prevent user enumeration vectors, this method MUST NOT throw exceptions
+     * or leak information if a user account is not found. The observable response
+     * on the client side must remain identical regardless of user existence.
      *
-     * @param string $usernameOrEmail Identifiant ou email saisi par l'utilisateur
+     * @param string $usernameOrEmail User identifier or email submitted via the form.
      */
     public function requestReset(string $usernameOrEmail): void;
 
     /**
-     * Confirme le lien reçu par email et déclenche la génération du mot de passe
-     * temporaire (envoyé par email à l'utilisateur).
+     * Confirms the token received via email and triggers temporary password generation,
+     * which is then securely sent to the user's registered email address.
      *
-     * @param string     $rawToken Le token en clair reçu via l'URL
-     * @param string|int $id       L'identifiant (déchiffré) de l'utilisateur
+     * @param string     $rawToken Plain-text token provided in the URL query parameters.
+     * @param string|int $id       Decrypted internal identifier of the target user.
      *
-     * @throws InvalidTokenException Si le token est invalide, expiré, déjà utilisé,
-     *                                ou si l'utilisateur n'est pas trouvé
+     * @throws InvalidTokenException If the token is invalid, expired, already consumed,
+     *                                or if no associated user is found.
      */
     public function confirmReset(string $rawToken, string|int $id): void;
 }

@@ -32,37 +32,38 @@ use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
  * Framework-agnostic base implementation of a user.
  *
  * Persistence mapping is added by the Doctrine layer, not here.
+ *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
 #[ORM\MappedSuperclass]
 abstract class BaseUser extends AbstractBaseUser implements UserInterface
 {
-    #[Assert\NotBlank(message: 'Le nom complet est obligatoire.')]
-    #[Assert\NotNull(message: 'Le nom complet ne peut pas être nul.')]
+    #[Assert\NotBlank(message: 'Full name is required.')]
+    #[Assert\NotNull(message: 'Full name cannot be null.')]
     #[Assert\Length(
         min: 6,
         max: 255,
-        minMessage: 'Le nom complet doit contenir au moins {{ limit }} caractères.',
-        maxMessage: 'Le nom complet ne peut pas dépasser {{ limit }} caractères.',
+        minMessage: 'Full name must contain at least {{ limit }} characters.',
+        maxMessage: 'Full name cannot exceed {{ limit }} characters.',
     )]
     #[Assert\Regex(
         pattern: '/^[\p{L}\p{M}\s\-\.]+$/u',
-        message: 'Le nom complet ne peut contenir que des lettres (toutes langues), espaces, tirets, points',
+        message: 'Full name can only contain letters (all languages), spaces, hyphens, and dots.',
     )]
     #[ORM\Column(length: 255, unique: true)]
     #[Groups(['user:cache', 'user:security', 'user:read'])]
     protected ?string $username = null;
 
-    #[Assert\NotNull(message: 'L\'email ne peut pas être nul.')]
+    #[Assert\NotNull(message: 'Email cannot be null.')]
     #[Assert\Length(
         min: 6,
         max: 200,
-        minMessage: 'L\'email doit contenir au moins {{ limit }} caractères.',
-        maxMessage: 'L\'email ne peut pas dépasser {{ limit }} caractères.',
+        minMessage: 'Email must contain at least {{ limit }} characters.',
+        maxMessage: 'Email cannot exceed {{ limit }} characters.',
     )]
     #[Assert\Email(
-        message: '{{ value }} n\'est pas une adresse email valide.',
+        message: '{{ value }} is not a valid email address.',
         mode: 'html5',
     )]
     #[ORM\Column(type: "string", length: 200, unique: true)]
@@ -82,7 +83,7 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
     #[ORM\Column(type: 'json')]
     protected array $roles = [];
 
-     #[ORM\Column(type: 'datetime', nullable: true)]
+    #[ORM\Column(type: 'datetime', nullable: true)]
     #[Groups(['user:cache', 'user:security'])]
     protected ?\DateTimeInterface $passwordRequestedAt = null;
 
@@ -91,9 +92,9 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
     protected ?\DateTimeImmutable $emailVerifiedAt = null;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
-    #[Groups(['user:cache', 'user:security','user:read'])]
+    #[Groups(['user:cache', 'user:security', 'user:read'])]
     protected ?\DateTimeInterface $lastLogin = null;
-
+    
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     #[Groups(['user:cache', 'user:security'])]
     protected ?string $confirmationToken = null;
@@ -112,15 +113,15 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
 
     #[Assert\File(
         maxSize: '2M',
-        mimeTypes: ['image/jpeg', 'image/png', 'image/webp','image/jpg'],
-        mimeTypesMessage: 'Merci de fournir une image JPG, PNG ou WEBP valide.',
-        maxSizeMessage: 'L\'image ne doit pas dépasser {{ limit }} {{ suffix }}.',
+        mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
+        mimeTypesMessage: 'Please upload a valid JPG, PNG, or WEBP image.',
+        maxSizeMessage: 'The image size cannot exceed {{ limit }} {{ suffix }}.',
     )]
     #[Vich\UploadableField(mapping: 'avatars', fileNameProperty: 'avatarName')]
     protected ?File $avatarFile = null;
 
     /**
-     * Timestamp pour Vich (obligatoire)
+     * Timestamp for Vich (required)
      */
     #[ORM\Column(type: 'datetime', nullable: true)]
     #[Groups(['user:cache', 'user:read'])]
@@ -133,40 +134,35 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
     #[Assert\NotBlank()]
     #[Assert\Length(min: 8, max: 80)]
     #[Assert\NotNull]
-    #[ORM\Column(type: 'phone_number',length:80,nullable: true)]
+    #[ORM\Column(type: 'phone_number', length: 80, nullable: true)]
     #[Groups(['user:read'])]
     protected ?PhoneNumber $phone = null;
 
     /**
-     * Dernière validation réussie d'un code MFA — posé exclusivement par
-     * TwoFactorAuthController::verify(). Rattaché au COMPTE plutôt qu'à
-     * UserSession volontairement : une réauthentification remember-me crée
-     * une nouvelle ligne UserSession à chaque fois (nouvel identifiant de
-     * session PHP), ce qui ferait perdre la fraîcheur MFA à chaque
-     * redémarrage de session PHP si elle y était rattachée. Ici, elle
-     * survit à n'importe quel changement de cookie/session.
+     * Timestamp of the last successful MFA code verification — set exclusively by
+     * TwoFactorAuthController::verify(). Intentionally attached to the ACCOUNT rather
+     * than UserSession: a remember-me re-authentication creates a new UserSession record
+     * every time (new PHP session ID), which would reset MFA freshness on every PHP session
+     * restart if stored there. Here, it persists across cookie/session changes.
      */
     #[Groups(['user:cache', 'user:security'])]
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     protected ?\DateTimeImmutable $twoFactorValidatedAt = null;
 
     /**
-     * Pouls d'activité admin — mis à jour (avec throttle, cf.
-     * TwoFactorAuthListener) à chaque requête admin qui passe le contrôle
-     * MFA. Sert à mesurer l'INACTIVITÉ glissante plutôt qu'une horloge fixe
-     * depuis le login : une session active en continu ne redemande jamais
-     * de code, une session endormie plus de 2h en redemande un.
+     * Admin activity heartbeat — updated (throttled, see TwoFactorAuthListener) on
+     * every admin request that passes the MFA check. Used to measure sliding INACTIVITY
+     * rather than a fixed clock since login: a continuously active session will never require
+     * a new code, while a session idle for over 2 hours will prompt for one.
      */
     #[Groups(['user:cache', 'user:security'])]
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     protected ?\DateTimeImmutable $twoFactorLastCheckedAt = null;
 
-
     /**
-     * Version normalisée (Unicode, sans accents/ponctuation, minuscule) de
-     * $username, recalculée automatiquement à chaque persist/update par
-     * SonataUserDoctrineLifecycleListener. Indexée en base (index GIN
-     * pg_trgm) pour la détection de doublons.
+     * Normalized version (Unicode, without accents/punctuation, lowercase) of $username,
+     * automatically recalculated on every persist/update by SonataUserDoctrineLifecycleListener.
+     * Indexed in database (pg_trgm GIN index) for duplicate detection.
      */
     #[ORM\Column(name: 'identity_normalized', type: 'string', nullable: true)]
     protected string $identityNormalized = '';
@@ -186,7 +182,6 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
         return str_replace(["’", '`'], "'", $value);
     }
 
-
     /**
      * Get the value of phone
      */
@@ -203,18 +198,17 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
         $this->phone = $phone;
     }
 
-
     public function getAvatarFile(): ?File
     {
         return $this->avatarFile;
     }
 
-    public function setAvatarFile(?File $avatarFile=null): void
+    public function setAvatarFile(?File $avatarFile = null): void
     {
         $this->avatarFile = $avatarFile;
 
         if (null !== $avatarFile) {
-            $this->avatarUpdatedAt = new \DateTime('now',new \DateTimeZone('UTC'));
+            $this->avatarUpdatedAt = new \DateTime('now', new \DateTimeZone('UTC'));
         }
     }
 
@@ -239,9 +233,8 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
     }
 
     /**
-     * Pose les deux champs à "maintenant" (UTC) en une seule fois — appelé
-     * exclusivement par TwoFactorAuthController::verify() à la validation
-     * réussie d'un code.
+     * Sets both timestamp fields to "now" (UTC) in a single operation — called
+     * exclusively by TwoFactorAuthController::verify() upon successful code validation.
      */
     public function markTwoFactorValidated(): void
     {

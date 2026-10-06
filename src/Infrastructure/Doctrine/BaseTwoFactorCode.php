@@ -21,14 +21,14 @@ use Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum\TwoFactorCodeStatus;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\AbstractTwoFactorCode;
 
 /**
- * Code MFA à usage unique, envoyé par email (13 chiffres + 7 lettres).
- *
- * Une ligne par code émis (pas d'update en place du même enregistrement
- * pour "renvoyer" : chaque renvoi crée une nouvelle ligne PENDING et
- * invalide les précédentes — garde une piste d'audit complète).
- *
- * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- */
+* One-time MFA code sent via email (13 digits + 7 letters). 
+*
+* One row per issued code (no in-place updates of the same record
+* for "resending": each resend creates a new PENDING row and
+* invalidates previous ones—maintaining a complete audit trail). 
+*
+* @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+*/
 #[ORM\MappedSuperclass]
 abstract class BaseTwoFactorCode extends AbstractTwoFactorCode
 {

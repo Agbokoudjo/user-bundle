@@ -20,12 +20,12 @@ use Wlindabla\ShareServiceBundle\Similarity\IdentitySimilarityChecker;
 use Wlindabla\UserBundle\Domain\User\Model\Persistance\UserFindDuplicatesRepositoryInterface;
 
 /**
- * Détecte qu'un username soumis (création manuelle d'un compte admin,
- * ou approbation d'une AccountRequest) ressemble fortement à un compte
- * SonataUser déjà existant.
- *
- * pré-sélection indexée (pg_trgm) puis confirmation fine (IdentitySimilarityChecker).
- */
+* Detects that a submitted username (manual admin account creation
+* or approval of an AccountRequest) strongly resembles an existing
+* SonataUser account. 
+*
+* Indexed pre-selection (pg_trgm) followed by fine-grained confirmation (IdentitySimilarityChecker). 
+*/
 final class UserDuplicateFinderService
 {
     public function __construct(

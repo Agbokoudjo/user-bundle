@@ -19,33 +19,48 @@ namespace Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\Persistance;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\TwoFactorCodeInterface;
 
 /**
- * Persistance des codes MFA.
+ * Handles persistence operations for MFA codes.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  */
 interface TwoFactorCodeRepositoryInterface
 {
     /**
-     * Le code PENDING le plus récent d'un utilisateur (borne non expirée
-     * exclue volontairement : c'est au manager/domaine de trancher via
-     * isPending(), pour garder la règle métier à un seul endroit).
+     * Finds the most recent PENDING code for a given user.
+     *
+     * Note: Non-expired bounds are intentionally excluded from the query level.
+     * Expiration checking is delegated to the domain layer (via `isPending()`)
+     * to enforce single-source-of-truth business rules.
      */
-    public function findLatestPending(string $userIdentifier): ?TwoFactorCodeInterface ;
+    public function findLatestPending(string $userIdentifier): ?TwoFactorCodeInterface;
 
     /**
-     * Nombre de codes envoyés depuis $since (fenêtre de limitation de débit,
-     * 3 envois / 15 min) — compte les lignes créées, PENDING ou non.
+     * Counts the number of codes sent for a user since a given timestamp.
+     *
+     * Used primarily for rate limiting windows (e.g., max 3 dispatches per 15 min).
+     * Counts all generated records regardless of their status (PENDING or otherwise).
      */
-    public function countSentSince(string $userIdentifier, \DateTimeInterface $since): int ;
-
-    public function save(TwoFactorCodeInterface $code, bool $flush = true): void ;
+    public function countSentSince(string $userIdentifier, \DateTimeInterface$since): int;
 
     /**
-     * Invalide (EXPIRED) tous les codes PENDING d'un utilisateur — appelé
-     * avant de générer un nouveau code, et à la vérification réussie pour
-     * empêcher la réutilisation d'un code plus ancien encore valide.
+     * Persists a MFA code instance.
+     *
+     * @param bool $flush Whether to flush changes immediately to the storage backend.
      */
-    public function invalidatePending(string $userIdentifier): void ;
+    public function save(TwoFactorCodeInterface $code, bool$flush = true): void;
 
-    public function getClass():string ;
+    /**
+     * Invalidates (marks as EXPIRED) all PENDING codes for a given user.
+     *
+     * Should be invoked prior to issuing a new code or upon successful verification
+     * to prevent replay attacks using older, unexpired codes.
+     */
+    public function invalidatePending(string $userIdentifier): void;
+
+    /**
+     * Returns the fully qualified class name of the managed entity/model.
+     *
+     * @return class-string<TwoFactorCodeInterface>
+     */
+    public function getClass(): string;
 }

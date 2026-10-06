@@ -16,76 +16,76 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\Domain\User\Service;
 
-use App\Infrastructure\Exception\InvalidTokenException;
+use Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException;
 
 /**
- * Interface pour la vérification des emails utilisateurs.
+ * Interface for user email verification.
  * 
- * Définit le contrat pour valider les tokens de confirmation d'email
- * et activer les comptes utilisateurs après vérification.
+ * Defines the contract to validate email confirmation tokens
+ * and activate user accounts upon successful verification.
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package App\Domain\User\Service
+ * @package Wlindabla\UserBundle\Domain\User\Service
  */
 interface EmailVerificationInterface
 {
     /**
-     * Délai minimum entre deux demandes de vérification (en secondes).
+     * Minimum delay between two verification requests (in seconds).
      */
     public const RESEND_COOLDOWN = 60; // 1 minute
 
     /**
-     * Durée de vie d'un token de vérification en secondes (1 heure).
+     * Lifetime of a verification token in seconds (1 hour).
      */
     public const TOKEN_LIFETIME = 3600;
 
     /**
-     * Valide le token de confirmation et active le compte utilisateur.
+     * Validates the confirmation token and activates the user account.
      * 
-     * Cette méthode effectue les vérifications suivantes :
-     * - Existence de l'utilisateur avec le slug fourni
-     * - Validité du token (comparaison avec le hash stocké)
-     * - Non-expiration du token (selon TOKEN_LIFETIME)
-     * - Token non déjà utilisé
+     * This method performs the following checks:
+     * - User existence matching the provided identifier
+     * - Token validity (comparison with the stored hash)
+     * - Token expiration status (based on TOKEN_LIFETIME)
+     * - Token single-use check (ensures token has not been used yet)
      * 
-     * Si toutes les vérifications passent :
-     * - Marque l'email comme vérifié
-     * - Supprime le token de confirmation
-     * - Active automatiquement le compte pour les utilisateurs simples (Client, Simple)
-     * - Les comptes Admin/Member nécessitent une activation manuelle par un administrateur
+     * If all checks pass:
+     * - Marks the email as verified
+     * - Removes the confirmation token
+     * - Automatically activates the account for standard users (Client, Simple)
+     * - Admin/Member accounts require manual activation by an administrator
      *
-     * @param string $rawToken Le token en clair reçu via l'URL de vérification
-     * @param string|int $id l'identifiant unique de l'utilisateur
+     * @param string $rawToken The plain text token received via the verification URL
+     * @param string|int $id The unique identifier of the user
      * 
      * @return void
      * 
-     * @throws InvalidTokenException Si le token est invalide, expiré, déjà utilisé, ou si l'utilisateur n'est pas trouvé
-     *                               - Code CODE_INVALID (1001) : Token ne correspond pas au hash
-     *                               - Code CODE_EXPIRED (1002) : Token a dépassé sa durée de vie
-     *                               - Code CODE_ALREADY_USED (1003) : Token déjà consommé
-     *                               - Code CODE_USER_NOT_FOUND (1004) : Utilisateur introuvable
+     * @throws InvalidTokenException If the token is invalid, expired, already used, or if the user is not found
+     *                               - Code CODE_INVALID (1001): Token does not match the stored hash
+     *                               - Code CODE_EXPIRED (1002): Token has exceeded its lifetime
+     *                               - Code CODE_ALREADY_USED (1003): Token has already been consumed
+     *                               - Code CODE_USER_NOT_FOUND (1004): User could not be found
      */
     public function verifyEmail(string $rawToken, string|int $id): void;
 
-
     /**
-     * Génère et envoie un nouveau token de vérification d'email.
-     * La génération et le rate limiting sont délégués à SecureTokenService.
-     * Cette méthode :
-     * 1. Vérifie l'existence de l'utilisateur
-     * 2. Vérifie si l'email n'est pas déjà vérifié
-     * 3. Applique un rate limiting (délai minimum entre demandes)
-     * 4. Génère un nouveau token cryptographiquement sécurisé
-     * 5. Hashe et stocke le token
-     * 6. Déclenche l'événement d'envoi d'email
+     * Generates and sends a new email verification token.
+     * Token generation and rate limiting are delegated to SecureTokenService.
+     * 
+     * This method:
+     * 1. Checks user existence
+     * 2. Verifies whether the email is not already verified
+     * 3. Applies rate limiting (minimum cooldown between requests)
+     * 4. Generates a new cryptographically secure token
+     * 5. Hashes and stores the token
+     * 6. Dispatches the email notification event
      *
-     * @param string|int $id l'identifiant unique de l'utilisateur
+     * @param string|int $id The unique identifier of the user
      * 
      * @return void
      * 
-     * @throws InvalidTokenException Si l'utilisateur n'existe pas, l'email est déjà vérifié,
-     *                               ou si le délai minimum entre demandes n'est pas respecté
-     * @throws \RuntimeException Si la génération ou le hachage du token échoue
+     * @throws InvalidTokenException If the user does not exist, the email is already verified,
+     *                               or if the cooldown period between requests has not elapsed
+     * @throws \RuntimeException If token generation or hashing fails
      */
     public function resendVerificationEmail(string|int $id): void;
 }

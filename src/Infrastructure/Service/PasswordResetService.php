@@ -27,17 +27,16 @@ use Wlindabla\UserBundle\Domain\User\Service\PasswordResetInterface;
 use Wlindabla\UserBundle\Infrastructure\Service\PasswordResetMailerService;
 
 /**
- * Gère le flux "mot de passe oublié" de bout en bout.
- *
- * Pour des raisons de sécurité (utilisateurs finaux issus du secteur de la santé),
- * aucune saisie de nouveau mot de passe n'est autorisée directement depuis le lien
- * email : la confirmation déclenche uniquement la génération d'un mot de passe
- * temporaire fort, envoyé par email, que l'utilisateur pourra changer une fois
- * connecté.
- *
- * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package App\Infrastructure\Service
- */
+* Manages the "forgotten password" flow from end to end. 
+*
+* For security reasons (given that end-users are in the healthcare sector),
+* entering a new password directly via the email link is not permitted; 
+* confirmation merely triggers the generation of a strong temporary password,
+* sent by email, which the user can change once logged in.
+*
+* @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+* @package App\Infrastructure\Service
+*/
 final readonly class PasswordResetService implements PasswordResetInterface
 {
     public function __construct(
@@ -53,8 +52,8 @@ final readonly class PasswordResetService implements PasswordResetInterface
         $user = $this->userManager->findUserByUsernameOrEmail($usernameOrEmail);
 
         if (null === $user) {
-            // Ne jamais révéler qu'aucun compte ne correspond (anti-énumération).
-            $this->logger->info('Demande de reset password pour un identifiant inconnu.', [
+           // Never reveal that no account matches (anti-enumeration).
+            $this->logger->info('Password reset request for an unknown username.', [
                 'identifier' => $usernameOrEmail,
             ]);
 
@@ -62,7 +61,7 @@ final readonly class PasswordResetService implements PasswordResetInterface
         }
 
         if (!$user->isEnabled() || !$user->isAccountNonLocked()) {
-            $this->logger->info('Demande de reset password ignorée : compte désactivé ou verrouillé.', [
+            $this->logger->info('Password reset request ignored: account deactivated or locked.', [
                 'user_id' => $user->getId(),
             ]);
 
@@ -71,7 +70,7 @@ final readonly class PasswordResetService implements PasswordResetInterface
 
         // Anti-spam : on ne régénère pas de token tant que le précédent est encore valide.
         if ($user->isPasswordRequestNonExpired(self::RETRY_COOLDOWN)) {
-            $this->logger->notice('Demande de reset password ignorée : cooldown actif.', [
+            $this->logger->notice('Password reset request ignored: cooldown active.', [
                 'user_id' => $user->getId(),
             ]);
 
@@ -92,7 +91,7 @@ final readonly class PasswordResetService implements PasswordResetInterface
             [$user->getId(), $plainToken]
         );
 
-        $this->logger->info('Demande de reset password acceptée, email en cours d\'envoi.', [
+        $this->logger->info('Password reset request accepted; email is being sent.', [
             'user_id' => $user->getId(),
         ]);
     }
@@ -119,15 +118,15 @@ final readonly class PasswordResetService implements PasswordResetInterface
         }
 
         if (!$this->tokenHasher->verify($rawToken, $hashedToken)) {
-            $this->logger->error('Tentative de reset password avec un token invalide (hash mismatch).', [
+            $this->logger->error('Password reset attempt with an invalid token (hash mismatch).', [
                 'user_id' => $user->getId(),
             ]);
 
             throw InvalidTokenException::invalidToken();
         }
 
-        // Le token a rempli son rôle : on le consomme immédiatement pour empêcher
-        // toute réutilisation, avant même que le mot de passe temporaire soit généré.
+        // The token has served its purpose: it is consumed immediately to prevent
+        // any reuse, even before the temporary password is generated.
         $user->setConfirmationToken(null);
         $user->setPasswordRequestedAt(null);
         $this->userManager->save($user);
@@ -138,7 +137,7 @@ final readonly class PasswordResetService implements PasswordResetInterface
             [$user->getId()]
         );
 
-        $this->logger->info('Lien de reset password confirmé, génération du mot de passe temporaire déclenchée.', [
+        $this->logger->info('Password reset link confirmed; temporary password generation triggered.', [
             'user_id' => $user->getId(),
         ]);
     }

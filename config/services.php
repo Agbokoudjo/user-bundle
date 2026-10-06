@@ -127,6 +127,7 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set(AdminFormLoginController::class)
         ->arg('$homeRouteName', '%wlindabla_user.routes.home%')
+        ->arg('$siteName', '%app.site_name%')
         ->tag('controller.service_arguments');
 
     

@@ -27,15 +27,15 @@ use Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException;
 use Wlindabla\UserBundle\Domain\User\Service\EmailVerificationInterface;
 
 /**
- * Service de vérification des emails utilisateurs.
- * 
- * Gère la vérification des tokens de confirmation d'email envoyés aux utilisateurs
- * lors de leur inscription. Vérifie l'expiration et la validité du token avant
- * d'activer le compte.
- *
- * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package App\Infrastructure\Service
- */
+* User email verification service. 
+*
+* Handles the verification of email confirmation tokens sent to users
+* during registration. Checks token expiration and validity before
+* activating the account. 
+*
+* @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+* @package App\Infrastructure\Service
+*/
 final class EmailVerificationService implements EmailVerificationInterface
 {
     public function __construct(
@@ -57,7 +57,7 @@ final class EmailVerificationService implements EmailVerificationInterface
             LoggerInterface::class,
             'info',
             [
-                'Tentative de vérification d\'email',
+                'Email verification attempt',
                 [
                     'id' => $id
                 ]
@@ -71,7 +71,7 @@ final class EmailVerificationService implements EmailVerificationInterface
                 LoggerInterface::class,
                 'warning',
                 [
-                    'Utilisateur non trouvé pour la vérification d\'email',
+                    'User not found for email verification',
                     [
                         'id' => $id
                     ]
@@ -90,7 +90,7 @@ final class EmailVerificationService implements EmailVerificationInterface
             $this->asyncMethodDispatcher->dispatch(
                 LoggerInterface::class,
                 'info',
-                ['Token manquant ou compte déjà vérifié', [
+                ['Missing token or account already verified', [
                     'user_id' => $user->getId(),
                     'has_token' => $hashedToken !== null,
                     'has_requested_at' => $requestedAt !== null,
@@ -111,7 +111,7 @@ final class EmailVerificationService implements EmailVerificationInterface
                 LoggerInterface::class,
                 'warning',
                 [
-                    'Token de vérification expiré',
+                    'Verification token expired',
                     [
                         'user_id' => $user->getId(),
                         'requested_at' => $requestedAt->format('Y-m-d H:i:s'),
@@ -128,7 +128,7 @@ final class EmailVerificationService implements EmailVerificationInterface
             $this->asyncMethodDispatcher->dispatch(
                 LoggerInterface::class,
                 'error',
-                ['Token de vérification invalide (hash mismatch)', ['user_id' => $user->getId()]],
+                ['Invalid verification token (hash mismatch)', ['user_id' => $user->getId()]],
             );
 
             throw InvalidTokenException::invalidToken('Hash mismatch');
@@ -149,21 +149,22 @@ final class EmailVerificationService implements EmailVerificationInterface
             throw $e;
         }
 
-        // 7. Application des changements (logique métier) en asynchrone
-        // Application synchrone : referme la fenêtre entre "token validé" et
-        // "token invalidé" — un deuxième passage sur le même lien pendant cette
-        // fenêtre (double-clic, prévisualisation d'un client mail, retry réseau)
-        // ne doit plus pouvoir revalider un token déjà consommé. Le log et
-        // l'événement d'envoi d'email, eux, restent asynchrones : c'est là que
-        // l'async apporte quelque chose (décharger la base et le SMTP sous forte
-        // charge), pas sur l'écriture qui décide si le lien reste valide.
+        // 7. Applying changes (business logic) asynchronously
+        // Synchronous application: closes the window between "token validated" and
+        // "token invalidated"—a second visit to the same link during this
+        // window (double-click, email client preview, network retry)
+        // must no longer be able to re-validate a token that has already been consumed. 
+        // Logging and the email-sending event, however, remain asynchronous:
+        // that is where the async approach adds value (offloading the database
+        // and SMTP under heavy load), rather than for the write operation
+        // that determines whether the link remains valid.
         $this->applyEmailVerificationHandler->handle($user->getId());
 
         $this->asyncMethodDispatcher->dispatch(
             LoggerInterface::class,
             'info',
             [
-                'Email vérifié avec succès',
+                'Email successfully verified',
                 [
                     'user_id' => $user->getId(),
                     'email' => $user->getEmail(),
@@ -189,7 +190,7 @@ final class EmailVerificationService implements EmailVerificationInterface
     }
 
     /**
-     * Calcule la date d'expiration d'un token.
+     * Calculates the expiration date of a token.
      *
      * @param \DateTimeInterface $requestedAt Date de création du token
      * 
@@ -208,14 +209,13 @@ final class EmailVerificationService implements EmailVerificationInterface
             LoggerInterface::class,
             'info',
             [
-                'Demande de renvoi d\'email de vérification',
+                'Request to resend verification email',
                 [
                     'id' => $id
                 ]
             ]
         );
         
-        // 1. Récupération de l'utilisateur
         $user = $this->userManager->find($id);
        
         if ($user === null) {
@@ -223,7 +223,7 @@ final class EmailVerificationService implements EmailVerificationInterface
                 LoggerInterface::class,
                 'warning',
                 [
-                    'Utilisateur non trouvé pour renvoi de vérification',
+                    'User not found for verification resend',
                     [
                         'id' => $id
                     ]
@@ -232,13 +232,13 @@ final class EmailVerificationService implements EmailVerificationInterface
 
             throw InvalidTokenException::userNotFound();
         }
-        // 2. Vérification si l'email est déjà vérifié
+      // 2. Check if the email is already verified
         if ($user->isEmailVerified()) {
             $this->asyncMethodDispatcher->dispatch(
                 LoggerInterface::class,
                 'info',
                 [
-                    'Tentative de renvoi pour email déjà vérifié',
+                    'Attempt to resend for an already verified email',
                     [
                         'user_id' => $user->getId(),
                         'email' => $user->getEmail(),
@@ -250,13 +250,13 @@ final class EmailVerificationService implements EmailVerificationInterface
         }
 
         try {
-            // Le service s'occupe de tout : cooldown, génération, hachage, persistance et dispatch de l'événement.
+            // The service handles everything: cooldown, generation, hashing, persistence, and event dispatching.
             $this->secureTokenService->generateEmailConfirmationToken($user);
             $this->asyncMethodDispatcher->dispatch(
                 LoggerInterface::class,
                 'info',
                 [
-                    'Email de vérification renvoyé avec succès',
+                    'Verification email successfully resent.',
                     [
                         'user_id' => $user->getId(),
                         'email' => $user->getEmail(),
@@ -271,7 +271,7 @@ final class EmailVerificationService implements EmailVerificationInterface
                 LoggerInterface::class,
                 'notice',
                 [
-                    'Renvoi de token bloqué par le cooldown',
+                    'Token return blocked by cooldown',
                     [
                         'user_id' => $user->getId(),
                         'message' => $e->getMessage(),
@@ -286,7 +286,7 @@ final class EmailVerificationService implements EmailVerificationInterface
                 LoggerInterface::class,
                 'error',
                 [
-                    'Échec critique du renvoi d\'email de vérification',
+                    'Critical failure sending verification email',
                     [
                         'user_id' => $user->getId(),
                         'error' => $e->getMessage(),
@@ -296,7 +296,7 @@ final class EmailVerificationService implements EmailVerificationInterface
            
             // Relancer une RuntimeException générique pour l'utilisateur
             throw new \RuntimeException(
-                'Impossible de renvoyer l\'email de vérification. Veuillez réessayer plus tard.',
+                'Unable to resend verification email. Please try again later.',
                 0,
                 $e
             );

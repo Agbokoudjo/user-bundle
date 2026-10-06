@@ -18,7 +18,7 @@ namespace Wlindabla\UserBundle\Infrastructure\Service;
 
 use InvalidArgumentException;
 use RuntimeException;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface ;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Wlindabla\ShareServiceBundle\Security\Generator\TokenGeneratorInterface;
 use Wlindabla\ShareServiceBundle\Security\Hash\TokenHasherInterface;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
@@ -28,14 +28,16 @@ use Wlindabla\UserBundle\Domain\User\Exception\TokenGenerationCooldownException;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 
 /**
+ * Service responsible for generating and dispatching secure tokens for email verification.
+ *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package App\Application\Service
+ * @package Wlindabla\UserBundle\Infrastructure\Service
  */
 final class SecureTokenService
 {
     /**
-     * Délai minimum entre deux générations de token (en secondes).
-     * Protège contre les abus et le spam.
+     * Minimum delay between two token generations (in seconds).
+     * Protects against abuse and spam requests.
      */
     private const TOKEN_GENERATION_COOLDOWN = 60;
     
@@ -47,71 +49,73 @@ final class SecureTokenService
     ) {}
 
     /**
-     * Génère et stocke un nouveau token de confirmation d'email.
+     * Generates and stores a new email confirmation token.
      * 
-     * Cette méthode :
-     * 1. Valide l'utilisateur et ses données
-     * 2. Génère un token cryptographiquement sécurisé
-     * 3. Hashe le token pour stockage sécurisé
-     * 4. Persiste les changements en base de données
-     * 5. Déclenche un événement pour l'envoi d'email
+     * This method:
+     * 1. Validates the user state and data
+     * 2. Checks rate limiting/cooldown enforcement
+     * 3. Generates a cryptographically secure token
+     * 4. Hashes the token for secure storage
+     * 5. Persists the user changes to the database
+     * 6. Dispatches an event to trigger confirmation email dispatch
      * 
-     * Le token en clair est envoyé dans l'événement pour être inclus
-     * dans l'email de vérification. Seul le hash est stocké en BDD.
+     * The plain-text token is passed via the dispatched event for email inclusion.
+     * Only the hashed token is stored in the database.
      *
-     * @param BaseUserInterface $user L'utilisateur pour lequel générer le token
-     * @param int $length La longueur du token (par défaut 32 caractères)
+     * @param BaseUserInterface $user The user instance requiring token generation
+     * @param int $length The desired length of the token (defaults to 32 characters)
      * 
      * @return void
      * 
-     * @throws InvalidArgumentException Si l'utilisateur ou la longueur sont invalides
-     * @throws RuntimeException Si la génération ou le stockage échoue
+     * @throws InvalidArgumentException If user or length inputs are invalid
+     * @throws EmailAlreadyVerifiedException If the user's email address is already verified
+     * @throws TokenGenerationCooldownException If requested before the cooldown period expires
+     * @throws RuntimeException If token generation or persistence fails
+     * 
      * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
-     * @package App\Application\Service
      */
     public function generateEmailConfirmationToken(
         BaseUserInterface $user,
-        int $length=TokenGeneratorInterface::DEFAULT_EMAIL_TOKEN_LENGTH
-        ): void
-    {
-        try {
-            // 1. Validation des données utilisateur
-            $this->validateUser($user);
-           
-            // 2. Vérification du rate limiting
-            $this->enforceTokenGenerationCooldown($user);
-            // 3. Génération du token en clair (cryptographiquement sécurisé)
-            $plainToken = $this->tokenGenerator->generate($length);
-            // 4. Hachage du token pour stockage sécurisé
-            $hashedToken = $this->tokenHasher->hash($plainToken);
-            // 5. Mise à jour de l'entité utilisateur
-            $user->setConfirmationToken($hashedToken);
-            $user->setTokenRequestedAt(new \DateTime("now",new \DateTimeZone('UTC'))); //Car le type est date_time en BDD
+        int $length = TokenGeneratorInterface::DEFAULT_EMAIL_TOKEN_LENGTH
+    ): void {
+        // 1. User data validation
+        $this->validateUser($user);
+       
+        // 2. Enforce rate limiting cooldown
+        $this->enforceTokenGenerationCooldown($user);
 
-            // 6. Persistance en base de données
-            $this->userManager->save($user);
-            
-            // 7. Déclenchement de l'événement pour envoi d'email
-            $event = new UserAccountEmailVerificationEvent(
-                $user->getUsername(),
-                $user->getEmail(),
-                $user->getId(),
-                $plainToken
-            );
-            $this->eventBusDispatcher->dispatch($event);
+        // 3. Generate plain-text token (cryptographically secure)
+        $plainToken = $this->tokenGenerator->generate($length);
 
-        } catch (\Exception $exception) {
-            throw $exception;
-        }
+        // 4. Hash token for secure database storage
+        $hashedToken = $this->tokenHasher->hash($plainToken);
+
+        // 5. Update user entity timestamps and token
+        $user->setConfirmationToken($hashedToken);
+        $user->setTokenRequestedAt(new \DateTime('now', new \DateTimeZone('UTC'))); // Field type in DB is datetime
+
+        // 6. Persist changes to database
+        $this->userManager->save($user);
+        
+        // 7. Dispatch event for email handling
+        $event = new UserAccountEmailVerificationEvent(
+            $user->getUsername(),
+            $user->getEmail(),
+            $user->getId(),
+            $plainToken
+        );
+        $this->eventBusDispatcher->dispatch($event);
     }
 
     /**
-     * Valide que l'utilisateur peut recevoir un token de confirmation.
-     * La couche de presentation fait deja ce qui est validation de l'utilisateur
-     * mais on le fait quand meme
-     * @param BaseUserInterface $user L'utilisateur à valider
+     * Validates that the user is eligible to receive a confirmation token.
+     * Although user validation is performed in the presentation/request layer,
+     * defense-in-depth is enforced here.
      * 
-     * @throws InvalidArgumentException Si l'utilisateur est invalide
+     * @param BaseUserInterface $user The user to validate
+     * 
+     * @throws InvalidArgumentException If the user is missing a valid email address
+     * @throws EmailAlreadyVerifiedException If the email is already verified
      */
     private function validateUser(BaseUserInterface $user): void
     {
@@ -122,30 +126,29 @@ final class SecureTokenService
         }
 
         if ($user->isEmailVerified()) {
-            
             throw EmailAlreadyVerifiedException::forEmail($user->getEmail());
         }
     }
 
     /**
-     * Applique un rate limiting sur la génération de tokens.
+     * Enforces rate limiting on token generation.
      * 
-     * Empêche les abus en limitant la fréquence de génération de tokens.
+     * Prevents system abuse by throttling token generation requests per user.
      *
-     * @param BaseUserInterface $user L'utilisateur demandant un token
+     * @param BaseUserInterface $user The user requesting a token
      * 
-     * @throws TokenGenerationCooldownException Si le délai minimum n'est pas respecté
+     * @throws TokenGenerationCooldownException If minimum delay between requests is violated
      */
     private function enforceTokenGenerationCooldown(BaseUserInterface $user): void
     {
         $lastRequestedAt = $user->getTokenRequestedAt();
 
         if ($lastRequestedAt === null) {
-            // Première demande, OK
+            // First request, proceed
             return;
         }
 
-        $now = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $timeSinceLastRequest = $now->getTimestamp() - $lastRequestedAt->getTimestamp();
 
         if ($timeSinceLastRequest < self::TOKEN_GENERATION_COOLDOWN) {

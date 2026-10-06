@@ -23,14 +23,14 @@ use Wlindabla\ShareServiceBundle\Similarity\IdentityNormalizer;
 use Wlindabla\UserBundle\Infrastructure\Model\UserIdentityNormalizerInterface;
 
 /**
- * Recalcule identity_normalized à chaque sauvegarde d'un User, à
- * partir de son username (qui joue le rôle d'identité complète nom+prénom
- * pour les comptes administrateurs).  : l'entité reste pure, c'est le
- * listener qui fait le lien avec le service de normalisation.
- *
- * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package <https://github.com/Agbokoudjo/>
- */
+* Recalculates identity_normalized whenever a User is saved, based
+* on their username (which serves as the full identity—surname + first name—
+* for administrator accounts). The entity remains pure; the listener
+* handles the connection to the normalization service. 
+*
+* @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+* @package <https://github.com/Agbokoudjo/>
+*/
 #[AsDoctrineListener(event: Events::prePersist, priority: 90)]
 #[AsDoctrineListener(event: Events::preUpdate, priority: 90)]
 final class SonataUserIdentityNormalizerDoctrineLifecycleListener

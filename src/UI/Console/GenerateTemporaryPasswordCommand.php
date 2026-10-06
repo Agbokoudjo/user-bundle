@@ -20,7 +20,7 @@ use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 
 #[AsCommand(
     name: 'app:user:generate-temporary-password',
-    description: 'Génère un mot de passe temporaire pour un utilisateur à partir de son email.',
+    description: 'Generates a temporary password for a user based on their email address.',
 )]
 final class GenerateTemporaryPasswordCommand extends Command
 {
@@ -36,7 +36,7 @@ final class GenerateTemporaryPasswordCommand extends Command
         $this->addArgument(
             'email',
             InputArgument::REQUIRED,
-            "L'adresse email de l'utilisateur."
+            "The user's email address."
         );
     }
 
@@ -45,28 +45,28 @@ final class GenerateTemporaryPasswordCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $email = trim((string) $input->getArgument('email'));
 
-        $io->title('Génération de mot de passe temporaire');
+        $io->title('Temporary password generation');
 
         // 1. Trouver l'utilisateur par email
         $user = $this->userManager->findUserByUsernameOrEmail($email);
 
         if ($user === null) {
-            $io->error(sprintf('Aucun utilisateur trouvé avec l\'email "%s".', $email));
+            $io->error(sprintf('No user found with the email "%s".', $email));
             return Command::FAILURE;
         }
 
-        $io->text(sprintf('Utilisateur trouvé : <info>%s</info> (ID: %s)', $email, $user->getId()));
+        $io->text(sprintf('User found : <info>%s</info> (ID: %s)', $email, $user->getId()));
 
         // 2. Déléguer au handler (génération + mise à jour + dispatch d'événement)
         try {
             $this->handler->process($user->getId());
         } catch (\Throwable $e) {
-            $io->error(sprintf('Erreur lors de la génération : %s', $e->getMessage()));
+            $io->error(sprintf('Error during generation : %s', $e->getMessage()));
             return Command::FAILURE;
         }
 
         $io->success(sprintf(
-            'Mot de passe temporaire généré et envoyé pour "%s".',
+            'Temporary password generated and sent for "%s".',
             $email
         ));
 

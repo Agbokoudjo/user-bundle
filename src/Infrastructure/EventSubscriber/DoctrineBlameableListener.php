@@ -15,10 +15,10 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\Infrastructure\EventSubscriber;
 
-use App\Infrastructure\Doctrine\Entity\Security\ManagedCatalogInterface;///ce n'est pas encore créer  
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Events;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
+use Wlindabla\UserBundle\Domain\Permission\Model\ManagedCatalogInterface;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 use Wlindabla\UserBundle\Infrastructure\Persistance\UserManagerDoctrineReference;
 use Wlindabla\UserBundle\Infrastructure\Security\SecurityContextInterface;
@@ -44,7 +44,7 @@ final class DoctrineBlameableListener
 
         if ($rawUser instanceof BaseUserInterface) {
             /**
-             * @var SonataUser
+             * @var BaseUserInterface
              */
             $user = $this->userManager->getReference($rawUser->getId());
             if (method_exists($object, 'getCreatedBy') && $object->getCreatedBy() === null) {

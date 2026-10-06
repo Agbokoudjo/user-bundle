@@ -10,9 +10,9 @@ use Wlindabla\UserBundle\Domain\User\Service\UpdatePasswordUserServiceInterface;
 use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInterface;
 
 /**
- * Gère la mise à jour sécurisée du mot de passe avec traçabilité.
- * * @author AGBOKOUDJO Franck
- */
+* Manages secure password updates with audit logging. 
+*  @author AGBOKOUDJO Franck
+*/
 final readonly class UpdatePasswordUserService implements UpdatePasswordUserServiceInterface
 {
     public function __construct(
@@ -29,30 +29,30 @@ final readonly class UpdatePasswordUserService implements UpdatePasswordUserServ
             $user = $this->userManager->find($userId);
 
             if (null === $user) {
-                $this->logger->warning('Tentative de changement de mot de passe pour un utilisateur inexistant.', [
+                $this->logger->warning('Attempt to change the password for a non-existent user.', [
                     'user_id' => $userId
                 ]);
                 return;
             }
 
-            // Mise à jour du mot de passe
+            // Password update
             $user->setPlainPassword($plainPassword);
             $this->userManager->updatePassword($user);
 
-            // On force le rafraîchissement des métadonnées (sel, updatedAt, etc.)
+            // Force a refresh of the metadata (salt, updatedAt, etc.)
             $user->setUpdatedAt(new \DateTime('now',new \DateTimeZone("UTC")));
             $this->userManager->save($user);
             
             $this->userProvider->invalidateUserCache($user->getId()) ;
 
-            // LOG DE SUCCÈS : On trace l'action (sans jamais loguer le password !)
-            $this->logger->info('Mot de passe mis à jour avec succès.', [
+            // SUCCESS LOG: We track the action (without ever logging the password!)
+            $this->logger->info('Password successfully updated.', [
                 'user_id' => $user->getId(),
                 'username' => $user->getUsername()
             ]);
         } catch (\Throwable $th) {
-            // LOG D'ERREUR : On trace l'exception pour le débug
-            $this->logger->error('Échec de la mise à jour du mot de passe.', [
+            // ERROR LOG: We trace the exception for debugging
+            $this->logger->error('Password update failed.', [
                 'user_id' => $userId,
                 'error' => $th->getMessage()
             ]);
