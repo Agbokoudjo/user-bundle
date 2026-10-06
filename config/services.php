@@ -15,27 +15,33 @@ declare(strict_types=1);
  */
 
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Wlindabla\UserBundle\Domain\EmailChange\Application\Manager\EmailChangeRequestServiceInterface;
 use Wlindabla\UserBundle\Domain\LoggerLoginUser\Application\Manager\LoggerLoginUserManagerInterface;
+use Wlindabla\UserBundle\Domain\Permission\Application\Security\AuthorizationCheckerForUserInterface;
+use Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface;
+use Wlindabla\UserBundle\Domain\TwoFactorAuth\Service\TwoFactorCodeServiceInterface;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Domain\User\Service\CanonicalFieldsUpdaterInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface;
 use Wlindabla\UserBundle\Infrastructure\Doctrine\DoctrineUserManager;
 use Wlindabla\UserBundle\Infrastructure\Messenger\Handler\RevokeInactiveSessionsHandler;
+use Wlindabla\UserBundle\Infrastructure\Persistance\EmailChangeRequestService;
 use Wlindabla\UserBundle\Infrastructure\Persistance\LoggerLoginUserManager;
+use Wlindabla\UserBundle\Infrastructure\Persistance\TwoFactorCodeManager;
 use Wlindabla\UserBundle\Infrastructure\Persistance\UserSessionManager;
 use Wlindabla\UserBundle\Infrastructure\Scheduler\SessionCleanupSchedule;
+use Wlindabla\UserBundle\Infrastructure\Security\Authorization\AuthorizationCheckerForUser;
 use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInterface;
 use Wlindabla\UserBundle\Infrastructure\Security\Provider\UserProvider;
+use Wlindabla\UserBundle\Infrastructure\Service\EmailChangeRequestMailerService;
+use Wlindabla\UserBundle\Infrastructure\Service\TwoFactorCodeService;
 use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistry;
 use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
-use Wlindabla\UserBundle\UI\Http\Controller\SessionConflictController;
-use Wlindabla\UserBundle\UI\Http\EventSubscriber\SessionControlListener;
-use Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface;
-use Wlindabla\UserBundle\Domain\TwoFactorAuth\Service\TwoFactorCodeServiceInterface;
-use Wlindabla\UserBundle\Infrastructure\Persistance\TwoFactorCodeManager;
-use Wlindabla\UserBundle\Infrastructure\Service\TwoFactorCodeService;
 use Wlindabla\UserBundle\UI\Http\Controller\Admin\AdminFormLoginController;
+use Wlindabla\UserBundle\UI\Http\Controller\EmailChangeConfirmationController;
+use Wlindabla\UserBundle\UI\Http\Controller\SessionConflictController;
 use Wlindabla\UserBundle\UI\Http\Controller\TwoFactorAuthController;
+use Wlindabla\UserBundle\UI\Http\EventSubscriber\SessionControlListener;
 use Wlindabla\UserBundle\UI\Http\EventSubscriber\TwoFactorAuthListener;
 
 
@@ -122,4 +128,21 @@ return static function (ContainerConfigurator $container): void {
     $services->set(AdminFormLoginController::class)
         ->arg('$homeRouteName', '%wlindabla_user.routes.home%')
         ->tag('controller.service_arguments');
+
+    
+    // Permission module
+    $services->set(AuthorizationCheckerForUser::class);
+    $services->alias(AuthorizationCheckerForUserInterface::class, AuthorizationCheckerForUser::class);
+
+    // EmailChange module
+    $services->set(EmailChangeRequestService::class)
+        ->arg('$tokenLifetimeSeconds', '%wlindabla_user.email_change.token_lifetime%')
+        ->arg('$retryCooldownSeconds', '%wlindabla_user.email_change.retry_cooldown%')
+        ->arg('$exemptRolesOnSelf', '%wlindabla_user.email_change.exempt_roles_on_self%')
+        ->arg('$recoveryInitiatorRole', '%wlindabla_user.email_change.recovery_initiator_role%');
+    $services->alias(EmailChangeRequestServiceInterface::class, EmailChangeRequestService::class);
+
+    $services->set(EmailChangeRequestMailerService::class);
+
+    $services->set(EmailChangeConfirmationController::class);
 };
