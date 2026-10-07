@@ -110,21 +110,17 @@ final class WlindablaUserBundle extends AbstractBundle
             ->arrayNode('session_control')
                 ->addDefaultsIfNotSet()
                 ->children()
-                    ->scalarNode('redis_session_prefix')->isRequired()->cannotBeEmpty()->end()
+                    ->scalarNode('redis_session_prefix')->defaultNull()->end()
                     ->integerNode('inactivity_hours')->defaultValue(4)->end()
                     ->integerNode('max_duration_hours')->defaultValue(24)->end()
-                    ->scalarNode('firewall_name')->isRequired()->cannotBeEmpty()->end()
+                    ->scalarNode('firewall_name')->defaultNull()->end()
                     ->arrayNode('excluded_routes')->scalarPrototype()->end()->defaultValue([])->end()
                 ->end()
             ->end()
             ->arrayNode('two_factor')
                 ->addDefaultsIfNotSet()
                 ->children()
-                    ->scalarNode('firewall_name')
-                        ->info('Name of the security firewall protecting the area where 2FA applies. Can differ from session_control.firewall_name if your project needs separate perimeters.')
-                        ->isRequired()
-                        ->cannotBeEmpty()
-                    ->end()
+                    ->scalarNode('firewall_name')->defaultNull()->end()
                     ->arrayNode('allowed_routes_while_pending')->scalarPrototype()->end()->defaultValue([])->end()
                     ->integerNode('inactivity_threshold_seconds')->defaultValue(2 * 3600)->end()
                     ->integerNode('absolute_cap_seconds')->defaultValue(24 * 3600)->end()
@@ -143,9 +139,6 @@ final class WlindablaUserBundle extends AbstractBundle
         ->end();
     }
 
-        /**
-     * @param array<string, mixed> $config
-     */
     public function loadExtension(
         array $config,
         ContainerConfigurator $container,
@@ -182,7 +175,54 @@ final class WlindablaUserBundle extends AbstractBundle
             ->set('wlindabla_user.email_change.exempt_roles_on_self', $config['email_change']['exempt_roles_on_self'])
             ->set('wlindabla_user.email_change.recovery_initiator_role', $config['email_change']['recovery_initiator_role']);
 
+        // Core: always loaded — the User module is the only non-optional one.
         $container->import('../config/services.php');
+
+        $classes = $config['classes'];
+
+        if (null !== $classes['user_session']) {
+            if (null === $config['session_control']['redis_session_prefix']) {
+                throw new \LogicException('wlindabla_user.classes.user_session is set, so wlindabla_user.session_control.redis_session_prefix is required.');
+            }
+
+            if (null === $config['session_control']['firewall_name']) {
+                throw new \LogicException('wlindabla_user.classes.user_session is set, so wlindabla_user.session_control.firewall_name is required.');
+            }
+
+            $container->import('../config/services_user_session.php');
+        }
+
+        if (null !== $classes['logger_login_user']) {
+            $container->import('../config/services_logger_login_user.php');
+        }
+
+        if (null !== $classes['two_factor_code']) {
+            if (null === $config['two_factor']['firewall_name']) {
+                throw new \LogicException('wlindabla_user.classes.two_factor_code is set, so wlindabla_user.two_factor.firewall_name is required.');
+            }
+
+            $container->import('../config/services_two_factor.php');
+        }
+
+        $permissionClasses = [$classes['permission_role'], $classes['permission_group'], $classes['user_permission_role'], $classes['user_permission_group']];
+
+        if (\in_array(null, $permissionClasses, true) && \array_filter($permissionClasses)) {
+            throw new \LogicException('The Permission module requires all four of classes.permission_role, permission_group, user_permission_role and user_permission_group to be set together.');
+        }
+
+        if (null !== $classes['permission_role']) {
+            $container->import('../config/services_permission.php');
+        }
+
+        $emailChangeClasses = [$classes['email_change_request'], $classes['email_change_validation']];
+
+        if (\in_array(null, $emailChangeClasses, true) && \array_filter($emailChangeClasses)) {
+            throw new \LogicException('The EmailChange module requires both classes.email_change_request and email_change_validation to be set together.');
+        }
+
+        if (null !== $classes['email_change_request']) {
+            $container->import('../config/services_email_change.php');
+        }
     }
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
