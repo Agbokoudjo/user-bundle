@@ -14,7 +14,7 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace Wlindabla\UserBundle\Infrastructure\Doctrine;
+namespace Wlindabla\UserBundle\Infrastructure\Persistance;
 
 use Doctrine\Persistence\ObjectRepository;
 use InvalidArgumentException;

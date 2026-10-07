@@ -15,16 +15,26 @@ declare(strict_types=1);
  */
 
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ApplyEmailVerificationHandler;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Domain\User\Service\CanonicalFieldsUpdater;
 use Wlindabla\UserBundle\Domain\User\Service\CanonicalFieldsUpdaterInterface;
-use Wlindabla\UserBundle\Infrastructure\Doctrine\DoctrineUserManager;
+use Wlindabla\UserBundle\Domain\User\Service\EmailVerificationInterface;
+use Wlindabla\UserBundle\Domain\User\Service\PasswordResetInterface;
+use Wlindabla\UserBundle\Infrastructure\Persistance\DoctrineUserManager;
+use Wlindabla\UserBundle\Infrastructure\Persistance\UserManagerDoctrineReference;
 use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInterface;
 use Wlindabla\UserBundle\Infrastructure\Security\Provider\UserProvider;
+use Wlindabla\UserBundle\Infrastructure\Service\EmailVerificationService;
+use Wlindabla\UserBundle\Infrastructure\Service\PasswordResetService;
+use Wlindabla\UserBundle\Infrastructure\Service\SecureTokenService;
+use Wlindabla\UserBundle\Infrastructure\Service\UserDuplicateFinderService;
 use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistry;
 use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 use Wlindabla\UserBundle\UI\Http\Controller\Admin\AdminFormLoginController;
+use Wlindabla\UserBundle\UI\Http\Controller\Admin\UserLogoutController;
 use Wlindabla\UserBundle\UI\Http\Controller\EmailVerificationController;
+use Wlindabla\UserBundle\UI\Http\Controller\OutcomePageRenderer;
 use Wlindabla\UserBundle\UI\Http\Controller\PasswordResetConfirmationController;
 use Wlindabla\UserBundle\UI\Http\Controller\PasswordResetRequestController;
 use Wlindabla\UserBundle\UI\Http\EventSubscriber\AccessDeniedListener;
@@ -42,10 +52,11 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set(CanonicalFieldsUpdater::class);
     $services->alias(CanonicalFieldsUpdaterInterface::class, CanonicalFieldsUpdater::class);
+    $services->set(UserDuplicateFinderService::class);
 
-    $services->set(DoctrineUserManager::class)
-        ->arg('$userClass', '%wlindabla_user.classes.user%');
+    $services->set(DoctrineUserManager::class);
     $services->alias(UserManagerInterface::class, DoctrineUserManager::class);
+    $services->alias(UserManagerDoctrineReference::class, DoctrineUserManager::class);
 
     $services->set(UserProvider::class)
         ->arg('$expiresAfter', '%wlindabla_user.security.user_cache_ttl%');
@@ -56,6 +67,8 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$homeRouteName', '%wlindabla_user.routes.home%')
         ->arg('$siteName', '%app.site_name%')
         ->tag('controller.service_arguments');
+
+    $services->set(UserLogoutController::class);
 
     $services->set(EmailVerificationController::class)
         ->arg('$loginRouteName', '%wlindabla_user.routes.login%')
@@ -72,4 +85,18 @@ return static function (ContainerConfigurator $container): void {
     $services->set(AccessDeniedListener::class);
 
     $services->set(EntityInUseExceptionListener::class);
+
+    $services->set(EmailVerificationInterface::class,EmailVerificationService::class);
+
+    $services->set(PasswordResetInterface::class,PasswordResetService::class);
+
+    $services->set(OutcomePageRenderer::class)
+            ->arg('$loginRouteName', '%wlindabla_user.routes.login%')
+            ->arg('$homeRouteName', '%wlindabla_user.routes.home%')
+             ->arg('$siteName', '%app.site_name%')
+            ;
+
+    $services->set(SecureTokenService::class);
+
+    $services->set(ApplyEmailVerificationHandler::class);
 };

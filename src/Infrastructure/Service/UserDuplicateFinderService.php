@@ -25,7 +25,7 @@ use Wlindabla\UserBundle\Domain\User\Model\Persistance\UserFindDuplicatesReposit
 * SonataUser account. 
 *
 * Indexed pre-selection (pg_trgm) followed by fine-grained confirmation (IdentitySimilarityChecker). 
-*/
+*/ 
 final class UserDuplicateFinderService
 {
     public function __construct(

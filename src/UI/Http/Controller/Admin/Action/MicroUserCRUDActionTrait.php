@@ -80,7 +80,7 @@ trait MicroUserCRUDActionTrait
         UserManagerInterface $userManager,
         TranslatorInterface $translator,
     ): JsonResponse {
-        if (!$this->isXmlHttpRequest($request) || !$request->isMethod('GET')) {
+        if (!$this->_isXmlHttpRequest($request) || !$request->isMethod('GET')) {
             throw new BadRequestHttpException('Unauthorized request. Please use the appropriate GET/AJAX channel.');
         }
 
@@ -167,7 +167,7 @@ trait MicroUserCRUDActionTrait
         AsyncMethodDispatcherInterface $asyncMethodDispatcher,
         TranslatorInterface $translator,
     ): JsonResponse {
-        if (!$this->isXmlHttpRequest($request) || !$request->isMethod('PATCH')) {
+        if (!$this->_isXmlHttpRequest($request) || !$request->isMethod('PATCH')) {
             throw new BadRequestHttpException('Unauthorized request. Please use the appropriate PATCH/AJAX channel.');
         }
 
@@ -235,7 +235,7 @@ trait MicroUserCRUDActionTrait
         AsyncMethodDispatcherInterface $asyncMethodDispatcher,
         TranslatorInterface $translator,
     ): JsonResponse {
-        if (!$this->isXmlHttpRequest($request) || !$request->isMethod('PATCH')) {
+        if (!$this->_isXmlHttpRequest($request) || !$request->isMethod('PATCH')) {
             throw new BadRequestHttpException('Unauthorized request. Please use the appropriate PATCH/AJAX channel.');
         }
 
@@ -398,7 +398,7 @@ trait MicroUserCRUDActionTrait
         throw new BadRequestHttpException(\sprintf('Invalid status: "%s". Use "true" or "false".', \is_scalar($status) ? $status : get_debug_type($status)));
     }
 
-    final protected function isXmlHttpRequest(Request $request): bool
+    final protected function _isXmlHttpRequest(Request $request): bool
     {
         return $request->isXmlHttpRequest()
             || $request->request->getBoolean('_xml_http_request')
@@ -546,7 +546,7 @@ trait MicroUserCRUDActionTrait
         EmailChangeRequestServiceInterface $emailChangeRequestService,
         UserManagerInterface $userManager,
     ): JsonResponse {
-        if (!$this->isXmlHttpRequest($request) || !$request->isMethod('POST')) {
+        if (!$this->_isXmlHttpRequest($request) || !$request->isMethod('POST')) {
             throw new BadRequestHttpException('Unauthorized request. Please use the appropriate POST/AJAX channel.');
         }
 

@@ -26,7 +26,7 @@ use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-abstract class AbstractBaseUser implements BaseUserInterface
+abstract class AbstractBaseUser implements BaseUserInterface,\Stringable
 {
     /** Role granted to every user. Override in your entity if needed (never ROLE_ADMIN). */
     public const string ROLE_DEFAULT = 'ROLE_USER';
@@ -65,6 +65,10 @@ abstract class AbstractBaseUser implements BaseUserInterface
 
     /** @var list<string> */
     protected array $roles = [];
+
+    protected ?\DateTimeInterface $createdAt = null;
+
+    protected ?\DateTimeInterface $updatedAt = null;
 
     public function getId(): int|string|null
     {
@@ -134,6 +138,21 @@ abstract class AbstractBaseUser implements BaseUserInterface
         $this->emailVerified = $emailVerified;
 
         return $this;
+    }
+
+    public function getEmailVerifiedAt(): ?\DateTimeImmutable
+    {
+        return $this->emailVerifiedAt;
+    }
+
+    public function setEmailVerifiedAt(?\DateTimeImmutable $emailVerifiedAt): void
+    {
+        $this->emailVerifiedAt = $emailVerifiedAt;
+    }
+
+    public function getConfirmationToken(): ?string
+    {
+        return $this->confirmationToken;
     }
 
     /**
@@ -311,5 +330,32 @@ abstract class AbstractBaseUser implements BaseUserInterface
     public function isAccountNonLocked(): bool
     {
         return true;
+    }
+
+    public function setCreatedAt(?\DateTimeInterface $createdAt = null): void
+    {
+        $this->createdAt = $createdAt;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeInterface $updatedAt = null): void
+    {
+        $this->updatedAt = $updatedAt;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
+
+    public function isPasswordRequestNonExpired(int $ttl): bool
+    {
+        $passwordRequestedAt = $this->getPasswordRequestedAt();
+
+        return null !== $passwordRequestedAt && $passwordRequestedAt->getTimestamp() + $ttl > time();
     }
 }

@@ -21,6 +21,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use Override;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Wlindabla\ShareServiceBundle\Similarity\IdentityNormalizer;
@@ -90,6 +91,12 @@ implements UserFindDuplicatesRepositoryInterface,UserRepositoryInterface
         parent::__construct($managerRegistry, $entityClass);
     }
 
+    #[Override]
+    public function getClass(): string
+    {
+        return $this->getClassName() ;
+    }
+    
     public function save(BaseUserInterface $entity, bool $andFlush = true): void
     {
         $_em=$this->getEntityManager() ;

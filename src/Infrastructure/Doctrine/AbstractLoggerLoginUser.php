@@ -32,11 +32,7 @@ use Wlindabla\UserBundle\Domain\LoggerLoginUser\Model\BaseLoggerLoginUser;
 #[ORM\HasLifecycleCallbacks]
 abstract class AbstractLoggerLoginUser extends BaseLoggerLoginUser
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
-
+    
     #[ORM\Column(type: 'string', length: 200)]
     protected string $username;
 
@@ -53,7 +49,7 @@ abstract class AbstractLoggerLoginUser extends BaseLoggerLoginUser
     protected ?string $userAgentLabel = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
-    protected ?\DateTimeInterface $createdAt = null;
+    protected ?\DateTimeImmutable $createdAt = null;
 
     public function getCreatedAt(): ?\DateTimeInterface
     {
@@ -75,7 +71,7 @@ abstract class AbstractLoggerLoginUser extends BaseLoggerLoginUser
         }
     }
 
-    public function getId(): ?int
+    public function getId(): int|string|null
     {
         return $this->id;
     }

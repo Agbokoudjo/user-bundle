@@ -24,6 +24,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Vich\UploaderBundle\Mapping\Attribute as Vich;
 use Wlindabla\UserBundle\Domain\User\Model\AbstractBaseUser;
 use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
+use Symfony\Component\Security\Core\User\UserInterface as SymfonySecurityUserInterface ;
 
 /**
  * Doctrine mapping for the base user. Extend this class in your application
@@ -39,6 +40,12 @@ use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 #[ORM\MappedSuperclass]
 abstract class BaseUser extends AbstractBaseUser implements UserInterface
 {
+    #[ORM\Id]
+    #[ORM\GeneratedValue('IDENTITY')]
+    #[ORM\Column(type: "integer")]
+    #[Groups(['user:cache', 'user:security', 'user:read'])]
+    protected int|string|null $id = null;
+    
     #[Assert\NotBlank(message: 'Full name is required.')]
     #[Assert\NotNull(message: 'Full name cannot be null.')]
     #[Assert\Length(
@@ -74,13 +81,16 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
     protected ?string $password = null;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    #[Groups(['user:cache', 'user:security', 'user:read'])]
     protected bool $enabled = false;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    #[Groups(['user:cache', 'user:security', 'user:read'])]
     protected bool $emailVerified = false;
 
     /** @var list<string> */
-    #[ORM\Column(type: 'json')]
+    #[ORM\Column(type: 'json', options: ['jsonb' => true])]
+    #[Groups(['user:cache', 'user:security', 'user:read'])]
     protected array $roles = [];
 
     #[ORM\Column(type: 'datetime', nullable: true)]
@@ -167,9 +177,23 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
     #[ORM\Column(name: 'identity_normalized', type: 'string', nullable: true)]
     protected string $identityNormalized = '';
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['user:cache', 'user:security'])]
+    protected ?string $salt = null;
+
     public function getIdentityNormalized(): string
     {
         return $this->identityNormalized;
+    }
+
+    public function setSalt(?string $salt): void
+    {
+        $this->salt = $salt;
+    }
+    
+    public function getSalt(): ?string
+    {
+        return $this->salt;
     }
 
     public function setIdentityNormalized(string $identityNormalized): void
@@ -177,9 +201,26 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
         $this->identityNormalized = $identityNormalized;
     }
 
-    private function normalizeApostrophes(string $value): string
+    protected function normalizeApostrophes(string $value): string
     {
         return str_replace(["’", '`'], "'", $value);
+    }
+
+    public function isEqualTo(SymfonySecurityUserInterface $user): bool
+    {
+        if (!$user instanceof self) {
+            return false;
+        }
+
+        if ($this->password !== $user->getPassword()) {
+            return false;
+        }
+
+        if ($this->getUserIdentifier() !== $user->getUserIdentifier()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

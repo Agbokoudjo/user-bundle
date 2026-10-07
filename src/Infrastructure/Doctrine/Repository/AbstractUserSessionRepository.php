@@ -312,7 +312,7 @@ abstract class AbstractUserSessionRepository extends ServiceEntityRepository imp
         return self::CACHE_PREFIX.'_activity_lock_'.hash('xxh128', $sessionId);
     }
 
-    private function cacheSession(string $userIdentifier, UserSessionInterface $session): void
+    protected function cacheSession(string $userIdentifier, UserSessionInterface $session): void
     {
         $item = $this->cache->getItem($this->cacheKey($userIdentifier));
         $item->set(['id' => $session->getId()]);

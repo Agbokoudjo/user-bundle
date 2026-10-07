@@ -19,8 +19,10 @@ namespace Wlindabla\UserBundle\UI\Http\EventSubscriber;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Security\Http\Event\LogoutEvent;
+use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
+use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInterface;
 
 /**
 * Revokes the UserSession record (reason: MANUAL_LOGOUT) upon voluntary
@@ -34,6 +36,7 @@ final readonly class LogoutSubscriber
 {
     public function __construct(
         private UserSessionManagerInterface $sessionManager,
+        private CacheUserProviderInterface $userProvider,
         private LoggerInterface $logger,
     ) {}
 
@@ -43,12 +46,16 @@ final readonly class LogoutSubscriber
             ? $event->getRequest()->getSession()
             : null;
 
-        if ($session === null) {
+         /** @var BaseUserInterface|null $user */
+        $user = $event->getToken()?->getUser();
+
+        if ($session === null && !($user instanceof BaseUserInterface)) {
             return;
         }
 
         try {
             $this->sessionManager->removeSession($session->getId(), UserSessionRevokedReason::MANUAL_LOGOUT);
+            $this->userProvider->invalidateUserCache($user->getId());
         } catch (\Throwable $throwable) {
             $this->logger->error('Error revoking session on logout', [
                 'exception_message' => $throwable->getMessage(),
