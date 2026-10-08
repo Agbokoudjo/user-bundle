@@ -12,7 +12,7 @@ wlindabla_share_service:
             - Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface
             - Wlindabla\UserBundle\Domain\LoggerLoginUser\Application\Manager\LoggerLoginUserManagerInterface
             - Wlindabla\UserBundle\Domain\TwoFactorAuth\Service\TwoFactorCodeServiceInterface
-            - App\WlindablaUserBundle\Domain\TwoFactorAuth\Application\Persistance\TwoFactorCodeManagerInterface
+            - Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface
             - Wlindabla\UserBundle\Domain\LoggerLoginUser\Application\Manager\LoggerLoginUserManagerInterface
             - Wlindabla\UserBundle\Infrastructure\Service\EmailChangeRequestMailerService
             - Psr\Log\LoggerInterface

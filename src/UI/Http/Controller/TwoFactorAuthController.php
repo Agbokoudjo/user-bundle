@@ -67,7 +67,7 @@ final class TwoFactorAuthController extends AbstractController
         private readonly ?string $logoutRouteName = null
     ) {}
 
-    #[Route('/admin/2fa/show', name: 'app_two_factor_show', methods: ['GET'])]
+    #[Route('/admin/2fa/show', name: 'wlindabla_user_two_factor_show', methods: ['GET'])]
     public function show(Request $request): Response
     {
         /** @var UserInterface|null $user */
@@ -91,7 +91,7 @@ final class TwoFactorAuthController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/2fa/verify', name: 'app_two_factor_verify', methods: ['POST'])]
+    #[Route('/admin/2fa/verify', name: 'wlindabla_user_two_factor_verify', methods: ['POST'])]
     public function verify(Request $request): Response
     {
         /** @var UserInterface|null $user */
@@ -165,7 +165,7 @@ final class TwoFactorAuthController extends AbstractController
         return $this->jsonOrRedirectHome($request, $this->trans('two_factor.verified'));
     }
 
-    #[Route('/admin/2fa/resend', name: 'app_two_factor_resend', methods: ['POST'])]
+    #[Route('/admin/2fa/resend', name: 'wlindabla_user_two_factor_resend', methods: ['POST'])]
     public function resend(
         Request $request,
         #[Target('two_factor_resend')]
@@ -208,7 +208,7 @@ final class TwoFactorAuthController extends AbstractController
 
         $this->addFlash('success', $message);
 
-        return $this->redirectToRoute('app_two_factor_show');
+        return $this->redirectToRoute('wlindabla_user_two_factor_show');
     }
 
     private function trans(string $key): string
@@ -224,7 +224,7 @@ final class TwoFactorAuthController extends AbstractController
 
         $this->addFlash('danger', $message);
 
-        return $this->redirectToRoute('app_two_factor_show');
+        return $this->redirectToRoute('wlindabla_user_two_factor_show');
     }
 
     private function jsonOrRedirectToLogin(Request $request, string $message): Response

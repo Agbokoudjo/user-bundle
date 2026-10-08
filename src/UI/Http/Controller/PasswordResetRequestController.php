@@ -54,7 +54,7 @@ final class PasswordResetRequestController extends AbstractController implements
     ) {
     }
 
-    #[Route('%wlindabla_user.password_reset.request_path%', name: 'app_password_reset_request', methods: ['GET', 'POST'])]
+    #[Route('%wlindabla_user.password_reset.request_path%', name: 'wlindabla_user_password_reset_request', methods: ['GET', 'POST'])]
     public function __invoke(
         Request $request,
         #[Target('password_reset')]

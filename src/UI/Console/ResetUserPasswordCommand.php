@@ -35,7 +35,7 @@ use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
  * @package <https://github.com/Agbokoudjo/>
  */
 #[AsCommand(
-    name: 'app:user:reset-password',
+    name: 'wlindabla:user:reset-password',
     description: 'Resets the password of a SonataUser using their email address.',
 )]
 final class ResetUserPasswordCommand extends Command

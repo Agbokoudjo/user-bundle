@@ -35,7 +35,7 @@ use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 #[AsController]
 #[Route(
     '/verify-email/{token}/{id}',
-    name: 'app.verify.email',
+    name: 'wlindabla_user.verify.email',
     methods: ['GET'],
     requirements: ['token' => '[a-zA-Z0-9]{32,64}'],
 )]

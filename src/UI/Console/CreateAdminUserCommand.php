@@ -30,7 +30,7 @@ use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-#[AsCommand(name: 'sonata:user:create', description: 'Create a user')]
+#[AsCommand(name: 'wlindabla:user:create', description: 'Create a user')]
 final class CreateAdminUserCommand extends Command
 {
      private UserPasswordHasherInterface $passwordHasher;
@@ -62,7 +62,7 @@ final class CreateAdminUserCommand extends Command
         $email = $helper->ask($input, $output, $question);
 
         /**
-         * @var UserInterface
+         * @var UserInterface $user_create
          */
         $user_create = new $this->userManager->create() ;
         $user_create->setUsername($username) ;

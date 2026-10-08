@@ -119,7 +119,7 @@
         <div class="tfa-resend">
             <span>{{ 'two_factor.nothing_received'|trans({}, 'WlindablaUserBundle') }}</span>
             <button type="button" id="two-factor-resend-btn"
-                    data-resend-url="{{ path('app_two_factor_resend') }}"
+                    data-resend-url="{{ path('wlindabla_user_two_factor_resend') }}"
                     data-csrf-token="{{ csrf_token('two_factor_resend') }}">
                 {{ 'two_factor.resend_button'|trans({}, 'WlindablaUserBundle') }}
             </button>

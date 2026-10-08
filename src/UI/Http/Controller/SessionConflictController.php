@@ -42,7 +42,7 @@ use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
  * @package <https://github.com/Agbokoudjo/>
  */
 #[AsController]
-#[Route(path: '/session-conflict/{id}', name: 'app_session_conflict', methods: ['GET'])]
+#[Route(path: '/session-conflict/{userId}', name: 'wlindabla_user_session_conflict', methods: ['GET'])]
 final class SessionConflictController extends AbstractController
 {
     use GeneratesOptionalRouteUrlTrait;

@@ -15,6 +15,9 @@ declare(strict_types=1);
  */
 
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+use function Symfony\Component\DependencyInjection\Loader\Configurator\param;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ApplyEmailVerificationHandler;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Domain\User\Service\CanonicalFieldsUpdater;
@@ -23,6 +26,7 @@ use Wlindabla\UserBundle\Domain\User\Service\EmailVerificationInterface;
 use Wlindabla\UserBundle\Domain\User\Service\PasswordResetInterface;
 use Wlindabla\UserBundle\Infrastructure\Persistance\DoctrineUserManager;
 use Wlindabla\UserBundle\Infrastructure\Persistance\UserManagerDoctrineReference;
+use Wlindabla\UserBundle\Infrastructure\Routing\WlindablaRouteLoader;
 use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInterface;
 use Wlindabla\UserBundle\Infrastructure\Security\Provider\UserProvider;
 use Wlindabla\UserBundle\Infrastructure\Service\EmailVerificationService;
@@ -62,6 +66,12 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$expiresAfter', '%wlindabla_user.security.user_cache_ttl%');
     $services->alias(\Symfony\Component\Security\Core\User\UserProviderInterface::class, UserProvider::class);
     $services->alias(CacheUserProviderInterface::class, UserProvider::class);
+
+    // Resolves %parameters% in route names, then routes the enabled modules.
+    // Imported by config/routes.php with: $routes->import('.', WlindablaRouteLoader::TYPE)
+    $services->set(WlindablaRouteLoader::class)
+        ->args([service('parameter_bag'), param('kernel.environment')])
+        ->tag('routing.loader');
 
     $services->set(AdminFormLoginController::class)
         ->arg('$homeRouteName', '%wlindabla_user.routes.home%')

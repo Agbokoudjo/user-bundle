@@ -26,6 +26,7 @@ use Wlindabla\UserBundle\Domain\Permission\Model\PermissionRoleInterface;
 use Wlindabla\UserBundle\Domain\Permission\Model\UserPermissionGroupInterface;
 use Wlindabla\UserBundle\Domain\Permission\Model\UserPermissionRoleInterface;
 use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
+use Wlindabla\UserBundle\Infrastructure\Routing\WlindablaRouteLoader;
 
 /**
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
@@ -182,6 +183,9 @@ final class WlindablaUserBundle extends AbstractBundle
 
         $classes = $config['classes'];
 
+        // Optional modules whose controllers must be routed (see WlindablaRouteLoader).
+        $routingModules = [WlindablaRouteLoader::MODULE_CORE];
+
         if (null !== $classes['user_session']) {
             if (null === $config['session_control']['redis_session_prefix']) {
                 throw new \LogicException('wlindabla_user.classes.user_session is set, so wlindabla_user.session_control.redis_session_prefix is required.');
@@ -192,6 +196,7 @@ final class WlindablaUserBundle extends AbstractBundle
             }
 
             $container->import('../config/services_user_session.php');
+            $routingModules[] = WlindablaRouteLoader::MODULE_USER_SESSION;
         }
 
         if (null !== $classes['logger_login_user']) {
@@ -204,6 +209,7 @@ final class WlindablaUserBundle extends AbstractBundle
             }
 
             $container->import('../config/services_two_factor.php');
+            $routingModules[] = WlindablaRouteLoader::MODULE_TWO_FACTOR;
         }
 
         $permissionClasses = [$classes['permission_role'], $classes['permission_group'], $classes['user_permission_role'], $classes['user_permission_group']];
@@ -224,7 +230,10 @@ final class WlindablaUserBundle extends AbstractBundle
 
         if (null !== $classes['email_change_request']) {
             $container->import('../config/services_email_change.php');
+            $routingModules[] = WlindablaRouteLoader::MODULE_EMAIL_CHANGE;
         }
+
+        $parameters->set(WlindablaRouteLoader::ENABLED_MODULES_PARAMETER, $routingModules);
     }
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
@@ -259,5 +268,44 @@ final class WlindablaUserBundle extends AbstractBundle
                 'resolve_target_entities' => $resolveTargetEntities,
             ],
         ]);
+
+        // Self-registers every FQCN this bundle dispatches asynchronously via
+        // AsyncMethodDispatcherInterface, so a consuming project never has to
+        // maintain (and risk letting drift out of sync) this whitelist by
+        // hand. wlindabla_share_service.async_method_dispatcher.allowed_services
+        // is a scalarPrototype array: Symfony merges it across every source
+        // that sets it for the same extension, so the project's own
+        // allowed_services entries (its own CommandHandlers, etc.) are kept
+        // alongside this list, not replaced by it.
+        if ($builder->hasExtension('wlindabla_share_service')) {
+            $container->extension('wlindabla_share_service', [
+                'async_method_dispatcher' => [
+                    'allowed_services' => $this->asyncDispatchedServices(),
+                ],
+            ]);
+        }
+    }
+
+    /**
+     * Every FQCN this bundle passes to AsyncMethodDispatcherInterface::dispatch()
+     * anywhere in its own code — kept here as the single source of truth.
+     *
+     * @return list<string>
+     */
+    private function asyncDispatchedServices(): array
+    {
+        return [
+            \Psr\Log\LoggerInterface::class,
+            \Wlindabla\UserBundle\Domain\User\Application\CommandHandler\UpdateUserProfileHandler::class,
+            \Wlindabla\UserBundle\Domain\User\Application\CommandHandler\GenerateTemporaryPasswordHandler::class,
+            \Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ToggleUserAccountHandler::class,
+            \Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface::class,
+            \Wlindabla\UserBundle\Domain\User\Service\UpdatePasswordUserServiceInterface::class,
+            \Wlindabla\UserBundle\Infrastructure\Service\PasswordResetMailerService::class,
+            \Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface::class,
+            \Wlindabla\UserBundle\Domain\LoggerLoginUser\Application\Manager\LoggerLoginUserManagerInterface::class,
+            \Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface::class,
+            \Wlindabla\UserBundle\Infrastructure\Service\EmailChangeRequestMailerService::class
+        ];
     }
 }

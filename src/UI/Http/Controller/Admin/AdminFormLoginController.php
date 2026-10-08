@@ -38,7 +38,7 @@ use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
  * @package <https://github.com/Agbokoudjo/>
  */
 #[AsController]
-#[Route('%wlindabla_user.routes.login_path%', name: 'wlindabla_user_login', methods: ['GET', 'POST'])]
+#[Route('%wlindabla_user.routes.login_path%', name: '%wlindabla_user.routes.login%', methods: ['GET', 'POST'])]
 final class AdminFormLoginController extends AbstractController
 {
     use GeneratesOptionalRouteUrlTrait;
@@ -51,8 +51,7 @@ final class AdminFormLoginController extends AbstractController
         private readonly ?LoggerInterface $logger = null,
         private readonly ?string $homeRouteName = null,
         private readonly ?string $siteName = null,
-    ) {
-    }
+    ) {}
 
     public function __invoke(AuthenticationUtils $authenticationUtils): Response
     {

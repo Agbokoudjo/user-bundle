@@ -17,7 +17,7 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\UI\Http\EventSubscriber;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Bundle\SecurityBundle\Security\FirewallMap;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -26,7 +26,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\RouterInterface;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Wlindabla\ShareServiceBundle\Messenger\QueueHandler\AsyncMethodDispatcherInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum\TwoFactorAuthKey;
@@ -57,13 +56,12 @@ use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 final readonly class TwoFactorAuthListener
 {
     public function __construct(
-        private TokenStorageInterface $tokenStorage,
         private RouterInterface $router,
         private TwoFactorCodeManagerInterface $twoFactorCodeManager,
         private AsyncMethodDispatcherInterface $asyncMethodDispatcher,
         private UserManagerInterface $userManager,
+        private Security $security,
         private LoggerInterface $logger,
-        private FirewallMap $firewallMap,
         private string $firewallName,
         private int $inactivityThresholdSeconds,
         private int $absoluteCapSeconds,
@@ -81,7 +79,7 @@ final readonly class TwoFactorAuthListener
 
         $request = $event->getRequest();
 
-        $firewallConfig = $this->firewallMap->getFirewallConfig($request);
+        $firewallConfig = $this->security->getFirewallConfig($request);
 
         if (null === $firewallConfig || $this->firewallName !== $firewallConfig->getName()) {
             return;
@@ -93,13 +91,7 @@ final readonly class TwoFactorAuthListener
             return;
         }
 
-        $token = $this->tokenStorage->getToken();
-
-        if (null === $token) {
-            return;
-        }
-
-        $user = $token->getUser();
+        $user = $this->security->getUser();
 
         if (!$user instanceof UserInterface) {
             $this->logger->warning('Unexpected user type for MFA freshness check — denying by caution (fail closed).', [

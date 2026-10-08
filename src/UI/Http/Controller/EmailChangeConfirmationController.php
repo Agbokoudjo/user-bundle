@@ -41,7 +41,7 @@ final class EmailChangeConfirmationController extends AbstractController impleme
     ) {
     }
 
-    #[Route('/email-change/confirm-old/{token}/{id}', name: 'app_email_change_confirm_old', methods: ['GET'], requirements: ['token' => '[a-zA-Z0-9]{32,64}'])]
+    #[Route('/email-change/confirm-old/{token}/{id}', name: 'wlindabla_user_email_change_confirm_old', methods: ['GET'], requirements: ['token' => '[a-zA-Z0-9]{32,64}'])]
     public function confirmOld(string $token, int $id): Response
     {
         try {
@@ -56,7 +56,7 @@ final class EmailChangeConfirmationController extends AbstractController impleme
         return $this->outcomePageRenderer->render($this);
     }
 
-    #[Route('/email-change/confirm-new/{token}/{id}', name: 'app_email_change_confirm_new', methods: ['GET'], requirements: ['token' => '[a-zA-Z0-9]{32,64}'])]
+    #[Route('/email-change/confirm-new/{token}/{id}', name: 'wlindabla_user_email_change_confirm_new', methods: ['GET'], requirements: ['token' => '[a-zA-Z0-9]{32,64}'])]
     public function confirmNew(string $token, int $id): Response
     {
         try {
@@ -71,7 +71,7 @@ final class EmailChangeConfirmationController extends AbstractController impleme
         return $this->outcomePageRenderer->render($this);
     }
 
-    #[Route('/email-change/not-me/{token}/{id}', name: 'app_email_change_not_me', methods: ['GET'], requirements: ['token' => '[a-zA-Z0-9]{32,64}'])]
+    #[Route('/email-change/not-me/{token}/{id}', name: 'wlindabla_user_email_change_not_me', methods: ['GET'], requirements: ['token' => '[a-zA-Z0-9]{32,64}'])]
     public function notMe(string $token, int $id): Response
     {
         try {

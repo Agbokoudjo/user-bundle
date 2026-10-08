@@ -19,7 +19,7 @@ use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\GenerateTemporar
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 
 #[AsCommand(
-    name: 'app:user:generate-temporary-password',
+    name: 'wlindabla:user:generate-temporary-password',
     description: 'Generates a temporary password for a user based on their email address.',
 )]
 final class GenerateTemporaryPasswordCommand extends Command

@@ -18,7 +18,6 @@ namespace Wlindabla\UserBundle\UI\Http\EventSubscriber;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Bundle\SecurityBundle\Security\FirewallMap;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -27,7 +26,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\RouterInterface;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\ShareServiceBundle\Messenger\QueueHandler\AsyncMethodDispatcherInterface;
 use Wlindabla\ShareServiceBundle\Security\Browser\DeviceFingerprintUserAgent;
@@ -62,8 +60,6 @@ final readonly class SessionControlListener
         private UserSessionManagerInterface $sessionManager,
         private AsyncMethodDispatcherInterface $asyncMethodDispatcher,
         private RouterInterface $router,
-        private TokenStorageInterface $tokenStorage,
-        private FirewallMap $firewallMap,
         private LoggerInterface $logger,
         private IdEncryptionInterface $idEncryptionService,
         private Security $security,
@@ -83,7 +79,7 @@ final readonly class SessionControlListener
         $request = $event->getRequest();
 
         try {
-            $firewallConfig = $this->firewallMap->getFirewallConfig($request);
+            $firewallConfig = $this->security->getFirewallConfig($request);
 
             if (null === $firewallConfig || $this->firewallName !== $firewallConfig->getName()) {
                 return;
@@ -95,13 +91,7 @@ final readonly class SessionControlListener
                 return;
             }
 
-            $token = $this->tokenStorage->getToken();
-
-            if (null === $token) {
-                return;
-            }
-
-            $user = $token->getUser();
+            $user = $this->security->getUser();
 
             if (!$user instanceof BaseUserInterface) {
                 return;
@@ -206,8 +196,8 @@ final readonly class SessionControlListener
 
         if (UserSessionRevokedReason::CONFLICT === $reason) {
             return new RedirectResponse(
-                $this->router->generate('app_session_conflict', [
-                    'id' => $this->idEncryptionService->encryptId($user->getId()),
+                $this->router->generate('wlindabla_user_session_conflict', [
+                    'userId' => $this->idEncryptionService->encryptId($user->getId()),
                 ]),
             );
         }

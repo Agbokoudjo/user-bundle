@@ -32,13 +32,13 @@ use Wlindabla\UserBundle\Domain\User\Service\PasswordResetInterface;
 #[AsController]
 #[Route(
     '%wlindabla_user.password_reset.confirm_path%',
-    name: 'app_password_reset_confirm',
+    name: 'wlindabla_user_password_reset_confirm',
     methods: ['GET'],
     requirements: ['token' => '[a-zA-Z0-9]{32,64}'],
 )]
 final class PasswordResetConfirmationController extends AbstractController implements RenderResponseInterface
 {
-    public const string ROUTE_NAME = 'app_password_reset_confirm';
+    public const string ROUTE_NAME = 'wlindabla_user_password_reset_confirm';
     
     public function __construct(
         private readonly PasswordResetInterface $passwordResetService,

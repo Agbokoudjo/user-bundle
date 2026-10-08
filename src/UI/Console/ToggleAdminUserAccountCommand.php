@@ -30,7 +30,7 @@ use Wlindabla\UserBundle\Domain\User\Enum\AccountStatus;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-#[AsCommand(name: 'app:user:activate', description: 'Activate a user')]
+#[AsCommand(name: 'wlindabla:user:activate', description: 'Activate a user')]
 final class ToggleAdminUserAccountCommand extends Command
 {
     public function __construct(
