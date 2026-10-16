@@ -71,11 +71,6 @@ abstract class AbstractLoggerLoginUser extends BaseLoggerLoginUser
         }
     }
 
-    public function getId(): int|string|null
-    {
-        return $this->id;
-    }
-
     public function __toString(): string
     {
         return \sprintf('%s <%s>', $this->username, $this->email);

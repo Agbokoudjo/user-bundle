@@ -22,7 +22,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 
@@ -32,17 +31,13 @@ use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
  */
 #[AsCommand(name: 'wlindabla:user:create', description: 'Create a user')]
 final class CreateAdminUserCommand extends Command
-{
-     private UserPasswordHasherInterface $passwordHasher;
-     
+{  
     public function __construct(
          private readonly ParameterBagInterface $parameterBag ,
-         UserPasswordHasherInterface $passwordHasher,
         private readonly UserManagerInterface $userManager,
         )
     {
-        parent::__construct('sonata:user:create');
-        $this->passwordHasher = $passwordHasher;
+        parent::__construct('wlindabla:user:create');
     }
 
     public function __invoke(InputInterface $input, OutputInterface $output): int
@@ -64,18 +59,15 @@ final class CreateAdminUserCommand extends Command
         /**
          * @var UserInterface $user_create
          */
-        $user_create = new $this->userManager->create() ;
+        $user_create = $this->userManager->create() ;
         $user_create->setUsername($username) ;
         $user_create->setEmail($email);
-
-         
        
         if($this->parameterBag->get("app.env") !=='prod'){
             $user_create->setEnabled(true);
            $user_create->setEmailVerified(true);
            $user_create->setEmailVerifiedAt(new \DateTimeImmutable('now', new \DateTimeZone('UTC')));
-           $hashedPassword = $this->passwordHasher->hashPassword($user_create, 'iwas-@#Demoprojet-dev-2026!!');
-           $user_create->setPassword($hashedPassword);
+           $user_create->setPlainPassword('iwas-@#Demoprojet-dev-2026!!'.$username);
         }
         
         $user_create->setCreatedAt(new \DateTimeImmutable('now', new \DateTimeZone('UTC')));

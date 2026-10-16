@@ -32,11 +32,6 @@ use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\AbstractTwoFactorCode;
 #[ORM\MappedSuperclass]
 abstract class BaseTwoFactorCode extends AbstractTwoFactorCode
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    protected int|string|null $id = null;
-
     #[ORM\Column(type: 'string', length: 255)]
     protected string $userIdentifier;
 

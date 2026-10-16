@@ -144,7 +144,7 @@ final class DoctrineUserManager implements UserManagerInterface,UserManagerDoctr
     {
         // Canonicalisation basique requise par l'écosystème SonataUser
         $this->canonicalFieldsUpdater->updateCanonicalFields($entity);
-        
+        $this->updatePassword($entity) ;
         $this->repository()->save($entity,$andFlush) ;
     }
 

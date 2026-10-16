@@ -1,145 +1,241 @@
+{#
+
+* This file is part of the project by AGBOKOUDJO Franck.
+ *
+ * (c) AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * Phone: +229 01 67 25 18 86
+ * LinkedIn: https://www.linkedin.com/in/internationales-web-apps-services-120520193/
+ * Github: https://github.com/Agbokoudjo/
+ * Company: INTERNATIONALES WEB APPS & SERVICES
+ *
+ * For more information, please feel free to contact the author.
+
+#}
+
 <!DOCTYPE html>
-<html lang="{{ app.request.locale|default('fr') }}">
+<html lang="{{ app.request.locale|default('en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-    <title>{{ 'login.page_title'|trans({}, 'WlindablaUserBundle') }}</title>
-    <style type="text/css">
-        :root {
-            --primary: #0ec5b2;
-            --background: #f4f6f9;
-            --white: #ffffff;
-            --gray: #6c757d;
-            --border: #dee2e6;
-            --danger: #dc3545;
-            --font-family: 'Inter', sans-serif;
-        }
+    <title>{% block title %} {{ 'login.page_title'|trans({}, 'WlindablaUserBundle') }} {% endblock %}</title>
 
-        body {
-            font-family: var(--font-family);
-            background-color: var(--background);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            color: #343a40;
-        }
+    {% block javascripts %} {% endblock %}
+    {% block stylesheets %} 
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"> 
+        <style type="text/css">
+            {% block styleInlineCss  %}
+                :root {
+                    --primary: #0ec5b2;
+                    --background: #f4f6f9;
+                    --white: #ffffff;
+                    --gray: #6c757d;
+                    --border: #dee2e6;
+                    --danger: #dc3545;
+                    --font-family: 'Inter', sans-serif;
+                }
 
-        .login-box {
-            width: 100%;
-            max-width: 400px;
-            background-color: var(--white);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
+                body {
+                    font-family: var(--font-family);
+                    background-color: var(--background);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    color: #343a40;
+                }
 
-        .login-header {
-            background: #0d1f4e;
-            padding: 24px;
-            color: #ffffff;
-            text-align: center;
-        }
+                .login-box {
+                    width: 100%;
+                    max-width: 400px;
+                    background-color: var(--white);
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    overflow: hidden;
+                }
 
-        .login-brand {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin: 0;
-        }
+                .login-header {
+                    background: #0d1f4e;
+                    padding: 24px;
+                    color: #ffffff;
+                    text-align: center;
+                }
 
-        .login-body {
-            padding: 30px;
-        }
+                .login-brand {
+                    font-size: 1.4rem;
+                    font-weight: 700;
+                    margin: 0;
+                }
 
-        .form-group {
-            margin-bottom: 18px;
-            text-align: left;
-        }
+                .login-body {
+                    padding: 30px;
+                }
 
-        label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: #495057;
-        }
+                .form-group {
+                    margin-bottom: 18px;
+                    text-align: left;
+                }
 
-        input[type="text"],
-        input[type="password"] {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            font-family: var(--font-family);
-        }
+                label {
+                    display: block;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    margin-bottom: 6px;
+                    color: #495057;
+                }
 
-        input[type="text"]:focus,
-        input[type="password"]:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
+                input[id="identify"],
+                input[type="password"] {
+                    width: 100%;
+                    padding: 10px 12px;
+                    border: 1px solid var(--border);
+                    border-radius: 6px;
+                    font-size: 1rem;
+                    box-sizing: border-box;
+                    font-family: var(--font-family);
+                }
 
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary);
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: var(--font-family);
-        }
+                input[id="identify"]:focus,
+                input[type="password"]:focus {
+                    outline: none;
+                    border-color: var(--primary);
+                }
 
-        button:hover {
-            opacity: 0.92;
-        }
+                button {
+                    width: 100%;
+                    padding: 12px;
+                    background-color: var(--primary);
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 6px;
+                    font-size: 1rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    font-family: var(--font-family);
+                }
 
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            border-radius: 4px;
-            padding: 12px;
-            margin-bottom: 18px;
-            font-size: 0.9rem;
-        }
-    </style>
+                button:hover {
+                    opacity: 0.92;
+                }
+
+                .alert-danger {
+                    background-color: #f8d7da;
+                    color: #721c24;
+                    border: 1px solid #f5c6cb;
+                    border-radius: 4px;
+                    padding: 12px;
+                    margin-bottom: 18px;
+                    font-size: 0.9rem;
+                }
+                .btn-link-password-reset-request{
+                    margin-top: 20px;
+                }
+            {% endblock %}
+        </style>
+    {% endblock %}
 </head>
 <body>
-    <div class="login-box">
-        <div class="login-header">
-            <h1 class="login-brand">{{ site_name|default('') }}</h1>
+    {% block sonata_wrapper %}
+        <div class="login-box  {% block loginBoxClassCss %} {% endblock %}">
+            {% block loginBox %}
+                
+            <div class="login-header">
+                {% block loginHeader %}
+                    <h1 class="login-brand">{{ site_name|default('') }}</h1>
+                {% endblock %}
+            </div>
+
+            <div class="login-body">
+                {% block loginBody %}
+
+                    {% block loginError %}
+                        {% if error %}
+                            <div class="alert-danger login-alert">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                        {% endif %}
+                    {% endblock %}
+
+                    <form method="post"
+                        class="login-form form-validate {% block formClass %} {% endblock %}" 
+                        data-turbo="false"
+                        {% block formAttr %} {% endblock %}
+                        autocomplete="off">
+
+                        {% block loginForm %}
+                            <div class="form-group login-field">
+                                {% block identifyInputBefore %} {% endblock %}
+                                <label for="identify">{{ 'login.username_label'|trans({}, 'WlindablaUserBundle') }}</label>
+                                <input type="email" 
+                                    id="identify"
+                                    name="_username" 
+                                    value="{{ last_username }}" 
+                                    placeholder="Ex: admin@example.net"
+                                    data-type="email"
+                                    data-allow-quoted-local="false"
+                                    maxlength="200"
+                                    minlength="6"
+                                    data-host-blacklist="tempmail.com,tempmail.org,tempmail.net,guerrillamail.com,guerrillamail.net,guerrillamail.org,guerrillamail.biz,guerrillamail.de,guerrillamail.info,mailinator.com,mailinator.net,mailinator.org,yopmail.com,yopmail.fr,yopmail.net,trashmail.com,trashmail.at,trashmail.me,trashmail.net,trashmail.org,trashmail.io,sharklasers.com,guerrillamailblock.com,grr.la,spam4.me,dispostable.com,10minutemail.com,10minutemail.net,10minutemail.org,10minutemail.co.uk,10minutemail.de,10minemail.com,throwam.com,throwaway.email,fakeinbox.com,fake-box.com,maildrop.cc,spamgourmet.com,spamgourmet.net,spamgourmet.org,mailnull.com,spamcowboy.com,spamcowboy.net,spamcowboy.org,spamevader.com,getairmail.com,discard.email,spamfree24.org,spamfree24.de,spamfree24.eu,spamfree24.info,spamfree24.net,mailnew.com,spamex.com,binkmail.com,bobmail.info,chammy.info,devnullmail.com,fudgerub.com,jobbikmail.com,yuurok.com,discardmail.com,discardmail.de,spamspot.com,spamthisplease.com,tempinbox.com,tempr.email,spam.la,inoutmail.de,inoutmail.eu,inoutmail.info,inoutmail.net,filzmail.com,weg-werf-email.de,wegwerfmail.de,wegwerfmail.net,wegwerfmail.org,meltmail.com,anonymbox.com,courriel.fr.nf,cool.fr.nf,jetable.fr.nf,nospam.ze.tc,nomail.xl.cx,mega.zik.dj,speed.1s.fr,iwi.net,jetable.net,jetable.org"
+                                    data-event-validate-blur="blur"
+                                    data-event-validate-input="input"
+                                    required 
+                                    class="form-control"
+                                    autofocus
+                                >
+                                {% block identifyInputAfter %} {% endblock %}
+                            </div>
+
+                            <div class="form-group login-field">
+                                {% block passwordInputBefore %} {% endblock %}
+                                <label for="password">{{ 'login.password_label'|trans({}, 'WlindablaUserBundle') }}</label>
+                                <input type="password" 
+                                    id="password" 
+                                    name="_password" 
+                                    placeholder="your password"
+                                    autocomplete="current-password"
+                                    maxlength="255"
+                                    minlength="8"
+                                    data-event-validate-blur="blur"
+                                    data-event-validate-input="input"
+                                    data-enable-scoring="false"
+                                    data-custom-upper-regex="[\p{Lu}]"
+                                    data-custom-lower-regex="[\p{Ll}]"
+                                    data-custom-number-regex="[\p{N}]"
+                                    data-custom-symbol-regex="[\p{S}\p{P}]"
+                                    data-custom-special-char-regex="[\p{S}\p{P}\s]"
+                                    data-custom-punctuation-regex="[\p{P}]"
+                                    data-pattern="^[\p{L}\p{N}\p{M}\p{S}\p{P}\s]+$"
+                                    class="login-input form-control"
+                                    required >
+
+                                    {% block passwordInputAfter %} {% endblock %}
+                            </div>
+                            <div class="form-group login-field">
+                                {% block RememberInputBefore %} {% endblock %}
+                                {% block RememberInputBody %}
+                                    <label class="login-checkbox-label">
+                                    <input type="checkbox" name="_remember_me" id="remember_me" class="login-checkbox">
+                                    <span class="login-checkbox-custom"></span>
+                                    <span>{{ 'login.checkbox_label'|trans({}, 'WlindablaUserBundle') }}</span>
+                                    </label>
+                                {% endblock %}
+
+                                {% block RememberInputAfter %} {% endblock %}
+                            </div>
+
+                            {% if csrf_token %}
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                            {% endif %}
+
+                            <button type="submit" class="login-btn {% block buttonSubmitClass %} {% endblock %}">{% block formSubmit %} <span class="login-btn-text">{{ 'login.submit'|trans({}, 'WlindablaUserBundle') }}</span> {% endblock %}</button>
+
+                           {% block password_reset_request %}
+                              <a href="{{path('wlindabla_user_password_reset_request')}}" class="btn btn-link-password-reset-request">{{ 'password_reset_request.link_click'|trans({}, 'WlindablaUserBundle') }}</a>
+                           {% endblock %}
+                        {% endblock %}
+                    </form>
+                {% endblock %}
+            </div>
+            {% endblock %}
         </div>
-
-        <div class="login-body">
-            {% if error %}
-                <div class="alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-            {% endif %}
-
-            <form method="post">
-                <div class="form-group">
-                    <label for="username">{{ 'login.username_label'|trans({}, 'WlindablaUserBundle') }}</label>
-                    <input type="text" id="username" name="_username" value="{{ last_username }}" required autofocus>
-                </div>
-
-                <div class="form-group">
-                    <label for="password">{{ 'login.password_label'|trans({}, 'WlindablaUserBundle') }}</label>
-                    <input type="password" id="password" name="_password" required>
-                </div>
-
-                {% if csrf_token %}
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-                {% endif %}
-
-                <button type="submit">{{ 'login.submit'|trans({}, 'WlindablaUserBundle') }}</button>
-            </form>
-        </div>
-    </div>
+    {% endblock %}
 </body>
 </html>

@@ -23,13 +23,13 @@ use Wlindabla\UserBundle\Domain\LoggerLoginUser\Model\Persistance\LoggerLoginUse
 use Wlindabla\UserBundle\Infrastructure\Doctrine\AbstractLoggerLoginUser;
 
 /**
- * Repository Doctrine pour les enregistrements de connexion utilisateur.
- *
- * Responsabilités :
- * - Persister les nouveaux enregistrements (append-only)
- * - Fournir des requêtes d'audit (par IP, par utilisateur, par période)
- * - Purger les anciens logs selon une politique de rétention
- *
+ * Doctrine repository for user login records. 
+*
+* Responsibilities:
+* - Persist new records (append-only)
+* - Provide audit queries (by IP, by user, by time period)
+* - Purge old logs according to a retention policy
+*
  * @extends ServiceEntityRepository<AbstractLoggerLoginUser>
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>

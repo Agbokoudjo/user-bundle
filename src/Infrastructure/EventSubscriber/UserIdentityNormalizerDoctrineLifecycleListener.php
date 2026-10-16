@@ -33,7 +33,7 @@ use Wlindabla\UserBundle\Infrastructure\Model\UserIdentityNormalizerInterface;
 */
 #[AsDoctrineListener(event: Events::prePersist, priority: 90)]
 #[AsDoctrineListener(event: Events::preUpdate, priority: 90)]
-final class SonataUserIdentityNormalizerDoctrineLifecycleListener
+final class UserIdentityNormalizerDoctrineLifecycleListener
 {
     public function prePersist(LifecycleEventArgs $args): void
     {

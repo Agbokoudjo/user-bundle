@@ -147,4 +147,27 @@ interface UserSessionManagerInterface
      * @return void
      */
     public function updateSessionActivity(string $sessionId): void;
+
+    /**
+     * Persists a session that is already revoked at creation time (used to
+     * record a login attempt refused by the "block" single-session policy).
+     * Never revokes the user's other active sessions.
+     */
+    public function createRevokedSession(
+        string $userIdentifier,
+        string $sessionId,
+        UserSessionRevokedReason $reason,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+        ?string $deviceFingerprint = null,
+    ): UserSessionInterface;
+
+    /**
+     * Revokes every active session, for every user — a global logout.
+     *
+     * @return int number of sessions revoked
+     */
+    public function revokeEverySession(
+        UserSessionRevokedReason $reason = UserSessionRevokedReason::MANUAL_LOGOUT,
+    ): int;
 }

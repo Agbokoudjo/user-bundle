@@ -19,14 +19,15 @@ namespace Wlindabla\UserBundle\Infrastructure\Doctrine\Repository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
+use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Override;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Wlindabla\ShareServiceBundle\Similarity\IdentityNormalizer;
-use Wlindabla\UserBundle\Domain\User\Model\Persistance\UserFindDuplicatesRepositoryInterface;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
+use Wlindabla\UserBundle\Domain\User\Model\Persistance\UserFindDuplicatesRepositoryInterface;
 use Wlindabla\UserBundle\Domain\User\Model\Persistance\UserRepositoryInterface;
 
 /**
@@ -120,7 +121,7 @@ implements UserFindDuplicatesRepositoryInterface,UserRepositoryInterface
     public function getReference(int|string $id): BaseUserInterface
     {
         /** @var BaseUserInterface */
-        return $this->getEntityManager()->getReference($this->getClass()::class, $id);
+        return $this->getEntityManager()->getReference($this->getClass(), $id);
     }
 
     // -----------------------------------------------------------------

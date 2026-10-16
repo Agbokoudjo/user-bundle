@@ -25,7 +25,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\MailingBundle\Mailing\MailerManagerInterface;
 use Wlindabla\MailingBundle\Mailing\PriorityInterface;
 use Wlindabla\UserBundle\Domain\User\Event\UpdatePasswordUserEvent;
-use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInterface;
 use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 
 /**
@@ -43,7 +42,6 @@ final class UpdatePasswordUserSubscriber implements EventSubscriberInterface
         private readonly ParameterBagInterface $parameterBag,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly LoggerInterface $logger,
-        private readonly CacheUserProviderInterface $userProvider,
         private readonly TemplateRegistryInterface $templateRegistry,
         private readonly TranslatorInterface $translator,
         private readonly ?string $loginRouteName = null,
@@ -66,7 +64,7 @@ final class UpdatePasswordUserSubscriber implements EventSubscriberInterface
 
             $subject = $this->translator->trans(
                 'temporary_password_email.subject',
-                ['%site_name%' => $siteName],
+                ['%site_name%' => $siteName], 
                 'WlindablaUserBundle',
             );
 
@@ -82,8 +80,6 @@ final class UpdatePasswordUserSubscriber implements EventSubscriberInterface
                 ],
                 PriorityInterface::PRIORITY_NORMAL,
             );
-
-            $this->userProvider->invalidateUserCache($user->getId());
 
             $this->logger->info('Temporary password email sent.', [
                 'user_email' => $user->getEmail(),

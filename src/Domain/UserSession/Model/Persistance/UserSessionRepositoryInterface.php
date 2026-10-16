@@ -72,4 +72,29 @@ interface UserSessionRepositoryInterface
     public function hasActiveSession(string $userIdentifier, string $currentSessionId): bool;
 
     public function findActiveSession(string $userIdentifier): ?UserSessionInterface;
+
+    /**
+     * Persists a session row already marked as revoked — used when a login
+     * attempt is refused outright (single-session "block" policy) instead of
+     * taking over. Unlike createSession(), this never touches other active
+     * sessions for the user.
+     */
+    public function createRevokedSession(
+        string $userIdentifier,
+        string $sessionId,
+        UserSessionRevokedReason $reason,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+        ?string $deviceFingerprint = null,
+    ): UserSessionInterface ;
+
+    /**
+     * Revokes every active session, for every user — a global logout.
+     *
+     * @return string[] revoked session IDs, so the caller can clean up the
+     *                   underlying session store
+     */
+    public function revokeEverySession(
+        UserSessionRevokedReason $reason = UserSessionRevokedReason::MANUAL_LOGOUT,
+    ): array;
 }

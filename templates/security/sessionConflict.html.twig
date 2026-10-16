@@ -1,0 +1,58 @@
+{#
+ * This file is part of the project by AGBOKOUDJO Franck.
+ *
+ * (c) AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * Phone: +229 01 67 25 18 86
+ * LinkedIn: https://www.linkedin.com/in/internationales-web-apps-services-120520193/
+ * Github: https://github.com/Agbokoudjo/
+ * Company: INTERNATIONALES WEB APPS & SERVICES
+ *
+ * For more information, please feel free to contact the author.
+#}
+<!DOCTYPE html>
+<html lang="{{ app.request.locale|default('en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'session_conflict.title'|trans({}, 'WlindablaUserBundle') }}</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f5f5f7; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .conflict-container { max-width: 440px; background: #fff; border-radius: 12px; padding: 2.5rem; box-shadow: 0 4px 24px rgba(0,0,0,.08); text-align: center; }
+        .conflict-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+        .login-brand { font-weight: 700; color: #d33; margin: 0 0 .25rem; }
+        h2 { margin: 0 0 1rem; }
+        .description { color: #555; line-height: 1.5; }
+        .info-box { background: #f0f4ff; border-radius: 8px; padding: 1rem; margin: 1.5rem 0; text-align: left; font-size: .9rem; }
+        .btn { display: inline-block; margin-top: .5rem; padding: .75rem 1.5rem; background: #2e4bd3; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; }
+        .footer { margin-top: 1.5rem; font-size: .8rem; color: #999; }
+    </style>
+</head>
+<body class="{{ app.environment }}">
+    <div class="conflict-container">
+        <div class="conflict-icon">🔒</div>
+        {% if site_name is defined and site_name %}
+            <p class="login-brand">{{ site_name }}</p>
+        {% endif %}
+        <h2>{{ 'session_conflict.heading'|trans({}, 'WlindablaUserBundle') }}</h2>
+
+        <p class="description">
+            {{ 'session_conflict.description'|trans({}, 'WlindablaUserBundle') }}
+        </p>
+
+        <div class="info-box">
+            <strong>{{ 'session_conflict.what_to_do_title'|trans({}, 'WlindablaUserBundle') }}</strong>
+            <p>{{ 'session_conflict.what_to_do_body'|trans({}, 'WlindablaUserBundle') }}</p>
+        </div>
+
+        {% if logout_url is defined and logout_url %}
+            <a href="{{ logout_url }}" class="btn">
+                {{ 'session_conflict.logout_button'|trans({}, 'WlindablaUserBundle') }}
+            </a>
+        {% endif %}
+
+        <div class="footer">
+            <p>{{ 'session_conflict.support_notice'|trans({}, 'WlindablaUserBundle') }}</p>
+        </div>
+    </div>
+</body>
+</html>

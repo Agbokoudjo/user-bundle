@@ -18,8 +18,9 @@ namespace Wlindabla\UserBundle\Infrastructure\Persistance;
 
 use Symfony\Component\Lock\LockFactory;
 use Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface;
-use Wlindabla\UserBundle\Domain\UserSession\Model\Persistance\UserSessionRepositoryInterface;
+use Wlindabla\UserBundle\Domain\UserSession\Application\Service\SessionStoreEvictorInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
+use Wlindabla\UserBundle\Domain\UserSession\Model\Persistance\UserSessionRepositoryInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Model\UserSessionInterface;
 
 /**
@@ -35,8 +36,7 @@ final class UserSessionManager implements UserSessionManagerInterface
     public function __construct(
         private readonly UserSessionRepositoryInterface $repository,
         private readonly LockFactory $lockFactory,
-        private readonly \Redis $redis,
-        private readonly string $redisSessionPrefix,
+        private readonly SessionStoreEvictorInterface $sessionStoreEvictor
     ) {
     }
     
@@ -95,7 +95,7 @@ final class UserSessionManager implements UserSessionManagerInterface
         $revokedSessionIds = $this->repository->revokeAllActiveSessions($userIdentifier, $reason);
 
         foreach ($revokedSessionIds as $sessionId) {
-            $this->redis->unlink($this->redisSessionPrefix.$sessionId);
+             $this->sessionStoreEvictor->evict($sessionId);
         }
     }
 
@@ -106,7 +106,7 @@ final class UserSessionManager implements UserSessionManagerInterface
         $revokedSessionId = $this->repository->removeSession($sessionId, $reason);
 
         if (null !== $revokedSessionId) {
-            $this->redis->unlink($this->redisSessionPrefix.$revokedSessionId);
+            $this->sessionStoreEvictor->evict($revokedSessionId);
         }
     }
 
@@ -121,7 +121,7 @@ final class UserSessionManager implements UserSessionManagerInterface
         $expiredMaxDuration = $this->repository->markSessionsExceedingMaxDuration($maxDurationHours);
 
         foreach ([...$expiredInactivity, ...$expiredMaxDuration] as $session) {
-            $this->redis->unlink($this->redisSessionPrefix.$session->getSessionId());
+            $this->sessionStoreEvictor->evict($session->getSessionId());
         }
 
         return [
@@ -143,5 +143,35 @@ final class UserSessionManager implements UserSessionManagerInterface
     public function findBySessionId(string $sessionId): ?UserSessionInterface
     {
         return $this->repository->findBySessionId($sessionId);
+    }
+
+    public function createRevokedSession(
+        string $userIdentifier,
+        string $sessionId,
+        UserSessionRevokedReason $reason,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+        ?string $deviceFingerprint = null,
+        ): UserSessionInterface {
+        return $this->repository->createRevokedSession(
+            $userIdentifier,
+            $sessionId,
+            $reason,
+            $ipAddress,
+            $userAgent,
+            $deviceFingerprint,
+        );
+    }
+
+    public function revokeEverySession(
+        UserSessionRevokedReason $reason = UserSessionRevokedReason::MANUAL_LOGOUT,
+    ): int {
+        $revokedSessionIds = $this->repository->revokeEverySession($reason);
+
+        foreach ($revokedSessionIds as $sessionId) {
+            $this->sessionStoreEvictor->evict($sessionId);
+        }
+
+        return \count($revokedSessionIds);
     }
 }

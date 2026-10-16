@@ -354,7 +354,7 @@ abstract class AbstractBaseUser implements BaseUserInterface,\Stringable
 
     public function isPasswordRequestNonExpired(int $ttl): bool
     {
-        $passwordRequestedAt = $this->getPasswordRequestedAt();
+        $passwordRequestedAt = $this->getPasswordRequestedAt(); 
 
         return null !== $passwordRequestedAt && $passwordRequestedAt->getTimestamp() + $ttl > time();
     }

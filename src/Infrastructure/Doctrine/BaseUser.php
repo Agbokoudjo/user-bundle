@@ -78,6 +78,7 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
     protected ?string $email = null;
 
     #[ORM\Column(type: 'string')]
+    #[Groups(['user:security'])]
     protected ?string $password = null;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
@@ -180,6 +181,12 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     #[Groups(['user:cache', 'user:security'])]
     protected ?string $salt = null;
+
+    #[ORM\Column(type: "datetime_immutable")]
+    protected ?\DateTimeInterface $createdAt = null;
+
+    #[ORM\Column(type: "datetime", nullable: true)]
+    protected ?\DateTimeInterface $updatedAt = null;
 
     public function getIdentityNormalized(): string
     {

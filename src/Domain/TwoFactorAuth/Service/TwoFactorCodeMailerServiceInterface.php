@@ -24,7 +24,7 @@ namespace Wlindabla\UserBundle\Domain\TwoFactorAuth\Service;
  *
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  */
-interface TwoFactorCodeServiceInterface
+interface TwoFactorCodeMailerServiceInterface
 {
     /**
      * Generates a new code, invalidates any existing PENDING codes for the user,

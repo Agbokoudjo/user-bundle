@@ -16,7 +16,9 @@ declare(strict_types=1);
 
 namespace Wlindabla\UserBundle\UI\Http\EventSubscriber;
 
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Security\Http\Event\InteractiveLoginEvent;
 use Symfony\Component\Security\Http\SecurityEvents;
@@ -24,7 +26,6 @@ use Wlindabla\ShareServiceBundle\Messenger\QueueHandler\AsyncMethodDispatcherInt
 use Wlindabla\ShareServiceBundle\Security\Browser\DeviceFingerprintUserAgent;
 use Wlindabla\ShareServiceBundle\Security\Browser\UserAgentParserInterface;
 use Wlindabla\UserBundle\Domain\LoggerLoginUser\Application\Manager\LoggerLoginUserManagerInterface;
-use Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum\TwoFactorAuthKey;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 
@@ -56,6 +57,8 @@ final class LoginSubscriber implements EventSubscriberInterface
     public function __construct(
         private readonly AsyncMethodDispatcherInterface $asyncMethodDispatcher,
         private readonly UserAgentParserInterface $userAgentParser,
+        #[Autowire(service: 'service_container')]
+        private readonly ContainerInterface $container,
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
@@ -83,6 +86,11 @@ final class LoginSubscriber implements EventSubscriberInterface
      */
     public function onRequireTwoFactor(InteractiveLoginEvent $event): void
     {
+         if (!$this->container->has(\Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface::class)) {
+            $this->logger?->debug('Two-factor module not configured on the host application — skipping MFA challenge.');
+            return;
+        }
+
         $user = $event->getAuthenticationToken()->getUser();
 
         if (!$user instanceof BaseUserInterface) {
@@ -100,7 +108,7 @@ final class LoginSubscriber implements EventSubscriberInterface
 
         try {
             $this->asyncMethodDispatcher->dispatch(
-                TwoFactorCodeManagerInterface::class,
+                \Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface::class,
                 'generateAndSendAsync',
                 [$user->getUserIdentifier(), $request->getClientIp(), 'login'],
             );

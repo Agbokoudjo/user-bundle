@@ -37,10 +37,10 @@ abstract class AbstractTwoFactorCodeRepository extends ServiceEntityRepository i
     }
 
     /**
-     * Le code PENDING le plus récent d'un utilisateur (borne non expirée
-     * exclue volontairement : c'est au manager/domaine de trancher via
-     * isPending(), pour garder la règle métier à un seul endroit).
-     */
+    * A user's most recent PENDING code (non-expired entries are
+    * intentionally excluded: it is up to the manager/domain to decide
+    * via isPending(), in order to keep the business logic in a single place). 
+    */
     public function findLatestPending(string $userIdentifier): ?TwoFactorCodeInterface
     {
         return $this->findOneBy(
@@ -50,9 +50,9 @@ abstract class AbstractTwoFactorCodeRepository extends ServiceEntityRepository i
     }
 
     /**
-     * Nombre de codes envoyés depuis $since (fenêtre de limitation de débit,
-     * 3 envois / 15 min) — compte les lignes créées, PENDING ou non.
-     */
+    * Number of codes sent since $since (rate-limiting window,
+    * 3 sends / 15 min) — counts created rows, regardless of whether they are PENDING. 
+    */
     public function countSentSince(string $userIdentifier, \DateTimeInterface $since): int
     {
         return (int) $this->createQueryBuilder('c')
@@ -76,10 +76,10 @@ abstract class AbstractTwoFactorCodeRepository extends ServiceEntityRepository i
     }
 
     /**
-     * Invalide (EXPIRED) tous les codes PENDING d'un utilisateur — appelé
-     * avant de générer un nouveau code, et à la vérification réussie pour
-     * empêcher la réutilisation d'un code plus ancien encore valide.
-     */
+    * Invalidates (sets to EXPIRED) all PENDING codes for a user — called
+    * before generating a new code, and upon successful verification,
+    * to prevent the reuse of an older, still-valid code. 
+    */
     public function invalidatePending(string $userIdentifier): void
     {
         $pendingCodes = $this->findBy([

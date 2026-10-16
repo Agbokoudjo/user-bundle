@@ -28,7 +28,7 @@ use Wlindabla\UserBundle\Domain\User\Exception\EntityInUseException;
 /**
  * Reacts to EntityInUseException (business block, never an authorization
  * question — see the exception's own docblock). Deliberately separate
- * from AccessDeniedListener: the two answer different questions, no
+ * from AccessDeniedSubscriber: the two answer different questions, no
  * reason to mix them into a single listener.
  *
  * Unlike a generic "hide everything in prod" exception listener, the

@@ -44,6 +44,7 @@ final readonly class PasswordResetService implements PasswordResetInterface
         private TokenGeneratorInterface $tokenGenerator,
         private TokenHasherInterface $tokenHasher,
         private AsyncMethodDispatcherInterface $asyncMethodDispatcher,
+        private PasswordResetMailerService $passwordResetMailerService,
         private LoggerInterface $logger,
     ) {}
 
@@ -85,11 +86,8 @@ final readonly class PasswordResetService implements PasswordResetInterface
 
         $this->userManager->save($user);
 
-        $this->asyncMethodDispatcher->dispatch(
-            PasswordResetMailerService::class,
-            'sendResetRequestEmail',
-            [$user->getId(), $plainToken]
-        );
+        $this->passwordResetMailerService->sendResetRequestEmail($user->getId(), $plainToken);
+
 
         $this->logger->info('Password reset request accepted; email is being sent.', [
             'user_id' => $user->getId(),

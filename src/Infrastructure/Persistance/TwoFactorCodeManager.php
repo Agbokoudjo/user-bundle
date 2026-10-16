@@ -27,7 +27,7 @@ use Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception\TwoFactorCodeLockedExcep
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Exception\TwoFactorSendThrottledException;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\Persistance\TwoFactorCodeRepositoryInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\TwoFactorCodeInterface;
-use Wlindabla\UserBundle\Domain\TwoFactorAuth\Service\TwoFactorCodeServiceInterface;
+use Wlindabla\UserBundle\Domain\TwoFactorAuth\Service\TwoFactorCodeMailerServiceInterface;
 
 /**
  * Orchestrates the full lifecycle of the email MFA code: generation,
@@ -42,7 +42,7 @@ final class TwoFactorCodeManager implements TwoFactorCodeManagerInterface
         private readonly TwoFactorCodeRepositoryInterface $repository,
         private readonly MfaCodeGeneratorInterface $codeGenerator,
         private readonly TokenHasherInterface $tokenHasher,
-        private readonly TwoFactorCodeServiceInterface $twoFactorCodeService,
+        private readonly TwoFactorCodeMailerServiceInterface $twoFactorCodeService,
         private readonly LoggerInterface $logger,
         private readonly ParameterBagInterface $params,
     ) {}
@@ -158,7 +158,7 @@ final class TwoFactorCodeManager implements TwoFactorCodeManagerInterface
         $code->setStatus(TwoFactorCodeStatus::VERIFIED);
         $this->repository->save($code);
 
-        $this->repository->invalidatePending($userIdentifier);
+        $this->invalidatePending($userIdentifier);
 
         $this->logger->info('MFA code validated successfully.', ['user' => $userIdentifier]);
     }

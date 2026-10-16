@@ -58,7 +58,7 @@ final readonly class UserAccountEmailVerificationSubscriber implements EventSubs
         $encryptedId = $this->idEncryptionService->encryptId($event->getUserId());
 
         $confirmationUrl = $this->router->generate(
-            'app.verify.email',
+            'wlindabla_user.verify.email',
             ['token' => $event->getRawToken(), 'id' => $encryptedId],
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
@@ -66,7 +66,7 @@ final readonly class UserAccountEmailVerificationSubscriber implements EventSubs
         $siteName = $this->params->get('app.site_name');
 
         $subject = $this->translator->trans(
-            'verification_email.subject',
+            'verification_email.subject', 
             ['%site_name%' => $siteName],
             'WlindablaUserBundle',
         );

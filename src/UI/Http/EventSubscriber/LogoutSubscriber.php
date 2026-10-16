@@ -31,7 +31,7 @@ use Wlindabla\UserBundle\Infrastructure\Security\Provider\CacheUserProviderInter
 *
 * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
 */
-#[AsEventListener(event: LogoutEvent::class)]
+#[AsEventListener(event: LogoutEvent::class,priority: 10)]
 final readonly class LogoutSubscriber
 {
     public function __construct(

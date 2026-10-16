@@ -21,7 +21,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\MailingBundle\Mailing\MailerManagerInterface;
 use Wlindabla\MailingBundle\Mailing\PriorityInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Model\TwoFactorCodeInterface;
-use Wlindabla\UserBundle\Domain\TwoFactorAuth\Service\TwoFactorCodeServiceInterface;
+use Wlindabla\UserBundle\Domain\TwoFactorAuth\Service\TwoFactorCodeMailerServiceInterface;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 
@@ -29,7 +29,7 @@ use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-final class TwoFactorCodeService implements TwoFactorCodeServiceInterface
+final class TwoFactorCodeMailerService implements TwoFactorCodeMailerServiceInterface
 {
     public function __construct(
         private readonly UserManagerInterface $userManager,

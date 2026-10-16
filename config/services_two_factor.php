@@ -16,9 +16,9 @@ declare(strict_types=1);
 
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface;
-use Wlindabla\UserBundle\Domain\TwoFactorAuth\Service\TwoFactorCodeServiceInterface;
+use Wlindabla\UserBundle\Domain\TwoFactorAuth\Service\TwoFactorCodeMailerServiceInterface;
 use Wlindabla\UserBundle\Infrastructure\Persistance\TwoFactorCodeManager;
-use Wlindabla\UserBundle\Infrastructure\Service\TwoFactorCodeService;
+use Wlindabla\UserBundle\Infrastructure\Service\TwoFactorCodeMailerService;
 use Wlindabla\UserBundle\UI\Http\Controller\TwoFactorAuthController;
 use Wlindabla\UserBundle\UI\Http\EventSubscriber\TwoFactorAuthListener;
 
@@ -31,19 +31,21 @@ return static function (ContainerConfigurator $container): void {
     $services->set(TwoFactorCodeManager::class);
     $services->alias(TwoFactorCodeManagerInterface::class, TwoFactorCodeManager::class);
 
-    $services->set(TwoFactorCodeService::class);
-    $services->alias(TwoFactorCodeServiceInterface::class, TwoFactorCodeService::class);
+    $services->set(TwoFactorCodeMailerService::class);
+    $services->alias(TwoFactorCodeMailerServiceInterface::class, TwoFactorCodeMailerService::class);
 
     $services->set(TwoFactorAuthListener::class)
         ->arg('$firewallName', '%wlindabla_user.two_factor.firewall_name%')
         ->arg('$inactivityThresholdSeconds', '%wlindabla_user.two_factor.inactivity_threshold_seconds%')
         ->arg('$absoluteCapSeconds', '%wlindabla_user.two_factor.absolute_cap_seconds%')
         ->arg('$activityTouchThrottleSeconds', '%wlindabla_user.two_factor.activity_touch_throttle_seconds%')
-        ->arg('$allowedRoutesWhilePending', '%wlindabla_user.two_factor.allowed_routes_while_pending%');
+        ->arg('$allowedRoutesWhilePending', '%wlindabla_user.two_factor.allowed_routes_while_pending%')
+        ->arg('$supportAjaxJsonResponse', '%wlindabla_user.two_factor.support_ajax_json_response%');
 
     $services->set(TwoFactorAuthController::class)
         ->arg('$loginRouteName', '%wlindabla_user.routes.login%')
         ->arg('$homeRouteName', '%wlindabla_user.routes.home%')
         ->arg('$logoutRouteName', '%wlindabla_user.routes.logout%')
+        ->arg('$firewallName', '%wlindabla_user.two_factor.firewall_name%')
         ->tag('controller.service_arguments');
 };

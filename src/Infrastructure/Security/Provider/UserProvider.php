@@ -41,7 +41,7 @@ final readonly class UserProvider implements UserProviderInterface, CacheUserPro
         private SerializerFacade $serializer,
         private AsyncMethodDispatcherInterface $asyncMethodDispatcher,
         private LoggerInterface $logger,
-        private int $expiresAfter = 43200,
+        private int $expiresAfter = 0,
     ) {
     }
 
@@ -69,7 +69,7 @@ final readonly class UserProvider implements UserProviderInterface, CacheUserPro
             ['Loading user by identifier', ['identifier' => $identifier]],
         );
 
-        $cacheKey = 'sonata_admin_user_login_cache'.md5($identifier);
+        $cacheKey = 'wlindbala_admin_user_login_cache_'.md5($identifier);
 
         $userData = $this->userCacheProvider->get($cacheKey, function (ItemInterface $item) use ($identifier) {
             $user = $this->findUser($identifier);
@@ -204,7 +204,7 @@ final readonly class UserProvider implements UserProviderInterface, CacheUserPro
                 return;
             }
 
-            $cacheKeyUser = 'sonata_admin_user_login_cache'.md5($freshUser->getUserIdentifier());
+            $cacheKeyUser = 'wlindabla_admin_user_login_cache'.md5($freshUser->getUserIdentifier());
             $this->userCacheProvider->invalidateTags(['user_id_'.(string) $userId, 'ADMIN', 'users']);
             $this->userCacheProvider->delete($cacheKeyUser);
         } catch (\Throwable $th) {

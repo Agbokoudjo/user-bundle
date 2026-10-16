@@ -47,7 +47,8 @@ use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
  * Order matters: this must run AFTER the firewall itself, AND after
  * TwoFactorAuthListener — a second factor not yet validated must never
  * let a session be registered for this browser.
- *
+ * @block: do NOT create the session for this browser, immediately log out this fresh authentication ($this->security->logout(false)), and redirect to a conflict page stating “already logged in elsewhere; please log out first” (you can reuse wlindabla_user_session_conflict or create a variant with a message different from session_conflict.*).
+ * @takeover: revoke the old session and allow the new one to proceed.
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
@@ -66,6 +67,7 @@ final readonly class SessionControlListener
         private TranslatorInterface $translator,
         private string $firewallName,
         private int $maxDurationHours,
+        private string $sessionPolicy = 'takeover',
         /** @var list<string> */
         private array $excludedRoutes = []
     ) {}
@@ -107,6 +109,29 @@ final readonly class SessionControlListener
 
             if (null !== $pendingData) {
                 $session->remove(LoginSubscriber::PENDING_SESSION_REGISTRATION);
+
+                if ('block' === $this->sessionPolicy
+                    && $this->sessionManager->hasActiveSession($pendingData['userIdentifier'], $currentSessionId)
+                ) {
+                    $this->sessionManager->createRevokedSession(
+                        $pendingData['userIdentifier'],
+                        $currentSessionId,
+                        UserSessionRevokedReason::CONFLICT,
+                        $pendingData['ipAddress'],
+                        $pendingData['userAgent'],
+                        $pendingData['deviceFingerprint'],
+                    );
+
+                    $this->logger->warning('Login refused: an active session already exists elsewhere.', [
+                        'user' => $pendingData['userIdentifier'],
+                        'session_id' => $currentSessionId,
+                    ]);
+
+                    $event->setResponse($this->buildRevokedResponse($request, $user, UserSessionRevokedReason::CONFLICT));
+                    $event->stopPropagation();
+
+                    return;
+                }
 
                 $this->sessionManager->createSession(
                     $pendingData['userIdentifier'],

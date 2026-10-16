@@ -1,3 +1,17 @@
+{#
+
+* This file is part of the project by AGBOKOUDJO Franck.
+ *
+ * (c) AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * Phone: +229 01 67 25 18 86
+ * LinkedIn: https://www.linkedin.com/in/internationales-web-apps-services-120520193/
+ * Github: https://github.com/Agbokoudjo/
+ * Company: INTERNATIONALES WEB APPS & SERVICES
+ *
+ * For more information, please feel free to contact the author.
+
+#}
+
 <!DOCTYPE html>
 <html lang="{{ app.request.locale|default('fr') }}">
 <head>
@@ -98,7 +112,7 @@
 
         <p class="tfa-hint">{{ 'two_factor.hint'|trans({}, 'WlindablaUserBundle') }}</p>
 
-        <form id="two-factor-form" method="post" action="{{ path('app_two_factor_verify') }}" autocomplete="off">
+        <form id="two-factor-form" method="post" action="{{ path('wlindabla_user_two_factor_verify') }}" autocomplete="off">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('two_factor_verify') }}">
             <input
                 type="text"

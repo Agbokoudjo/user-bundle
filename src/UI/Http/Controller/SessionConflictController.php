@@ -55,16 +55,17 @@ final class SessionConflictController extends AbstractController
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly string $kernelEnvironment,
         private readonly ?string $homeRouteName = null,
+        private readonly ?string $logoutRouteName = null,
+        private readonly ?string $siteName = null,
         private readonly ?LoggerInterface $logger = null,
-    ) {
-    }
+    ) {}
 
-    public function __invoke(Request $request, int|string $id): Response
+    public function __invoke(Request $request, int|string $userId): Response
     {
         try {
             $this->asyncMethodDispatcher->dispatch(LoggerInterface::class, 'info', [
                 'Session conflict page displayed',
-                ['userId' => $id, 'timestamp' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM)],
+                ['userId' => $userId, 'timestamp' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM)],
             ]);
 
             // The losing browser must not remain "active" in the DB either:
@@ -74,14 +75,17 @@ final class SessionConflictController extends AbstractController
                 $this->sessionManager->removeSession($request->getSession()->getId(), UserSessionRevokedReason::CONFLICT);
             }
 
-            return $this->render($this->templateRegistry->get('session_conflict'));
+            return $this->render($this->templateRegistry->get('session_conflict'), [
+                    'site_name' => $this->siteName,
+                    'logout_url' => $this->safeGenerateUrl($this->logoutRouteName, $this->urlGenerator, $this->logger),
+                ]);
         } catch (\Throwable $th) {
             $this->asyncMethodDispatcher->dispatch(LoggerInterface::class, 'error', [
                 'Error while displaying the session conflict page',
                 [
                     'exception_class' => $th::class,
                     'exception_message' => $th->getMessage(),
-                    'user' => $id,
+                    'user' => $userId,
                     'trace' => 'prod' !== $this->kernelEnvironment ? $th->getTraceAsString() : null,
                 ],
             ]);

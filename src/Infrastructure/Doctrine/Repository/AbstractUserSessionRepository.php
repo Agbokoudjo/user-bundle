@@ -91,13 +91,43 @@ abstract class AbstractUserSessionRepository extends ServiceEntityRepository imp
         return $session;
     }
 
-    private function newSession(): UserSessionInterface
+    protected function newSession(): UserSessionInterface
     {
         $entityClass = $this->getClassName();
 
         return new $entityClass();
     }
 
+    /**
+     * Persists a session row already marked as revoked — used when a login
+     * attempt is refused outright (single-session "block" policy) instead of
+     * taking over. Unlike createSession(), this never touches other active
+     * sessions for the user.
+     */
+    public function createRevokedSession(
+        string $userIdentifier,
+        string $sessionId,
+        UserSessionRevokedReason $reason,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+        ?string $deviceFingerprint = null,
+    ): UserSessionInterface {
+        $session = $this->newSession();
+        $session->setUserIdentifier($userIdentifier);
+        $session->setSessionId($sessionId);
+        $session->setIpAddress($ipAddress);
+        $session->setUserAgent($userAgent);
+        $session->setDeviceFingerprint($deviceFingerprint);
+        $session->revoke($reason);
+
+        $entityManager = $this->getEntityManager();
+        $entityManager->persist($session);
+        $entityManager->flush();
+
+        return $session;
+    }
+
+    
     /**
      * Finds a session by its PHPSESSID, active OR revoked.
      *
@@ -319,4 +349,34 @@ abstract class AbstractUserSessionRepository extends ServiceEntityRepository imp
         $item->expiresAfter(self::CACHE_TTL);
         $this->cache->save($item);
     }
+
+    /**
+     * @return string[] revoked session IDs, so the caller can clean up the
+     *                   underlying session store
+     */
+    public function revokeEverySession(
+        UserSessionRevokedReason $reason= UserSessionRevokedReason::MANUAL_LOGOUT
+    ): array
+    {
+        $sessions = $this->findBy(['active' => true]);
+
+        if ([] === $sessions) {
+            return [];
+        }
+
+        $revokedSessionIds = [];
+
+        foreach ($sessions as $session) {
+            $session->revoke($reason);
+            $this->cache->deleteItem($this->activityLockKey($session->getSessionId()));
+            $this->cache->deleteItem($this->cacheKey($session->getUserIdentifier()));
+            $revokedSessionIds[] = $session->getSessionId();
+        }
+
+        $this->getEntityManager()->flush();
+
+        return $revokedSessionIds;
+    }
+
+
 }

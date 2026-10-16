@@ -67,7 +67,7 @@ final class WlindablaUserBundle extends AbstractBundle
             ->arrayNode('security')
                 ->addDefaultsIfNotSet()
                 ->children()
-                    ->integerNode('user_cache_ttl')->defaultValue(43200)->min(0)->end()
+                    ->integerNode('user_cache_ttl')->defaultValue(0)->min(0)->end()
                 ->end()
             ->end()
             ->arrayNode('routes')
@@ -78,11 +78,13 @@ final class WlindablaUserBundle extends AbstractBundle
                     ->scalarNode('logout')->defaultValue('wlindabla_user_logout')->end()
                     ->scalarNode('logout_path')->defaultValue("/admin/logout")->end()
                     ->scalarNode('home')->defaultNull()->end()
+                    ->scalarNode('dashboard')->defaultNull()->end()
                 ->end()
             ->end()
             ->arrayNode('templates')
                 ->addDefaultsIfNotSet()
                 ->children()
+                    ->scalarNode('session_conflict')->defaultValue('@WlindablaUser/security/sessionConflict.html.twig')->end()
                     ->scalarNode('login')->defaultValue('@WlindablaUser/security/login.html.twig')->end()
                     ->scalarNode('access_denied')->defaultValue('@WlindablaUser/security/error403.html.twig')->end()
                     ->scalarNode('outcome_page')->defaultValue('@WlindablaUser/email/security/checkEmail.html.twig')->end()
@@ -105,13 +107,17 @@ final class WlindablaUserBundle extends AbstractBundle
             ->arrayNode('password_reset')
                 ->addDefaultsIfNotSet()
                 ->children()
-                    ->scalarNode('request_path')->defaultValue('/forget-password')->end()
-                    ->scalarNode('confirm_path')->defaultValue('/reset-password/confirm/{token}/{id}')->end()
+                    ->scalarNode('request_path')->defaultValue('/forget_password/form/request')->end()
+                    ->scalarNode('confirm_path')->defaultValue('/reset_password/form/request/confirm/{token}/{id}')->end()
                 ->end()
             ->end()
             ->arrayNode('session_control')
                 ->addDefaultsIfNotSet()
                 ->children()
+                    ->scalarNode('policy')
+                        ->defaultValue('takeover')
+                        ->info('"takeover":The new connection revokes existing sessions. "block": the new connection is refused if a session is already active elsewhere.')
+                    ->end()
                     ->scalarNode('redis_session_prefix')->defaultNull()->end()
                     ->integerNode('inactivity_hours')->defaultValue(4)->end()
                     ->integerNode('max_duration_hours')->defaultValue(24)->end()
@@ -127,6 +133,7 @@ final class WlindablaUserBundle extends AbstractBundle
                     ->integerNode('inactivity_threshold_seconds')->defaultValue(2 * 3600)->end()
                     ->integerNode('absolute_cap_seconds')->defaultValue(24 * 3600)->end()
                     ->integerNode('activity_touch_throttle_seconds')->defaultValue(5 * 60)->end()
+                    ->booleanNode('support_ajax_json_response')->defaultValue(false)->end()
                 ->end()
             ->end()
             ->arrayNode('email_change')
@@ -161,9 +168,10 @@ final class WlindablaUserBundle extends AbstractBundle
             ->set('wlindabla_user.routes.logout', $config['routes']['logout'])
             ->set('wlindabla_user.routes.logout_path', $config['routes']['logout_path'])
             ->set('wlindabla_user.routes.home', $config['routes']['home'])
+            ->set('wlindabla_user.routes.dashboard', $config['routes']['dashboard'])
             ->set('wlindabla_user.password_reset.request_path', $config['password_reset']['request_path'])
             ->set('wlindabla_user.password_reset.confirm_path', $config['password_reset']['confirm_path'])
-            ->set('wlindabla_user.session_control.redis_session_prefix', $config['session_control']['redis_session_prefix'])
+            ->set('wlindabla_user.session_control.policy', $config['session_control']['policy'])
             ->set('wlindabla_user.session_control.inactivity_hours', $config['session_control']['inactivity_hours'])
             ->set('wlindabla_user.session_control.max_duration_hours', $config['session_control']['max_duration_hours'])
             ->set('wlindabla_user.session_control.firewall_name', $config['session_control']['firewall_name'])
@@ -173,6 +181,7 @@ final class WlindablaUserBundle extends AbstractBundle
             ->set('wlindabla_user.two_factor.inactivity_threshold_seconds', $config['two_factor']['inactivity_threshold_seconds'])
             ->set('wlindabla_user.two_factor.absolute_cap_seconds', $config['two_factor']['absolute_cap_seconds'])
             ->set('wlindabla_user.two_factor.activity_touch_throttle_seconds', $config['two_factor']['activity_touch_throttle_seconds'])
+            ->set('wlindabla_user.two_factor.support_ajax_json_response', $config['two_factor']['support_ajax_json_response'])
             ->set('wlindabla_user.email_change.token_lifetime', $config['email_change']['token_lifetime'])
             ->set('wlindabla_user.email_change.retry_cooldown', $config['email_change']['retry_cooldown'])
             ->set('wlindabla_user.email_change.exempt_roles_on_self', $config['email_change']['exempt_roles_on_self'])
@@ -187,10 +196,6 @@ final class WlindablaUserBundle extends AbstractBundle
         $routingModules = [WlindablaRouteLoader::MODULE_CORE];
 
         if (null !== $classes['user_session']) {
-            if (null === $config['session_control']['redis_session_prefix']) {
-                throw new \LogicException('wlindabla_user.classes.user_session is set, so wlindabla_user.session_control.redis_session_prefix is required.');
-            }
-
             if (null === $config['session_control']['firewall_name']) {
                 throw new \LogicException('wlindabla_user.classes.user_session is set, so wlindabla_user.session_control.firewall_name is required.');
             }
@@ -278,9 +283,47 @@ final class WlindablaUserBundle extends AbstractBundle
         // allowed_services entries (its own CommandHandlers, etc.) are kept
         // alongside this list, not replaced by it.
         if ($builder->hasExtension('wlindabla_share_service')) {
+            $llowed_services=$this->asyncDispatchedServices() ;
+            
+            /**
+             * i have do conditions if because the errors message of application hote:
+             *  '[Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException]
+              *  The service "Wlindabla\ShareServiceBundle\Messenger\QueueHandler\ServiceMethodMessageHandler" has a dependency on a non-existent service "Wlindabla\UserBundle\Dom
+              *  ain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface"'.
+             */
+
+             if (isset($classes['two_factor_code'])) {
+                $llowed_services=array_merge($llowed_services,[\Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface::class]) ;
+             }
+
+             if (isset($classes['email_change_request'])) {
+                 $llowed_services=array_merge($llowed_services,[\Wlindabla\UserBundle\Infrastructure\Service\EmailChangeRequestMailerService::class]) ;
+             }
+
+             if (isset($classes['logger_login_user'])) {
+               $llowed_services=array_merge($llowed_services,[\Wlindabla\UserBundle\Domain\LoggerLoginUser\Application\Manager\LoggerLoginUserManagerInterface::class]) ;
+            }
+
+            if (isset($classes['user_session'])) {
+                $llowed_services=array_merge($llowed_services,[\Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface::class]) ;
+            }
+
             $container->extension('wlindabla_share_service', [
                 'async_method_dispatcher' => [
-                    'allowed_services' => $this->asyncDispatchedServices(),
+                    'allowed_services' => $llowed_services,
+                ],
+            ]);
+
+            // Self-registers the route parameter names this bundle encrypts via
+            // IdEncryptionInterface, so the host app doesn't have to remember to
+            // list them. id_encryption.identity_key_collection is a scalarPrototype
+            // array like allowed_services — Symfony merges it across sources, so
+            // the host's own entries (code, slug for its own routes) are kept.
+            // This alone does NOT activate the resolver: encryption_key still has
+            // to be set host-side, since it's a secret this bundle cannot supply.
+            $container->extension('wlindabla_share_service', [
+                'id_encryption' => [
+                    'identity_key_collection' => ['id','userId'],
                 ],
             ]);
         }
@@ -302,10 +345,8 @@ final class WlindablaUserBundle extends AbstractBundle
             \Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface::class,
             \Wlindabla\UserBundle\Domain\User\Service\UpdatePasswordUserServiceInterface::class,
             \Wlindabla\UserBundle\Infrastructure\Service\PasswordResetMailerService::class,
-            \Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface::class,
-            \Wlindabla\UserBundle\Domain\LoggerLoginUser\Application\Manager\LoggerLoginUserManagerInterface::class,
-            \Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface::class,
-            \Wlindabla\UserBundle\Infrastructure\Service\EmailChangeRequestMailerService::class
+            \Wlindabla\UserBundle\Domain\User\Service\PasswordResetInterface::class,
+            \Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ApplyEmailVerificationHandler::class
         ];
     }
 }

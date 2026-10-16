@@ -27,6 +27,7 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Wlindabla\ShareServiceBundle\Messenger\QueueHandler\AsyncMethodDispatcherInterface;
 use Wlindabla\UserBundle\Domain\User\Service\PasswordResetInterface;
 use Wlindabla\UserBundle\Infrastructure\Form\Type\PasswordResetRequestType;
 use Wlindabla\UserBundle\Infrastructure\Routing\GeneratesOptionalRouteUrlTrait;
@@ -42,7 +43,6 @@ final class PasswordResetRequestController extends AbstractController implements
     use GeneratesOptionalRouteUrlTrait;
     
     public function __construct(
-        private readonly PasswordResetInterface $passwordResetService,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly OutcomePageRenderer $outcomePageRenderer,
         private readonly TemplateRegistryInterface $templateRegistry,
@@ -50,7 +50,7 @@ final class PasswordResetRequestController extends AbstractController implements
         private readonly \Symfony\Component\Routing\Generator\UrlGeneratorInterface $urlGenerator,
         private readonly LoggerInterface $logger,
         private readonly ?string $homeRouteName = null,
-        private readonly ?string $logoutRouteName = null
+        private readonly ?string $loginRouteName = null,
     ) {
     }
 
@@ -59,6 +59,7 @@ final class PasswordResetRequestController extends AbstractController implements
         Request $request,
         #[Target('password_reset')]
         RateLimiterFactoryInterface $passwordResetLimiter,
+        AsyncMethodDispatcherInterface $asyncMethodDispatcher,
     ): Response {
         if ($this->authorizationChecker->isGranted('IS_AUTHENTICATED_FULLY')) {
             return $this->redirect($this->generateUrl($this->homeRouteName ?? '/'));
@@ -77,7 +78,11 @@ final class PasswordResetRequestController extends AbstractController implements
                 );
             }
 
-            $this->passwordResetService->requestReset($form->get('username')->getData());
+            $asyncMethodDispatcher->dispatch(
+                PasswordResetInterface::class,
+                'requestReset',
+                [$form->get('username')->getData()]
+            );
 
             // Intentionally generic message: never confirm or deny
             // the existence of an account (anti-enumeration).
@@ -88,7 +93,7 @@ final class PasswordResetRequestController extends AbstractController implements
 
         return $this->render($this->templateRegistry->get('password_reset_request'), [
             'form' => $form->createView(),
-            'login_url' => $this->safeGenerateUrl($this->logoutRouteName,$this->urlGenerator, $this->logger),   // réutilise $homeRouteName déjà injecté
+            'login_url' => $this->safeGenerateUrl($this->loginRouteName,$this->urlGenerator, $this->logger)
         ]);
     }
 

@@ -48,7 +48,7 @@ final class PasswordResetConfirmationController extends AbstractController imple
     ) {
     }
 
-    public function __invoke(string $token, int $id): Response
+    public function __invoke(int $id,string $token): Response
     {
         try {
             $this->passwordResetService->confirmReset($token, $id);

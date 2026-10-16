@@ -38,7 +38,7 @@ use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-final class AccessDeniedListener implements EventSubscriberInterface
+final class AccessDeniedSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly Security $security,

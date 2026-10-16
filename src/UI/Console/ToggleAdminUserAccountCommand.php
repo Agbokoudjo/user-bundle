@@ -30,14 +30,14 @@ use Wlindabla\UserBundle\Domain\User\Enum\AccountStatus;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-#[AsCommand(name: 'wlindabla:user:activate', description: 'Activate a user')]
+#[AsCommand(name: 'wlindabla:user:activate', description: 'Activate a user account')]
 final class ToggleAdminUserAccountCommand extends Command
 {
     public function __construct(
         private ToggleUserAccountHandler $toggleUserHandlerAccountHandler
     )
     {
-        parent::__construct('app:user:activate');
+        parent::__construct('wlindabla:user:activate');
     }
 
     public function __invoke(InputInterface $input, OutputInterface $output): int

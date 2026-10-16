@@ -26,6 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Http\Util\TargetPathTrait;
 use Wlindabla\ShareServiceBundle\Messenger\QueueHandler\AsyncMethodDispatcherInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum\TwoFactorAuthKey;
@@ -55,6 +56,8 @@ use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
 #[AsEventListener(event: KernelEvents::REQUEST, priority: 7)]
 final readonly class TwoFactorAuthListener
 {
+    use TargetPathTrait;
+    
     public function __construct(
         private RouterInterface $router,
         private TwoFactorCodeManagerInterface $twoFactorCodeManager,
@@ -68,8 +71,8 @@ final readonly class TwoFactorAuthListener
         private int $activityTouchThrottleSeconds,
         /** @var list<string> */
         private array $allowedRoutesWhilePending = [],
-    ) {
-    }
+        private bool $supportAjaxJsonResponse = false,
+    ) {}
 
     public function __invoke(RequestEvent $event): void
     {
@@ -93,14 +96,17 @@ final readonly class TwoFactorAuthListener
 
         $user = $this->security->getUser();
 
+        if (null === $user) {
+            // Anonymous visitor — not our concern, let the firewall handle authentication.
+            return;
+        }
+
         if (!$user instanceof UserInterface) {
             $this->logger->warning('Unexpected user type for MFA freshness check — denying by caution (fail closed).', [
-                'user_class' => $user ? $user::class : 'null',
+                'user_class' => $user::class,
             ]);
-
             $event->setResponse($this->buildRedirectResponse($request));
             $event->stopPropagation();
-
             return;
         }
 
@@ -218,8 +224,21 @@ final readonly class TwoFactorAuthListener
         }
 
         try {
-            $user->setTwoFactorLastCheckedAt($now);
-            $this->userManager->save($user);
+            /**
+             * @var UserInterface|null $managedUser
+             */
+            $managedUser = $this->userManager->find($user->getId());
+
+            if (!$managedUser instanceof UserInterface) {
+                $this->logger->error('Failed to update the MFA activity heartbeat: user no longer exists.', [
+                    'user' => $user->getUserIdentifier(),
+                ]);
+
+                return;
+            }
+
+            $managedUser->setTwoFactorLastCheckedAt($now);
+            $this->userManager->save($managedUser);
         } catch (\Throwable $e) {
             $this->logger->error('Failed to update the MFA activity heartbeat (non-blocking).', [
                 'user' => $user->getUserIdentifier(),
@@ -230,14 +249,25 @@ final readonly class TwoFactorAuthListener
 
     private function buildRedirectResponse(Request $request): Response
     {
-        if ($request->isXmlHttpRequest()) {
+        // The target_path is never written by a background XHR call,
+        // regardless of the mode — it must always reflect the actual
+        // primary navigation that triggered this blockage.
+        if (!$request->isXmlHttpRequest()) {
+            $this->saveTargetPath($request->getSession(), $this->firewallName, $request->getUri());
+        }
+
+        if ($this->supportAjaxJsonResponse && $request->isXmlHttpRequest()) {
             return new JsonResponse([
                 'success' => false,
                 'twoFactorRequired' => true,
-                'redirect' => $this->router->generate('app_two_factor_show'),
+                'redirect' => $this->router->generate('wlindabla_user_two_factor_show'),
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        return new RedirectResponse($this->router->generate('app_two_factor_show'));
+        // supportAjaxJsonResponse === false: the bundle no longer handles AJAX
+        // differently — it returns a standard redirect even for an
+        // XHR call. It is up to the host frontend to detect `response.redirected`
+        // / `xhr.responseURL` and to force `window.location.href` itself.
+        return new RedirectResponse($this->router->generate('wlindabla_user_two_factor_show'));
     }
 }

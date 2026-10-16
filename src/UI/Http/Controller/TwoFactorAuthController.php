@@ -26,6 +26,7 @@ use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Util\TargetPathTrait;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Application\Manager\TwoFactorCodeManagerInterface;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum\TwoFactorAuthKey;
@@ -53,7 +54,8 @@ final class TwoFactorAuthController extends AbstractController
 {
     use ResolvesManagedCurrentUserTrait;
     use GeneratesOptionalRouteUrlTrait;
-
+    use TargetPathTrait;
+    
     public function __construct(
         private readonly TwoFactorCodeManagerInterface $twoFactorCodeManager,
         private readonly UserManagerInterface $userManager,
@@ -64,7 +66,8 @@ final class TwoFactorAuthController extends AbstractController
         private readonly LoggerInterface $logger,
         private readonly ?string $loginRouteName = null,
         private readonly ?string $homeRouteName = null,
-        private readonly ?string $logoutRouteName = null
+        private readonly ?string $logoutRouteName = null,
+        private readonly ?string $firewallName = null
     ) {}
 
     #[Route('/admin/2fa/show', name: 'wlindabla_user_two_factor_show', methods: ['GET'])]
@@ -162,7 +165,15 @@ final class TwoFactorAuthController extends AbstractController
 
         $this->logger->info('2FA validated, session regenerated.', ['user' => $user->getUserIdentifier()]);
 
-        return $this->jsonOrRedirectHome($request, $this->trans('two_factor.verified'));
+        $targetUrl = null;
+        if (null !== $this->firewallName) {
+            $targetUrl = $this->getTargetPath($request->getSession(), $this->firewallName);
+            if (null !== $targetUrl) {
+                $this->removeTargetPath($request->getSession(), $this->firewallName);
+            }
+        }
+
+        return $this->jsonOrRedirectTo($request, $this->trans('two_factor.verified'), $targetUrl);
     }
 
     #[Route('/admin/2fa/resend', name: 'wlindabla_user_two_factor_resend', methods: ['POST'])]
@@ -243,6 +254,17 @@ final class TwoFactorAuthController extends AbstractController
     private function jsonOrRedirectHome(Request $request, string $message): Response
     {
         $url = $this->safeGenerateUrl($this->homeRouteName, $this->urlGenerator,$this->logger) ?? '/';
+
+        if ($request->isXmlHttpRequest()) {
+            return new JsonResponse(['success' => true, 'message' => $message, 'redirect' => $url], Response::HTTP_OK);
+        }
+
+        return $this->redirect($url);
+    }
+
+    private function jsonOrRedirectTo(Request $request, string $message, ?string $url): Response
+    {
+        $url ??= $this->safeGenerateUrl($this->homeRouteName, $this->urlGenerator, $this->logger) ?? '/';
 
         if ($request->isXmlHttpRequest()) {
             return new JsonResponse(['success' => true, 'message' => $message, 'redirect' => $url], Response::HTTP_OK);

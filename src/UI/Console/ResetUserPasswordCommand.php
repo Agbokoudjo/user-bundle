@@ -35,7 +35,7 @@ use Wlindabla\UserBundle\Infrastructure\Model\UserInterface;
  * @package <https://github.com/Agbokoudjo/>
  */
 #[AsCommand(
-    name: 'wlindabla:user:reset-password',
+    name: 'wlindabla:user:reset_password',
     description: 'Resets the password of a SonataUser using their email address.',
 )]
 final class ResetUserPasswordCommand extends Command
@@ -46,7 +46,7 @@ final class ResetUserPasswordCommand extends Command
     public function __construct(
         private readonly UserManagerInterface $userManager,
     ) {
-        parent::__construct('app:user:reset-password');
+        parent::__construct('wlindabla:user:reset_password');
     }
 
     protected function configure(): void
@@ -63,7 +63,7 @@ final class ResetUserPasswordCommand extends Command
             );
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    public function __invoke(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
         $io->title('Password Reset — SonataUser');

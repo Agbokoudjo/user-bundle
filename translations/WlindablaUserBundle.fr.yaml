@@ -23,13 +23,13 @@ email_verification:
 
 account_confirmation:
     page_title: 'Confirmation de compte'
-    title: 'Création de votre compte <strong>%site_name%</strong>'
-    greeting: 'Salut <strong>%username%</strong>,'
-    body: 'Nous vous confirmons que votre compte pour l''application <strong>%site_name%</strong> a été créé avec succès.'
-    action_required: 'Avant de pouvoir vous connecter, vous devez <strong>vérifier et activer votre adresse e-mail <span style="color:#0ec5b2; font-weight: 600;">%email%</span></strong> en cliquant sur le lien ci-dessous.'
+    title: 'Création de votre compte <strong> %site_name% </strong>'
+    greeting: 'Salut <strong> %username% </strong>,'
+    body: 'Nous vous confirmons que votre compte pour l''application <strong> %site_name% </strong> a été créé avec succès.'
+    action_required: 'Avant de pouvoir vous connecter, vous devez <strong>vérifier et activer votre adresse e-mail <span style="color:#0ec5b2; font-weight: 600;"> %email% </span></strong> en cliquant sur le lien ci-dessous.'
     cta: 'Confirmer mon compte'
     link_notice: 'Ce lien de confirmation expirera bientôt pour des raisons de sécurité. Si vous rencontrez des problèmes, copiez et collez l''URL suivante dans votre navigateur :'
-    footer: 'Ceci est un message automatique du système <strong>%site_name%</strong>.<br>Merci de ne pas répondre directement à cet e-mail.'
+    footer: 'Ceci est un message automatique du système <strong> %site_name% </strong>.<br> Merci de ne pas répondre directement à cet e-mail.'
 
 login:
     page_title: 'Connexion'
@@ -37,7 +37,8 @@ login:
     username_label: 'Identifiant'
     password_label: 'Mot de passe'
     submit: 'Se connecter'
-
+    checkbox_label: 'Se souvenir de moi'
+     
 toggle_account_email:
     page_title: 'Statut du compte'
     status_active: 'ACTIVÉ'
@@ -47,10 +48,10 @@ toggle_account_email:
     body_active: 'Nous vous informons que votre compte sur <strong>%site_name%</strong> a été %status% par l''équipe d''administration.'
     login_intro: 'Vous pouvez dès à présent accéder à votre espace d''administration en cliquant sur le bouton ci-dessous :'
     temp_password_label: '🔐 Mot de passe temporaire :'
-    temp_password_notice: '⚠️ <strong>Important :</strong> Une fois connecté à l''espace d''administration, veuillez <strong>changer immédiatement</strong> votre mot de passe pour des raisons de sécurité.'
+    temp_password_notice: '⚠️ <strong> Important :</strong> Une fois connecté à l''espace d''administration, veuillez <strong> changer immédiatement </strong> votre mot de passe pour des raisons de sécurité.'
     login_button: 'Se connecter'
-    body_inactive: 'Nous vous informons que votre compte sur <strong>%site_name%</strong> a été %status% par l''équipe d''administration.'
-    contact_admins: 'Si vous pensez qu''il s''agit d''une erreur ou pour obtenir plus d''informations, veuillez <strong>contacter les administrateurs</strong> de %site_name%.'
+    body_inactive: 'Nous vous informons que votre compte sur <strong> %site_name% </strong> a été %status% par l''équipe d''administration.'
+    contact_admins: 'Si vous pensez qu''il s''agit d''une erreur ou pour obtenir plus d''informations, veuillez <strong> contacter les administrateurs </strong> de %site_name%.'
     footer_note: 'Note : ceci est un email automatique, merci de ne pas y répondre directement. Veuillez utiliser notre adresse de support habituelle si vous avez des questions.'
     subject_activated: 'Votre compte %site_name% a été activé'
     subject_deactivated: 'Votre compte %site_name% a été désactivé'
@@ -64,9 +65,10 @@ temporary_password_email:
     action_required: '⚠️ Action immédiate requise : ce mot de passe est temporaire. Par mesure de sécurité, vous devez le changer dès votre première connexion.'
     cta: 'Accéder à mon compte'
     not_requested: 'Si vous n''avez pas demandé cette réinitialisation, veuillez contacter immédiatement le support de %site_name%.'
-    signature: 'Cordialement,<br>L''équipe %site_name%'
+    signature: 'Cordialement,<br> L''équipe %site_name%'
     footer: 'Ceci est un e-mail automatique. Veuillez ne pas y répondre.'
     rights_reserved: 'Tous droits réservés.'
+    subject: "%site_name% — Votre mot de passe temporaire"
 
 password_reset:
     confirmed: 'Votre demande est confirmée ! Un mot de passe temporaire vient de vous être envoyé par email : connectez-vous avec, puis changez-le depuis votre profil.'
@@ -77,6 +79,7 @@ password_reset:
     unexpected_error: 'Une erreur est survenue. Veuillez réessayer plus tard ou contacter le support.'
     request_sent: 'Si un compte existe avec cette adresse, un email de confirmation vient de vous être envoyé.'
     too_many_attempts: 'Trop de tentatives. Réessayez plus tard.'
+
 password_reset_request:
     username_label: 'Adresse email'
     invalid_email: 'Veuillez saisir une adresse email valide.'
@@ -86,17 +89,18 @@ password_reset_request:
     email_label: 'Adresse email'
     submit: 'Envoyer le lien de confirmation'
     back_to_login: 'Retour à la connexion'
+    link_click: 'Mot de passe oublié'
     
 password_reset_email:
     subject: 'Réinitialisation de votre mot de passe - %site_name%'
     page_title: 'Réinitialisation de mot de passe'
-    title: 'Réinitialisation de mot de passe — <strong>%site_name%</strong>'
-    greeting: 'Bonjour <strong>%username%</strong>,'
-    body: 'Vous avez demandé la réinitialisation du mot de passe de votre compte <strong>%site_name%</strong>. Si vous n''êtes pas à l''origine de cette demande, vous pouvez ignorer cet email sans risque : votre mot de passe actuel restera inchangé.'
+    title: 'Réinitialisation de mot de passe — <strong> %site_name% </strong>'
+    greeting: 'Bonjour <strong> %username% </strong>'
+    body: 'Vous avez demandé la réinitialisation du mot de passe de votre compte <strong> %site_name% </strong>. Si vous n''êtes pas à l''origine de cette demande, vous pouvez ignorer cet email sans risque : votre mot de passe actuel restera inchangé.'
     action_notice: 'Pour confirmer votre demande, cliquez sur le bouton ci-dessous. Un mot de passe temporaire sécurisé vous sera alors envoyé par email, à utiliser pour votre prochaine connexion.'
     cta: 'Confirmer la réinitialisation'
     link_notice: 'Ce lien expirera dans 1 heure pour des raisons de sécurité. Si vous rencontrez des problèmes, copiez et collez l''URL suivante dans votre navigateur :'
-    footer: 'Ceci est un message automatique du système <strong>%site_name%</strong>.<br>Merci de ne pas répondre directement à cet e-mail.'
+    footer: 'Ceci est un message automatique du système <strong> %site_name% </strong>.<br> Merci de ne pas répondre directement à cet e-mail.'
 
 access_denied:
     title: 'Accès refusé'
@@ -133,18 +137,25 @@ two_factor:
     cancel_logout: 'Annuler et se déconnecter'
 
 session_conflict:
-    error: 'Impossible d''afficher la page de conflit de session. Veuillez réessayer.'
-
+    title: 'Session déjà active'
+    heading: 'Session déjà active'
+    description: "Votre compte est actuellement connecté sur un autre navigateur ou appareil. Pour des raisons de sécurité, une seule connexion active est autorisée à la fois."
+    what_to_do_title: '📱 Que faire ?'
+    what_to_do_body: "Déconnectez-vous de l'autre session en cliquant sur « Déconnexion » sur l'autre appareil, puis reconnectez-vous ici."
+    logout_button: 'Se déconnecter et revenir à la connexion'
+    support_notice: 'Problème persistant ? Contactez le support technique.'
+    error: "Une erreur est survenue lors de l'affichage de la page de conflit de session.Veuillez réessayer."
+ 
 two_factor_email:
     subject: 'Votre code de vérification %site_name%'
     page_title: 'Code de vérification'
-    title: 'Code de vérification — <strong>%site_name%</strong>'
-    greeting: 'Bonjour <strong>%username%</strong>,'
-    body: 'Une tentative de connexion à votre compte <strong>%site_name%</strong> vient d''avoir lieu. Pour la confirmer, saisissez le code ci-dessous sur l''écran de vérification.'
-    expiry_notice: 'Ce code expire dans <strong>%ttl% minutes</strong>. Tentative effectuée le %date%.'
+    title: 'Code de vérification — <strong> %site_name% </strong>'
+    greeting: 'Bonjour <strong> %username% </strong>,'
+    body: 'Une tentative de connexion à votre compte <strong> %site_name% </strong> vient d''avoir lieu. Pour la confirmer, saisissez le code ci-dessous sur l''écran de vérification.'
+    expiry_notice: 'Ce code expire dans <strong> %ttl% minutes </strong>. Tentative effectuée le %date%.'
     from_ip: ' depuis l''adresse %ip%.'
     not_you_warning: 'Si vous n''êtes pas à l''origine de cette connexion, prévenez immédiatement l''administrateur.'
-    footer: 'Ceci est un message automatique du système <strong>%site_name%</strong>.<br>Merci de ne pas répondre directement à cet e-mail.'
+    footer: 'Ceci est un message automatique du système <strong> %site_name% </strong>.<br> Merci de ne pas répondre directement à cet e-mail.'
 
 user_action:
     common:

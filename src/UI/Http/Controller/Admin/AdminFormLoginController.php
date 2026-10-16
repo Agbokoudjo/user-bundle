@@ -50,6 +50,7 @@ final class AdminFormLoginController extends AbstractController
         private readonly ?CsrfTokenManagerInterface $csrfTokenManager = null,
         private readonly ?LoggerInterface $logger = null,
         private readonly ?string $homeRouteName = null,
+        private readonly ?string $dashboardRouteName = null,
         private readonly ?string $siteName = null,
     ) {}
 
@@ -58,8 +59,12 @@ final class AdminFormLoginController extends AbstractController
         if ($this->getUser()) {
             $this->addFlash('info', $this->translator->trans('login.already_authenticated', [], 'WlindablaUserBundle'));
 
-            return $this->redirect($this->safeGenerateUrl($this->homeRouteName,$this->urlGenerator, $this->logger) ?? '/');
-        }
+            $redirectUrl = $this->safeGenerateUrl($this->dashboardRouteName, $this->urlGenerator, $this->logger)
+                ?? $this->safeGenerateUrl($this->homeRouteName, $this->urlGenerator, $this->logger)
+                ?? '/';
+
+            return $this->redirect($redirectUrl);
+    }
 
         $csrfToken = null;
 

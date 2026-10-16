@@ -1,3 +1,17 @@
+{#
+
+* This file is part of the project by AGBOKOUDJO Franck.
+ *
+ * (c) AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+ * Phone: +229 01 67 25 18 86
+ * LinkedIn: https://www.linkedin.com/in/internationales-web-apps-services-120520193/
+ * Github: https://github.com/Agbokoudjo/
+ * Company: INTERNATIONALES WEB APPS & SERVICES
+ *
+ * For more information, please feel free to contact the author.
+
+#}
+
 <!DOCTYPE html>
 <html lang="{{ app.request.locale|default('fr') }}">
 <head>
@@ -20,11 +34,11 @@
 
         <div style="padding: 20px 0;">
             <p style="font-size: 16px; margin-bottom: 20px;">
-                {{ 'two_factor_email.greeting'|trans({'%username%': username}, 'WlindablaUserBundle') }}
+                {{ 'two_factor_email.greeting'|trans({'%username%': username}, 'WlindablaUserBundle')|raw }}
             </p>
 
             <p style="margin-bottom: 20px;">
-                {{ 'two_factor_email.body'|trans({'%site_name%': site_name}, 'WlindablaUserBundle') }}
+                {{ 'two_factor_email.body'|trans({'%site_name%': site_name}, 'WlindablaUserBundle')|raw }}
             </p>
 
             <div style="text-align: center; margin: 30px 0;">
@@ -39,7 +53,7 @@
             </p>
 
             <p style="font-size: 14px; margin-top: 30px; color: #666; font-weight: bold;">
-                {{ 'two_factor_email.not_you_warning'|trans({}, 'WlindablaUserBundle') }}
+                {{ 'two_factor_email.not_you_warning'|trans({}, 'WlindablaUserBundle')|raw }}
             </p>
         </div>
 

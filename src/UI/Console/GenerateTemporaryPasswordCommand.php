@@ -19,7 +19,7 @@ use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\GenerateTemporar
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 
 #[AsCommand(
-    name: 'wlindabla:user:generate-temporary-password',
+    name: 'wlindabla:user:generate_temporary_password',
     description: 'Generates a temporary password for a user based on their email address.',
 )]
 final class GenerateTemporaryPasswordCommand extends Command
@@ -28,7 +28,7 @@ final class GenerateTemporaryPasswordCommand extends Command
         private readonly UserManagerInterface $userManager,
         private readonly GenerateTemporaryPasswordHandler $handler,
     ) {
-        parent::__construct('app:user:generate-temporary-password');
+        parent::__construct('wlindabla:user:generate_temporary_password');
     }
 
     protected function configure(): void

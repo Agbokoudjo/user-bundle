@@ -23,13 +23,13 @@ email_verification:
     cooldown: 'Please wait %seconds% seconds before requesting a new verification link.'
 account_confirmation:
     page_title: 'Account confirmation'
-    title: 'Your <strong>%site_name%</strong> account has been created'
-    greeting: 'Hi <strong>%username%</strong>,'
-    body: 'We confirm that your account for <strong>%site_name%</strong> has been successfully created.'
-    action_required: 'Before you can log in, you must <strong>verify and activate your email address <span style="color:#0ec5b2; font-weight: 600;">%email%</span></strong> by clicking the link below.'
+    title: 'Your <strong> %site_name% </strong> account has been created'
+    greeting: 'Hi <strong> %username% </strong>,'
+    body: 'We confirm that your account for <strong> %site_name% </strong> has been successfully created.'
+    action_required: 'Before you can log in, you must <strong>verify and activate your email address <span style="color:#0ec5b2; font-weight: 600;"> %email% </span></strong> by clicking the link below.'
     cta: 'Confirm my account'
     link_notice: 'This confirmation link will expire soon for security reasons. If you run into any issue, copy and paste the following URL into your browser:'
-    footer: 'This is an automated message from <strong>%site_name%</strong>.<br>Please do not reply directly to this email.'
+    footer: 'This is an automated message from <strong> %site_name% </strong>.<br>Please do not reply directly to this email.'
 
 login:
     page_title: 'Log in'
@@ -37,6 +37,7 @@ login:
     username_label: 'Username'
     password_label: 'Password'
     submit: 'Log in'
+    checkbox_label: 'Remember me'
 
 toggle_account_email:
     page_title: 'Account status'
@@ -44,13 +45,13 @@ toggle_account_email:
     status_inactive: 'DEACTIVATED'
     greeting: 'Hi %username%,'
     heading: 'Your account has been %status%'
-    body_active: 'We are letting you know that your account on <strong>%site_name%</strong> has been %status% by the administration team.'
+    body_active: 'We are letting you know that your account on <strong> %site_name% </strong> has been %status% by the administration team.'
     login_intro: 'You can now access your admin area by clicking the button below:'
     temp_password_label: '🔐 Temporary password:'
-    temp_password_notice: '⚠️ <strong>Important:</strong> once logged in to the admin area, please <strong>change your password immediately</strong> for security reasons.'
+    temp_password_notice: '⚠️ <strong>Important:</strong> once logged in to the admin area, please <strong> change your password immediately </strong> for security reasons.'
     login_button: 'Log in'
-    body_inactive: 'We are letting you know that your account on <strong>%site_name%</strong> has been %status% by the administration team.'
-    contact_admins: 'If you believe this is a mistake or need more information, please <strong>contact the administrators</strong> of %site_name%.'
+    body_inactive: 'We are letting you know that your account on <strong> %site_name% </strong> has been %status% by the administration team.'
+    contact_admins: 'If you believe this is a mistake or need more information, please <strong> contact the administrators </strong> of %site_name%.'
     footer_note: 'Note: this is an automated email, please do not reply directly. Use our usual support address if you have questions.'
     subject_activated: 'Your %site_name% account has been activated'
     subject_deactivated: 'Your %site_name% account has been deactivated'
@@ -64,9 +65,10 @@ temporary_password_email:
     action_required: '⚠️ Immediate action required: this password is temporary. For security reasons, you must change it on your first login.'
     cta: 'Access my account'
     not_requested: 'If you did not request this reset, please contact %site_name% support immediately.'
-    signature: 'Regards,<br>The %site_name% team'
+    signature: 'Regards,<br> The %site_name% team'
     footer: 'This is an automated email. Please do not reply.'
     rights_reserved: 'All rights reserved.'
+    subject: "%site_name% — Your temporary password"
 
 password_reset:
     confirmed: 'Your request is confirmed! A temporary password has just been sent to you by email: log in with it, then change it from your profile.'
@@ -87,17 +89,18 @@ password_reset_request:
     email_label: 'Email address'
     submit: 'Send confirmation link'
     back_to_login: 'Back to login'
-    
+    link_click: 'Forgot password'
+
 password_reset_email:
     subject: 'Reset your password - %site_name%'
     page_title: 'Password reset'
-    title: 'Password reset — <strong>%site_name%</strong>'
-    greeting: 'Hi <strong>%username%</strong>,'
+    title: 'Password reset — <strong> %site_name% </strong>'
+    greeting: 'Hi <strong> %username% </strong>,'
     body: 'You requested a password reset for your <strong>%site_name%</strong> account. If you did not request this, you can safely ignore this email: your current password will remain unchanged.'
     action_notice: 'To confirm your request, click the button below. A secure temporary password will then be sent to you by email, to use for your next login.'
     cta: 'Confirm the reset'
     link_notice: 'This link will expire in 1 hour for security reasons. If you run into any issue, copy and paste the following URL into your browser:'
-    footer: 'This is an automated message from <strong>%site_name%</strong>.<br>Please do not reply directly to this email.'
+    footer: 'This is an automated message from <strong> %site_name% </strong>.<br>Please do not reply directly to this email.'
 
 access_denied:
     title: 'Access denied'
@@ -134,18 +137,25 @@ two_factor:
     cancel_logout: 'Cancel and log out'
 
 session_conflict:
-    error: 'Unable to display the session conflict page. Please try again.'
-
+    title: 'Session already active'
+    heading: 'Session already active'
+    description: "Your account is currently logged in on another browser or device. For security reasons, only one active session is allowed at a time."
+    what_to_do_title: '📱 What to do?'
+    what_to_do_body: "Log out of the other session by clicking \"Logout\" on the other device, then sign in again here."
+    logout_button: 'Log out and return to login'
+    support_notice: 'Problem persists? Contact technical support.'
+    error: 'An error occurred while displaying the session conflict page.Please try again.'
+ 
 two_factor_email:
     subject: 'Your %site_name% verification code'
     page_title: 'Verification code'
-    title: 'Verification code — <strong>%site_name%</strong>'
-    greeting: 'Hi <strong>%username%</strong>,'
-    body: 'A login attempt to your <strong>%site_name%</strong> account just occurred. To confirm it, enter the code below on the verification screen.'
+    title: 'Verification code — <strong> %site_name% </strong>'
+    greeting: 'Hi <strong> %username% </strong>,'
+    body: 'A login attempt to your <strong> %site_name% </strong> account just occurred. To confirm it, enter the code below on the verification screen.'
     expiry_notice: 'This code expires in <strong>%ttl% minutes</strong>. Attempt made on %date%.'
     from_ip: ' from address %ip%.'
     not_you_warning: 'If you did not initiate this login, notify the administrator immediately.'
-    footer: 'This is an automated message from <strong>%site_name%</strong>.<br>Please do not reply directly to this email.'
+    footer: 'This is an automated message from <strong> %site_name% </strong>.<br>Please do not reply directly to this email.'
 
 user_action:
     common:
@@ -188,9 +198,9 @@ email_change:
     link_already_used: 'This link has already been used or the request is closed.'
     link_invalid: 'This link is invalid.'
     unexpected_error: 'An error occurred. Please try again later or contact support.'
-    greeting: 'Hi <strong>%username%</strong>,'
+    greeting: 'Hi <strong> %username% </strong>,'
     greeting_plain: 'Hi,'
-    footer: 'This is an automated message from <strong>%site_name%</strong>.<br>Please do not reply directly to this email.'
+    footer: 'This is an automated message from <strong> %site_name% </strong>.<br>Please do not reply directly to this email.'
     link_expiry_notice: 'This link will expire on %date% (UTC) for security reasons. If you run into any issue, copy and paste the following URL into your browser:'
     confirm_cta: 'Confirm the change'
     confirm_this_address_cta: 'Confirm this address'
@@ -206,8 +216,8 @@ email_change:
     new_confirmation_body: 'This address has been proposed as the new email address for your <strong>%site_name%</strong> account. To validate it, confirm by clicking the button below.'
     new_confirmation_notice: 'The change will only take effect once confirmed from <strong>this</strong> address <strong>and</strong> your old address. If you didn''t request this, you can safely ignore this email: nothing will be changed without both confirmations.'
     applied_subject: 'Your email address has been changed - %site_name%'
-    applied_title: 'Your email address has been changed — <strong>%site_name%</strong>'
-    applied_body: 'The email address for your <strong>%site_name%</strong> account was successfully changed on %date% (UTC), to <strong>%new_email%</strong>.'
+    applied_title: 'Your email address has been changed — <strong> %site_name% </strong>'
+    applied_body: 'The email address for your <strong> %site_name% </strong> account was successfully changed on %date% (UTC), to <strong>%new_email%</strong>.'
     applied_sessions_notice: 'For your security, all your active sessions have been closed. You will need to log in again with your new email address.'
     applied_not_you_warning: '<strong>Didn''t make this change?</strong><br>Contact the <strong>%site_name%</strong> technical team immediately — this email is sent to your old address precisely so you can react if this change isn''t familiar to you.'
     not_me_alert_subject: 'Security alert: an email change attempt was reported - %site_name%'
