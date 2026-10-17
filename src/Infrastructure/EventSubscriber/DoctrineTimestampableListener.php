@@ -13,7 +13,7 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-namespace App\Infrastructure\EventSubscriber;
+namespace Wlindabla\UserBundle\Infrastructure\EventSubscriber;
 
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Events;

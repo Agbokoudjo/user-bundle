@@ -14,8 +14,7 @@ declare(strict_types=1);
  * For more information, please feel free to contact the author.
  */
 
-use App\Infrastructure\EventSubscriber\DoctrineTimestampableListener;
-use App\UI\Console\ResetUserPasswordCommand;
+use Wlindabla\UserBundle\UI\Console\ResetUserPasswordCommand;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\ApplyEmailVerificationHandler;
 use Wlindabla\UserBundle\Domain\User\Application\CommandHandler\GenerateTemporaryPasswordHandler;
@@ -28,6 +27,7 @@ use Wlindabla\UserBundle\Domain\User\Service\EmailVerificationInterface;
 use Wlindabla\UserBundle\Domain\User\Service\PasswordResetInterface;
 use Wlindabla\UserBundle\Domain\User\Service\UpdatePasswordUserServiceInterface;
 use Wlindabla\UserBundle\Infrastructure\EventSubscriber\DoctrineBlameableListener;
+use Wlindabla\UserBundle\Infrastructure\EventSubscriber\DoctrineTimestampableListener;
 use Wlindabla\UserBundle\Infrastructure\EventSubscriber\DoctrineUserEventListener;
 use Wlindabla\UserBundle\Infrastructure\EventSubscriber\ToggleUserAccountSubscriber;
 use Wlindabla\UserBundle\Infrastructure\EventSubscriber\UpdatePasswordUserSubscriber;

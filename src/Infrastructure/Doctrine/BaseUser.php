@@ -188,6 +188,9 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
     #[ORM\Column(type: "datetime", nullable: true)]
     protected ?\DateTimeInterface $updatedAt = null;
 
+    #[ORM\Column(type: 'string', length: 255, unique: true, nullable: true)]
+    protected ?string $slug = null;
+    
     public function getIdentityNormalized(): string
     {
         return $this->identityNormalized;
