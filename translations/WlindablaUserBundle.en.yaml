@@ -189,6 +189,17 @@ user_action:
         title: 'Account creation not processed'
         already_exists: 'This user already exists in the database. Account creation was blocked.'
         similar_name: 'Account creation blocked: this user''s name is similar to an existing account.'
+        
+email_change_vote:
+    request_not_found_title: 'Request not found'
+    request_not_found: 'No email change request found with identifier "%id%".'
+    approved_title: 'Approval recorded'
+    approved: 'Your approval has been recorded. The request will be finalized once the required quorum is reached.'
+    rejected_title: 'Rejection recorded'
+    rejected: 'Your rejection has been recorded. The email change request is now closed.'
+    not_recorded_title: 'Decision could not be recorded'
+    failed_title: 'Validation failed'
+    failed: 'An error occurred while recording your decision. Please try again.'
 
 email_change:
     old_confirmed: 'Your old address is confirmed. The new address still needs to be confirmed for the change to take effect.'

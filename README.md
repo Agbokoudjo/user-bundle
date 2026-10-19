@@ -50,6 +50,7 @@ application a complete, secure user layer:
 | Email change module | [docs/email-change.md](docs/email-change.md) | How to implement the validator policy, entities, controllers (with examples) |
 | Related bundles | [docs/related-bundles.md](docs/related-bundles.md) | Configuration of `share-service-bundle` and `mailing-bundle`, which this bundle needs |
 | Example application | [docs/example-application.md](docs/example-application.md) | A real, working integration (SonataAdmin + 2FA + single session + Redis) explained |
+| Admin integration | [docs/admin-integration.md](docs/admin-integration.md) | `MicroUserCRUDActionTrait`, Sonata admin/CRUD controllers, and how to use the bundle with EasyAdmin or custom controllers |
 | Known issues | [docs/known-issues.md](docs/known-issues.md) | Inconsistencies and ambiguities found in the code |
 
 ---
@@ -205,7 +206,8 @@ This means **a Messenger worker must be running** in production. See
 
 ## License
 
-MIT. Author: **AGBOKOUDJO Franck** <internationaleswebservices@gmail.com>
-     Phone: +229 01 67 25 18 86
-     LinkedIn: https://www.linkedin.com/in/internationales-web-apps-services-120520193/
-     Company: INTERNATIONALES WEB APPS & SERVICES
+MIT. 
+- Author: **AGBOKOUDJO Franck** <internationaleswebservices@gmail.com>
+- Phone: +229 01 67 25 18 86
+- LinkedIn: https://www.linkedin.com/in/internationales-web-apps-services-120520193/
+- Company: INTERNATIONALES WEB APPS & SERVICES

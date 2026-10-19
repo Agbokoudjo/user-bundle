@@ -192,6 +192,17 @@ user_action:
         already_exists: 'Cet utilisateur existe déjà dans la base de données. La création de compte a été bloquée.'
         similar_name: 'Création de compte bloquée : le nom de cet utilisateur est similaire à un compte existant.'
 
+email_change_vote:
+    request_not_found_title: 'Demande introuvable'
+    request_not_found: 'Aucune demande de changement d''email trouvée avec l''identifiant "%id%".'
+    approved_title: 'Approbation enregistrée'
+    approved: 'Votre approbation a été enregistrée. La demande sera finalisée une fois le quorum requis atteint.'
+    rejected_title: 'Refus enregistré'
+    rejected: 'Votre refus a été enregistré. La demande de changement d''email est maintenant close.'
+    not_recorded_title: 'La décision n''a pas pu être enregistrée'
+    failed_title: 'Échec de la validation'
+    failed: 'Une erreur est survenue lors de l''enregistrement de votre décision. Veuillez réessayer.'
+
 email_change:
     old_confirmed: 'Votre ancienne adresse est confirmée. Il reste à confirmer la nouvelle pour que le changement soit effectif.'
     new_confirmed: 'Votre nouvelle adresse est confirmée. Il reste à confirmer l''ancienne pour que le changement soit effectif.'

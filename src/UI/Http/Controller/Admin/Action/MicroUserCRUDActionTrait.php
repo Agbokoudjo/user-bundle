@@ -522,8 +522,9 @@ trait MicroUserCRUDActionTrait
         EmailChangeRequestRepositoryInterface $emailChangeRequestRepository,
         EmailChangeRequestServiceInterface $emailChangeRequestService,
         UserManagerInterface $userManager,
+        TranslatorInterface $translator,
     ): JsonResponse {
-        return $this->handleValidationDecision($request, $id, $currentUserConnected,true, $emailChangeRequestRepository, $emailChangeRequestService, $userManager);
+        return $this->handleValidationDecision($request, $id, $currentUserConnected, true, $emailChangeRequestRepository, $emailChangeRequestService, $userManager, $translator);
     }
 
     public function rejectAction(
@@ -533,18 +534,20 @@ trait MicroUserCRUDActionTrait
         EmailChangeRequestRepositoryInterface $emailChangeRequestRepository,
         EmailChangeRequestServiceInterface $emailChangeRequestService,
         UserManagerInterface $userManager,
+        TranslatorInterface $translator,
     ): JsonResponse {
-        return $this->handleValidationDecision($request, $id,$currentUserConnected, false, $emailChangeRequestRepository, $emailChangeRequestService, $userManager);
+        return $this->handleValidationDecision($request, $id, $currentUserConnected, false, $emailChangeRequestRepository, $emailChangeRequestService, $userManager, $translator);
     }
 
     private function handleValidationDecision(
         Request $request,
         int|string $id,
-        #[CurrentUser] SymfonySecurityUserInterface $currentUserConnected,
+        SymfonySecurityUserInterface $currentUserConnected,
         bool $approved,
         EmailChangeRequestRepositoryInterface $emailChangeRequestRepository,
         EmailChangeRequestServiceInterface $emailChangeRequestService,
         UserManagerInterface $userManager,
+        TranslatorInterface $translator,
     ): JsonResponse {
         if (!$this->_isXmlHttpRequest($request) || !$request->isMethod('POST')) {
             throw new BadRequestHttpException('Unauthorized request. Please use the appropriate POST/AJAX channel.');
@@ -553,43 +556,50 @@ trait MicroUserCRUDActionTrait
         $emailChangeRequest = $emailChangeRequestRepository->find($id);
 
         if (null === $emailChangeRequest) {
-            return $this->createFlashJsonResponse(
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
                 type: 'warning',
-                title: 'Request not found',
-                message: \sprintf('No email change request found with identifier "%s".', $id),
+                titleKey: 'email_change_vote.request_not_found_title',
+                messageKey: 'email_change_vote.request_not_found',
+                messageParameters: ['%id%' => (string) $id],
                 statusCode: Response::HTTP_NOT_FOUND,
             );
         }
 
-        $validator = $this->resolveManagedCurrentUser($userManager,$currentUserConnected);
-        $comment = $request->getPayload()->getString('comment', '');
+        $validator = $this->resolveManagedCurrentUser($userManager, $currentUserConnected);
+        $comment = trim($request->getPayload()->getString('comment', ''));
 
         try {
             $emailChangeRequestService->submitValidation(
                 request: $emailChangeRequest,
                 validator: $validator,
                 approved: $approved,
-                comment: '' !== trim($comment) ? trim($comment) : null,
+                comment: '' !== $comment ? $comment : null,
             );
 
-            $type = 'success';
-            $title = $approved ? 'Approval recorded' : 'Rejection recorded';
-            $message = $approved
-                ? 'Your approval has been recorded. The request will be finalized once the required quorum is reached.'
-                : 'Your rejection has been recorded. The email change request is now closed.';
-            $statusHttp = Response::HTTP_OK;
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
+                type: 'success',
+                titleKey: $approved ? 'email_change_vote.approved_title' : 'email_change_vote.rejected_title',
+                messageKey: $approved ? 'email_change_vote.approved' : 'email_change_vote.rejected',
+                statusCode: Response::HTTP_OK,
+            );
         } catch (\DomainException $e) {
-            $type = 'warning';
-            $title = 'Decision could not be recorded';
-            $message = $e->getMessage();
-            $statusHttp = Response::HTTP_CONFLICT;
-        } catch (\Throwable $e) {
-            $type = 'danger';
-            $title = 'Validation failed';
-            $message = 'An error occurred while recording your decision. Please try again.';
-            $statusHttp = Response::HTTP_BAD_REQUEST;
+            // Title is translated; the message is the domain reason, kept as is.
+            return $this->createFlashJsonResponse(
+                type: 'warning',
+                title: $this->bundleTrans($translator, 'email_change_vote.not_recorded_title'),
+                message: $e->getMessage(),
+                statusCode: Response::HTTP_CONFLICT,
+            );
+        } catch (\Throwable) {
+            return $this->createTranslatedFlashJsonResponse(
+                $translator,
+                type: 'danger',
+                titleKey: 'email_change_vote.failed_title',
+                messageKey: 'email_change_vote.failed',
+                statusCode: Response::HTTP_BAD_REQUEST,
+            );
         }
-
-        return $this->createFlashJsonResponse(type: $type, title: $title, message: $message, statusCode: $statusHttp);
-    }
+        }
 }

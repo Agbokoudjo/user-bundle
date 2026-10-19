@@ -408,9 +408,9 @@ public function decide(
 your policy says the user is eligible; a comment exists when rejecting. It then saves the vote, calls your
 `evaluate()` and acts on the verdict.
 
-> If you use SonataAdmin, the bundle's `MicroUserCRUDActionTrait` already contains approve/reject actions that
-> call `submitValidation()`. Read it in the source to reuse them.
-
+> The bundle's `MicroUserCRUDActionTrait` already contains `approveAction` / `rejectAction` (POST, AJAX) that
+> call `submitValidation()`. They work with SonataAdmin, EasyAdmin or any controller: see
+> [admin-integration.md](admin-integration.md).
 ---
 
 ## Security, mail and workers
