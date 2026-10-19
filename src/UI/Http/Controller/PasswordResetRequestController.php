@@ -62,7 +62,7 @@ final class PasswordResetRequestController extends AbstractController implements
         AsyncMethodDispatcherInterface $asyncMethodDispatcher,
     ): Response {
         if ($this->authorizationChecker->isGranted('IS_AUTHENTICATED_FULLY')) {
-            return $this->redirect($this->generateUrl($this->homeRouteName ?? '/'));
+            return $this->redirect(null !== $this->homeRouteName ? $this->generateUrl($this->homeRouteName) : '/');
         }
 
         $form = $this->createForm(PasswordResetRequestType::class);

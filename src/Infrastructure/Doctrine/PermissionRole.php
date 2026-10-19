@@ -48,10 +48,10 @@ abstract class PermissionRole extends AbstractPermissionRole
     #[ORM\Column(type: 'string', length: 200, nullable: true)]
     protected ?string $context = null;
 
-    #[ORM\ManyToOne(targetEntity: 'Wlindabla\UserBundle\Infrastructure\Model\BaseUserInterface')]
+    #[ORM\ManyToOne(targetEntity: 'Wlindabla\UserBundle\Infrastructure\Model\UserInterface')]
     protected ?BaseUserInterface $createdBy = null;
 
-    #[ORM\ManyToOne(targetEntity: 'Wlindabla\UserBundle\Infrastructure\Model\BaseUserInterface')]
+    #[ORM\ManyToOne(targetEntity: 'Wlindabla\UserBundle\Infrastructure\Model\UserInterface')]
     protected ?BaseUserInterface $currentManager = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
@@ -63,8 +63,8 @@ abstract class PermissionRole extends AbstractPermissionRole
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     protected ?\DateTimeInterface $deletedAt = null;
 
-    #[ORM\ManyToOne]
-    protected $deletedBy = null;
+    #[ORM\ManyToOne(targetEntity: 'Wlindabla\UserBundle\Infrastructure\Model\UserInterface')]
+    protected ?BaseUserInterface $deletedBy = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
     protected ?string $deletedReason = null;

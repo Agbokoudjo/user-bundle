@@ -178,9 +178,10 @@ These points come from reading the code. They are observations, not promises.
    "invalid code" error, and the user can press *resend* to get a new code (limited to 3 per 15 minutes per
    account and by the IP limiter). The message of the locked exception says "contact an administrator", but the
    bundle has no unlock command. Plan your own policy if you need a hard lock.
-2. **Resend can report success even if the email failed.** `TwoFactorCodeManager::createCodeAndSend()` catches
-   every exception, logs it at `critical` level and returns `null`; the controller does not check the return
-   value. Watch your logs.
+2. **Resend reports a failed send.** `TwoFactorCodeManager::createCodeAndSend()` still catches every exception, logs it
+   at `critical` level and returns `null`, but `TwoFactorAuthController::resend()` now checks the result: when the code
+   could not be sent, the user gets the message `two_factor.send_failed` (HTTP `503` for AJAX requests) instead of a
+   false success. The throttle exception (HTTP `429`) is unchanged.
 3. **Codes are sent asynchronously at login.** If your worker is down, users will not receive a code, but they
    will still be blocked (the flag is set first). The *resend* button works synchronously.
 4. **Unexpected user class.** If the logged-in user does not implement the bundle's `UserInterface`,
@@ -200,7 +201,7 @@ These points come from reading the code. They are observations, not promises.
   (defaults: 300 s vs 7200 s).
 - Keep `security.user_cache_ttl` **much smaller** than `inactivity_threshold_seconds` too. (This is our
   inference from point 6 above: a long cache lifetime could serve an old `twoFactorLastCheckedAt`.)
-- Always add the three 2FA routes and your logout route to `allowed_routes_while_pending`.
+- `allowed_routes_while_pending` only needs **your own extra routes**: the 2FA routes, the password-reset routes and your login/logout routes are added by the bundle.
 - Customise the page with the `two_factor_show` template and the email with `two_factor_code_email`
   ([templates](events-and-extensibility.md#templates)).
 

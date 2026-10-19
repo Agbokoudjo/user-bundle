@@ -190,7 +190,7 @@ final class TwoFactorAuthController extends AbstractController
         }
 
         if (!$this->isCsrfTokenValid('two_factor_resend', $request->headers->get('X-CSRF-Token'))) {
-            return $this->jsonOrRedirect($request, false, $this->trans('two_factor.session_expired_retry'), 'app_two_factor_show');
+            return $this->jsonOrRedirect($request, false, $this->trans('two_factor.session_expired_retry'), 'wlindabla_user_two_factor_show');
         }
 
         $limiter = $resendLimiter->create($request->getClientIp());
@@ -200,7 +200,11 @@ final class TwoFactorAuthController extends AbstractController
         }
 
         try {
-            $this->twoFactorCodeManager->generateAndSend($user->getUserIdentifier(), $request->getClientIp(), 'resend');
+            $code = $this->twoFactorCodeManager->generateAndSend($user->getUserIdentifier(), $request->getClientIp(), 'resend');
+
+            if (null === $code) {
+                return $this->respondInvalid($request, $this->trans('two_factor.send_failed'), Response::HTTP_SERVICE_UNAVAILABLE);
+            }
         } catch (TwoFactorSendThrottledException $e) {
             return $this->respondInvalid(
                 $request,

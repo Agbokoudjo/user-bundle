@@ -45,7 +45,7 @@ final class WlindablaRouteLoaderTest extends TestCase
         foreach ([
             'wlindabla_user_login',
             'wlindabla_user_logout',
-            'wlindabla_user.verify.email',
+            'wlindabla_user_verify_email',
             'wlindabla_user_password_reset_request',
             'wlindabla_user_password_reset_confirm',
         ] as $name) {
@@ -83,7 +83,7 @@ final class WlindablaRouteLoaderTest extends TestCase
 
         $this->assertSame('/forget-password', $routes->get('wlindabla_user_password_reset_request')->getPath());
         $this->assertSame('/reset-password/confirm/{token}/{id}', $routes->get('wlindabla_user_password_reset_confirm')->getPath());
-        $this->assertSame('/verify-email/{token}/{id}', $routes->get('wlindabla_user.verify.email')->getPath());
+        $this->assertSame('/verify-email/{token}/{id}', $routes->get('wlindabla_user_verify_email')->getPath());
     }
 
     public function testEnvParametersAreRejectedInRouting(): void

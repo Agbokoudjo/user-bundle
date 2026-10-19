@@ -1,6 +1,6 @@
 {
     "name": "wlindabla/user-bundle",
-    "description": "Reusable Symfony user bundle: security, tokens, 2FA, sessions",
+    "description": "Reusable Symfony 6.4/7.4/8 user bundle (PHP 8.3+) with a ready-made security layer: login, email verification, password reset and temporary passwords, email-code two-factor authentication (2FA), single-session policy, login history, business permissions and double-confirmed email changes. SonataAdmin-friendly, PostgreSQL-first, with overridable repositories.",
     "type": "symfony-bundle",
     "minimum-stability": "stable",
     "prefer-stable": true,
@@ -11,6 +11,13 @@
             "email": "internationaleswebservices@gmail.com"
         }
     ],
+    "keywords": ["symfony", "symfony-bundle", "user", "security", "authentication", "2fa", "two-factor", "session", "password-reset", "email-verification", "sonata-admin", "doctrine", "postgresql"],
+    "homepage": "https://github.com/Agbokoudjo/user-bundle",
+    "support": {
+        "issues": "https://github.com/Agbokoudjo/user-bundle/issues",
+        "source": "https://github.com/Agbokoudjo/user-bundle",
+        "docs": "https://github.com/Agbokoudjo/user-bundle/tree/main/docs"
+    },
     "require": {
         "php": ">=8.3",
         "symfony/http-kernel": "^6.4|^7.4|^8.0",
@@ -31,7 +38,16 @@
         "wlindabla/share-service-bundle": "^1.0",
         "wlindabla/mailing-bundle": "^1.0",
         "vich/uploader-bundle": "^3.0",
-        "odolbeau/phone-number-bundle": "^4.2"
+        "odolbeau/phone-number-bundle": "^4.2",
+        "symfony/console": "^6.4|^7.4|^8.0",
+        "symfony/form": "^6.4|^7.4|^8.0",
+        "symfony/cache": "^6.4|^7.4|^8.0",
+        "symfony/framework-bundle": "^6.4|^7.4|^8.0",
+        "symfony/event-dispatcher": "^6.4|^7.4|^8.0",
+        "symfony/http-foundation": "^6.4|^7.4|^8.0",
+        "symfony/routing": "^6.4|^7.4|^8.0",
+        "symfony/mailer": "^6.4|^7.4|^8.0",
+        "scienta/doctrine-json-functions": "^6.0"
     },
     "autoload": {
     "psr-4": { "Wlindabla\\UserBundle\\": "src/" }

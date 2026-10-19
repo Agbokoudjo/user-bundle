@@ -46,10 +46,14 @@ final readonly class LogoutSubscriber
             ? $event->getRequest()->getSession()
             : null;
 
+        if ($session === null) {
+            return;
+        }
+
          /** @var BaseUserInterface|null $user */
         $user = $event->getToken()?->getUser();
 
-        if ($session === null && !($user instanceof BaseUserInterface)) {
+        if (!($user instanceof BaseUserInterface)) {
             return;
         }
 

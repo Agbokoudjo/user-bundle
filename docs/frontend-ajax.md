@@ -360,6 +360,7 @@ is up to your template.
 | 2FA verify, success | `200` | `{"success": true, "message": "…", "redirect": "<target url>"}` |
 | 2FA resend, success | `200` | `{"success": true, "message": "…"}` |
 | 2FA resend, throttled | `429` | `{"success": false, "errorMessage": "…"}` |
+| 2FA resend, the email could not be sent | `503` | `{"success": false, "errorMessage": "…"}` (translation key `two_factor.send_failed`) |
 | Access denied | `403` | `{"title": "…", "message": "…"}` |
 | Entity in use | `409` | `{"title": "…", "message": "…"}` |
 

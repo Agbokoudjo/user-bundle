@@ -75,7 +75,7 @@ use Wlindabla\UserBundle\Infrastructure\Doctrine\BaseUser;
 #[ORM\Table(name: 'users')]   // "user" is a reserved word in PostgreSQL: choose another name
 class User extends BaseUser
 {
-    
+    // Add your own columns here. "slug" is already mapped by BaseUser.
 }
 ```
 
@@ -121,10 +121,11 @@ Column names below assume Doctrine's default naming strategy (camelCase property
 | `avatarFile` | (not persisted) | — | Vich `UploadableField`, mapping `avatars`, max 2 MB, jpeg/png/webp |
 | `avatarUpdatedAt` | datetime | yes | |
 | `avatarName` | string(255) | yes | |
-| `phone` | `phone_number`, length 80 | yes | Has `#[Assert\NotBlank]`, `#[Assert\NotNull]`, length 8–80 (so the form requires it) |
+| `phone` | `phone_number`, length 80 | yes | Optional: only `#[Assert\Length(min: 8, max: 80)]` applies. Add `NotBlank` in your form or a validation group if you want it required |
 | `twoFactorValidatedAt` | datetime_immutable | yes | **2FA freshness**: last successful code validation |
 | `twoFactorLastCheckedAt` | datetime_immutable | yes | **2FA freshness**: activity heartbeat |
 | `identityNormalized` | string, column `identity_normalized` | yes | Used for duplicate detection |
+| `slug` | string(255), unique | yes | Set once by `UpdateUserProfileHandler` |
 | `salt` | string(255) | yes | |
 | `createdAt` | datetime_immutable | no | Filled by `DoctrineTimestampableListener` (see known issues) |
 | `updatedAt` | datetime | yes | |
@@ -133,9 +134,7 @@ Serializer groups used by `UserProvider` for its cache: `user:cache`, `user:secu
 
 ### Things you must add or configure
 
-1. **`slug`** — `AbstractBaseUser` has the property and `getSlug()`/`setSlug()`, but `BaseUser` has no
-   `#[ORM\Column]` for it. Add the column in your entity (see the example above).
-   `UpdateUserProfileHandler` sets it once (a hash of the canonical username and id) and never regenerates it.
+1. **`slug`** — mapped by `BaseUser` (`string(255)`, unique, nullable). `UpdateUserProfileHandler` sets it once (a hash of the canonical username and id) and never regenerates it.
 2. **Vich mapping `avatars`** — see [installation](installation.md#7-avatar-upload-mapping-and-phone-type).
 3. **The `phone_number` Doctrine type** — comes from `odolbeau/phone-number-bundle`.
 4. **A `createdAt` value** — the column is `NOT NULL`. The bundle's `DoctrineTimestampableListener` is meant to
@@ -192,7 +191,11 @@ class TwoFactorCode extends BaseTwoFactorCode
 }
 ```
 
-> **Check the `id` of each entity.** `BaseUser`, `AbstractUserSession`, the permission entities (except
+**The identifier type is your choice (by design).** The bundle leaves `id` unmapped in these classes so that you decide:
+an auto-increment integer (as above) or a string identifier such as a UUID. Keep the PHP type compatible with
+`int|string|null` (for a UUID, store it as a string column, not as a Doctrine `uuid` type that hydrates an object).
+
+> **Check the `id` of each entity.** (The example application maps it exactly like this: see [example application](example-application.md).) `BaseUser`, `AbstractUserSession`, the permission entities (except
 > `PermissionGroup`, whose primary key is its string `code`) and the email change entities map their own `id`.
 > `BaseTwoFactorCode` inherits a `protected $id` property from a plain domain class that has no Doctrine
 > attributes, and `AbstractLoggerLoginUser` / `BaseLoggerLoginUser` declare **no `id` property at all** in the
@@ -243,7 +246,7 @@ class EmailChangeValidation extends \Wlindabla\UserBundle\Infrastructure\Doctrin
 The email change module also needs **your own implementation** of
 `Wlindabla\UserBundle\Domain\EmailChange\Application\Manager\EmailChangeValidatorPolicyInterface`
 (it decides the validation quorum). The bundle does not ship one.
-See [known issues](known-issues.md#email-change-policy).
+See the step-by-step guide with examples: [Email change module](email-change.md).
 
 ---
 

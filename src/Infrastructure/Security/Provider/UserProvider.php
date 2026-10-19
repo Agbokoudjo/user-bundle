@@ -69,7 +69,7 @@ final readonly class UserProvider implements UserProviderInterface, CacheUserPro
             ['Loading user by identifier', ['identifier' => $identifier]],
         );
 
-        $cacheKey = 'wlindbala_admin_user_login_cache_'.md5($identifier);
+        $cacheKey = 'wlindabla_admin_user_login_cache_'.md5($identifier);
 
         $userData = $this->userCacheProvider->get($cacheKey, function (ItemInterface $item) use ($identifier) {
             $user = $this->findUser($identifier);
@@ -135,7 +135,7 @@ final readonly class UserProvider implements UserProviderInterface, CacheUserPro
         }
 
         try {
-            $cacheKey = \sprintf('user_%s_%s', (string) $user->getId(), md5($user->getUserIdentifier()));
+            $cacheKey = \sprintf('wlindabla_admin_user_login_cache_%s_%s_', (string) $user->getId(), md5($user->getUserIdentifier()));
 
             $userData = $this->userCacheProvider->get($cacheKey, function (ItemInterface $item) use ($user) {
                 $freshUser = $this->findUser($user->getUserIdentifier());
@@ -204,9 +204,11 @@ final readonly class UserProvider implements UserProviderInterface, CacheUserPro
                 return;
             }
 
-            $cacheKeyUser = 'wlindabla_admin_user_login_cache'.md5($freshUser->getUserIdentifier());
+            $cacheKeyUserForLoadUserIdentifer = 'wlindabla_admin_user_login_cache_'.md5($freshUser->getUserIdentifier());
             $this->userCacheProvider->invalidateTags(['user_id_'.(string) $userId, 'ADMIN', 'users']);
-            $this->userCacheProvider->delete($cacheKeyUser);
+            $this->userCacheProvider->delete($cacheKeyUserForLoadUserIdentifer);
+            $cacheKeyForRefleshUser = \sprintf('wlindabla_admin_user_login_cache_%s_%s_', (string) $freshUser->getId(), md5($freshUser->getUserIdentifier()));
+            $this->userCacheProvider->delete($cacheKeyForRefleshUser );
         } catch (\Throwable $th) {
             // A failed cache invalidation here means a disabled account or
             // a role change can stay live in another session's cache until

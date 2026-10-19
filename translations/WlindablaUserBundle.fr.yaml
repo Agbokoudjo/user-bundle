@@ -135,6 +135,7 @@ two_factor:
     nothing_received: 'Vous n''avez rien reçu ?'
     resend_button: 'Renvoyer le code'
     cancel_logout: 'Annuler et se déconnecter'
+    send_failed: Impossible d’envoyer le code. Merci de réessayer dans un instant.
 
 session_conflict:
     title: 'Session déjà active'

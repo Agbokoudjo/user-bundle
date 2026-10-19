@@ -58,7 +58,7 @@ value rebuilds the router cache.
 |---|---|---|---|---|
 | `wlindabla_user_login` ¹ | `/admin/form/login` ¹ | GET, POST | core | Login page. Redirects already-authenticated users to the dashboard (or home) with a flash message. |
 | `wlindabla_user_logout` ¹ | `/admin/logout` ¹ | GET | core | Logout. The controller is empty; Symfony's firewall intercepts it. |
-| `wlindabla_user.verify.email` ² | `/verify-email/{token}/{id}` | GET | core | Email verification link. `token`: 32–64 alphanumeric characters. |
+| `wlindabla_user_verify_email` ² | `/verify-email/{token}/{id}` | GET | core | Email verification link. `token`: 32–64 alphanumeric characters. |
 | `wlindabla_user_password_reset_request` | `/forget_password/form/request` ³ | GET, POST | core | "Forgot password" form. Rate limited by IP (`password_reset` limiter). |
 | `wlindabla_user_password_reset_confirm` | `/reset_password/form/request/confirm/{token}/{id}` ³ | GET | core | Password reset link sent by email. `token`: 32–64 alphanumeric characters. |
 | `wlindabla_user_session_conflict` | `/session-conflict/{userId}` | GET | user_session | Page shown to the browser that lost a session conflict. Revokes that browser's own session row. |
@@ -70,8 +70,9 @@ value rebuilds the router cache.
 | `wlindabla_user_email_change_not_me` | `/email-change/not-me/{token}/{id}` | GET | email_change | "This wasn't me" link sent to the old address. |
 
 ¹ Configurable with `wlindabla_user.routes.login|login_path|logout|logout_path`.
-² The name uses dots, unlike every other route, which use underscores. It is hard-coded in
-`UserAccountEmailVerificationSubscriber`, so do not rename it.
+² The name was `wlindabla_user.verify.email` (with dots) in earlier versions. It is now `wlindabla_user_verify_email`,
+like the other routes. If your own code or templates generate this route, update the name. The name is hard-coded in
+`UserAccountEmailVerificationSubscriber`, which already uses the new one.
 ³ Configurable with `wlindabla_user.password_reset.request_path|confirm_path`.
 ⁴ **Not configurable.** The three 2FA paths and names are fixed in the controller attributes, and
 `TwoFactorAuthListener` generates the URL of `wlindabla_user_two_factor_show` by that name.

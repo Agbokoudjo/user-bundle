@@ -175,11 +175,11 @@ final class TwoFactorCodeManager implements TwoFactorCodeManagerInterface
         $this->repository->invalidatePending($userIdentifier);
     }
 
-    /**
-     * 3 envois maximum par fenêtre de 15 minutes (cf. rate_limiter.yaml
-     * pour la limitation par IP ; ceci limite par compte, sur la fenêtre
-     * de renvoi métier décrite dans le cahier des charges).
-     */
+    /** 
+    * 3 sendings maximum per 15 minute window (see rate_limiter.yaml 
+    * for limitation by IP; this limit per account, on the window 
+    * business reference described in the specifications). 
+    */
     private function guardSendRateLimit(string $userIdentifier): void
     {
         $since = new \DateTimeImmutable(

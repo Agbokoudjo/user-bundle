@@ -58,7 +58,7 @@ final readonly class UserAccountEmailVerificationSubscriber implements EventSubs
         $encryptedId = $this->idEncryptionService->encryptId($event->getUserId());
 
         $confirmationUrl = $this->router->generate(
-            'wlindabla_user.verify.email',
+            'wlindabla_user_verify_email',
             ['token' => $event->getRawToken(), 'id' => $encryptedId],
             UrlGeneratorInterface::ABSOLUTE_URL,
         );

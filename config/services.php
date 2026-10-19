@@ -62,7 +62,6 @@ use Wlindabla\UserBundle\UI\Http\Controller\PasswordResetRequestController;
 use Wlindabla\UserBundle\UI\Http\EventSubscriber\AccessDeniedSubscriber;
 use Wlindabla\UserBundle\UI\Http\EventSubscriber\EntityInUseExceptionListener;
 use Wlindabla\UserBundle\UI\Http\EventSubscriber\LoginSubscriber;
-use Wlindabla\UserBundle\UI\Http\EventSubscriber\LogoutSubscriber;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\param;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -163,7 +162,6 @@ return static function (ContainerConfigurator $container): void {
     $services->set(UserIdentityNormalizerDoctrineLifecycleListener::class);
     $services->set(UpdateProfileSuccessListener::class);
     $services->set(LoginSubscriber::class);
-    $services->set(LogoutSubscriber::class);
 
     $services->set(SymfonySecurityContextAdapter::class);
     $services->alias(SecurityContextInterface::class, SymfonySecurityContextAdapter::class);

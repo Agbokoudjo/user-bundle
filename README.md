@@ -47,6 +47,9 @@ application a complete, secure user layer:
 | Frontend and AJAX | [docs/frontend-ajax.md](docs/frontend-ajax.md) | Redirect mode vs JSON mode, plain JavaScript examples |
 | Console commands | [docs/console-commands.md](docs/console-commands.md) | Every CLI command with arguments and examples |
 | Events and extensibility | [docs/events-and-extensibility.md](docs/events-and-extensibility.md) | Events, templates, translations, services you can replace |
+| Email change module | [docs/email-change.md](docs/email-change.md) | How to implement the validator policy, entities, controllers (with examples) |
+| Related bundles | [docs/related-bundles.md](docs/related-bundles.md) | Configuration of `share-service-bundle` and `mailing-bundle`, which this bundle needs |
+| Example application | [docs/example-application.md](docs/example-application.md) | A real, working integration (SonataAdmin + 2FA + single session + Redis) explained |
 | Known issues | [docs/known-issues.md](docs/known-issues.md) | Inconsistencies and ambiguities found in the code |
 
 ---
@@ -92,9 +95,7 @@ use Wlindabla\UserBundle\Infrastructure\Doctrine\BaseUser;
 #[ORM\Table(name: 'users')]
 class User extends BaseUser
 {
-    // The bundle does not map the "slug" column: add it yourself (see docs/entities-and-migrations.md).
-    #[ORM\Column(length: 255, unique: true, nullable: true)]
-    protected ?string $slug = null;
+    // Add your own columns here. The "slug" column is already mapped by BaseUser.
 }
 ```
 

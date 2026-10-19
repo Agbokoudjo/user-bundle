@@ -25,6 +25,7 @@ use Wlindabla\UserBundle\UI\Console\RevokeAllUserSessionsCommand;
 use Wlindabla\UserBundle\UI\Console\RevokeUserSessionCommand;
 use Wlindabla\UserBundle\UI\Http\Controller\SessionConflictController;
 use Wlindabla\UserBundle\UI\Http\EventSubscriber\SessionControlListener;
+use Wlindabla\UserBundle\UI\Http\EventSubscriber\LogoutSubscriber;
 
 return static function (ContainerConfigurator $container): void {
     $services = $container->services()
@@ -52,7 +53,8 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set(RevokeUserSessionCommand::class);
     $services->set(RevokeAllUserSessionsCommand::class);
-    
+    $services->set(LogoutSubscriber::class);
+
     if (interface_exists(\Symfony\Component\Scheduler\ScheduleProviderInterface::class)) {
         $services->set(SessionCleanupSchedule::class)
             ->arg('$inactivityHours', '%wlindabla_user.session_control.inactivity_hours%')

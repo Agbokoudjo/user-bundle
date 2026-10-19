@@ -146,7 +146,9 @@ framework:
             interval: '15 minutes'
 ```
 
-To make the argument binding deterministic, add these two aliases (they are standard Symfony syntax):
+In the [example application](example-application.md) (Symfony 7.4) these limiters work **without** any extra alias.
+If autowiring cannot resolve them in your project, make the binding explicit with these two aliases
+(standard Symfony syntax):
 
 ```yaml
 # config/services.yaml
@@ -179,16 +181,14 @@ Your own entries are merged, not replaced.
 
 ### 5. ShareServiceBundle and MailingBundle configuration
 
-This documentation does **not** cover the full configuration of `wlindabla/share-service-bundle` and
-`wlindabla/mailing-bundle`; they are separate packages. From the code of this bundle we know that:
+This bundle depends on two other bundles of the same author. Both need configuration. The complete
+reference (keys, defaults, examples taken from a real application) is in
+[Related bundles](related-bundles.md). The short version:
 
-- ShareServiceBundle provides the async dispatcher, the ID encryption service, the token generator and
-  hasher, the MFA code generator, the user-agent parser and the `SerializerFacade`.
-- The ID encryption resolver is **not active until you set `encryption_key`** on the host side. The bundle
-  cannot supply a secret for you (see the comment in `prependExtension()`).
-- MailingBundle provides `MailerManagerInterface`, used to send every email of this bundle.
-
-Please follow those packages' documentation to configure them.
+- **ShareServiceBundle** needs `id_encryption.encryption_key` (generate it once, keep it secret) and an
+  `async_method_dispatcher.transport` that points to a Messenger transport. It requires `ext-sodium`.
+- **MailingBundle** needs two Symfony mailer transports named `system` and `support`, and the
+  `wlindabla_mailing.from_addresses` block.
 
 ### 6. Locks (user session module)
 
@@ -218,6 +218,44 @@ vich_uploader:
 
 Make sure the `phone_number` Doctrine type of `odolbeau/phone-number-bundle` is registered (follow that
 package's installation page).
+
+---
+
+## Dependencies you add yourself, and PostgreSQL
+
+`composer.json` of the bundle does not require every package its code can use. This is deliberate: you install an
+extra package **only when you use the feature that needs it**. The bundle's default repository code was written
+for **PostgreSQL**. If you do not use PostgreSQL, you override those methods in your own repository.
+
+| Feature | Extra package or setting | If you do not use it |
+|---|---|---|
+| Role-based finders of `AbstractUserRepository` (`findActiveEmailsByRole()`, `findActiveSuperAdminEmails()`, `findByUserWithExcludRole()`) | `composer require scienta/doctrine-json-functions`, a PostgreSQL `json`/`jsonb` `roles` column, and the `JSONB_EXISTS` DQL function in `doctrine.yaml` | Do not call these methods, or **override** them in your repository with a query for your database |
+| Duplicate-account detection (`findSimilarCandidates()`, `hasSuspectedDuplicate()`) | PostgreSQL with the `pg_trgm` extension and a GIN index on `identity_normalized` | **Override** `findSimilarCandidates()`, or implement `UserFindDuplicatesRepositoryInterface` yourself instead of extending the abstract class |
+| Session cleanup job | `symfony/scheduler` | Run the revoke commands by cron instead |
+
+Example, to run on another database: extend the abstract class and replace only the PostgreSQL methods.
+
+```php
+final class UserRepository extends AbstractUserRepository
+{
+    public function findActiveEmailsByRole(string $role, ?\DateTimeImmutable $createdBefore = null): array
+    {
+        // Your own query. Example for a database without JSONB: roles stored as a simple array/text.
+        $qb = $this->createQueryBuilder('u')
+            ->select('u.email')
+            ->where('u.enabled = :enabled')
+            ->andWhere('u.roles LIKE :role')
+            ->setParameter('enabled', true)
+            ->setParameter('role', '%"'.$role.'"%');
+
+        return array_column($qb->getQuery()->getScalarResult(), 'email');
+    }
+}
+```
+
+See `src/Infrastructure/Doctrine/Repository/AbstractUserRepository.php`: its class comment lists, method by method,
+what each group needs. The `LIKE` query above is only an illustration of overriding; check it against how your
+roles column is stored.
 
 ---
 

@@ -81,11 +81,7 @@ wlindabla_user:
     session_control:
         firewall_name: main
         max_duration_hours: 24
-        excluded_routes:
-            - wlindabla_user_two_factor_show
-            - wlindabla_user_two_factor_verify
-            - wlindabla_user_two_factor_resend
-            - wlindabla_user_logout
+        # excluded_routes: only your extra routes. The 2FA, login and logout routes are added by the bundle.
     two_factor:
         firewall_name: main
         allowed_routes_while_pending:
@@ -154,10 +150,10 @@ The order **Firewall → 2FA → session** is deliberate:
 3. Both listeners only act for the firewall named in the configuration. Requests that belong to another
    firewall (for example the `dev` firewall for the profiler) are ignored.
 
-> **Ambiguity worth knowing.** Routes listed in `allowed_routes_while_pending` are *not* blocked by the 2FA
-> listener, so they continue to `SessionControlListener`. If you do not also list them in
-> `session_control.excluded_routes`, the session can be registered while the code is still pending. The
-> example above lists them in both places on purpose. See [known issues](known-issues.md#session-registered-before-2fa).
+> **Handled by the bundle.** Routes in `allowed_routes_while_pending` are not blocked by the 2FA listener, so they
+> continue to `SessionControlListener`. The bundle therefore adds the three 2FA routes and your login and logout
+> routes to `session_control.excluded_routes` by itself, so a session cannot be registered while a code is pending.
+> Older versions needed you to list them in both places. See [known issues](known-issues.md#session-registered-before-2fa).
 
 ### Security events
 

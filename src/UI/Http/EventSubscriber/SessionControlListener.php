@@ -47,7 +47,9 @@ use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
  * Order matters: this must run AFTER the firewall itself, AND after
  * TwoFactorAuthListener — a second factor not yet validated must never
  * let a session be registered for this browser.
- * @block: do NOT create the session for this browser, immediately log out this fresh authentication ($this->security->logout(false)), and redirect to a conflict page stating “already logged in elsewhere; please log out first” (you can reuse wlindabla_user_session_conflict or create a variant with a message different from session_conflict.*).
+ * @block: the new login is refused. A revoked UserSession row (reason: conflict) is created for this browser and
+ *         the user is redirected to the conflict page (wlindabla_user_session_conflict), which then revokes that
+ *         browser's row.
  * @takeover: revoke the old session and allow the new one to proceed.
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>

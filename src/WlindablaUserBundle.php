@@ -47,7 +47,10 @@ final class WlindablaUserBundle extends AbstractBundle
                 ->addDefaultsIfNotSet()
                 ->children()
                     ->scalarNode('user')->isRequired()->cannotBeEmpty()->end()
-                    ->scalarNode('user_token')->defaultNull()->end()
+                    ->scalarNode('user_token')
+                        ->setDeprecated('wlindabla/user-bundle', '1.2', 'The "%node%" option is not used and will be removed in 2.0.')
+                        ->defaultNull()
+                    ->end()
                     ->scalarNode('user_session')->defaultNull()->end()
                     ->scalarNode('logger_login_user')->defaultNull()->end()
                     ->scalarNode('two_factor_code')->defaultNull()->end()
@@ -60,7 +63,7 @@ final class WlindablaUserBundle extends AbstractBundle
                 ->end()
             ->end()
             ->scalarNode('default_role')
-                ->info('Role added to every user. Never use ROLE_ADMIN here.')
+                ->setDeprecated('wlindabla/user-bundle', '1.2', 'The "%node%" option is not used. Override the ROLE_DEFAULT constant in your user entity instead.')
                 ->defaultValue('ROLE_USER')
                 ->cannotBeEmpty()
             ->end()
@@ -114,12 +117,16 @@ final class WlindablaUserBundle extends AbstractBundle
             ->arrayNode('session_control')
                 ->addDefaultsIfNotSet()
                 ->children()
-                    ->scalarNode('policy')
+                    ->enumNode('policy')
+                        ->values(['takeover', 'block'])
                         ->defaultValue('takeover')
-                        ->info('"takeover":The new connection revokes existing sessions. "block": the new connection is refused if a session is already active elsewhere.')
+                        ->info('"takeover": the new connection revokes existing sessions. "block": the new connection is refused if a session is already active elsewhere.')
                     ->end()
                     ->scalarNode('redis_session_prefix')->defaultNull()->end()
-                    ->integerNode('inactivity_hours')->defaultValue(4)->end()
+                    ->integerNode('inactivity_hours')
+                        ->defaultValue(4)
+                        ->info('Used only by the session cleanup schedule (requires symfony/scheduler).')
+                    ->end()
                     ->integerNode('max_duration_hours')->defaultValue(24)->end()
                     ->scalarNode('firewall_name')->defaultNull()->end()
                     ->arrayNode('excluded_routes')->scalarPrototype()->end()->defaultValue([])->end()
@@ -159,6 +166,34 @@ final class WlindablaUserBundle extends AbstractBundle
             $parameters->set('wlindabla_user.classes.'.$key, $value);
         }
 
+        $allowed_routes_while_pending_default=[
+                "wlindabla_user_two_factor_show",
+                    "wlindabla_user_two_factor_verify",
+                    "wlindabla_user_two_factor_resend",
+                    "wlindabla_user_password_reset_request",
+                    "wlindabla_user_password_reset_confirm",
+                    $config['routes']['login'],
+                    $config['routes']['logout'],
+                ];
+
+        $excluded_routes_default = [
+            'wlindabla_user_two_factor_show',
+            'wlindabla_user_two_factor_verify',
+            'wlindabla_user_two_factor_resend',
+            $config['routes']['login'],
+            $config['routes']['logout'],
+        ];
+
+        $excluded_routes = array_values(array_unique(array_merge(
+            $config['session_control']['excluded_routes'] ?? [],
+            $excluded_routes_default
+        )));
+
+        $allowed_routes_while_pending=array_values(array_unique(array_merge(
+            $config['two_factor']['allowed_routes_while_pending'] ?? [],
+            $allowed_routes_while_pending_default
+        )));
+
         $parameters
             ->set('wlindabla_user.default_role', $config['default_role'])
             ->set('wlindabla_user.security.user_cache_ttl', $config['security']['user_cache_ttl'])
@@ -175,9 +210,10 @@ final class WlindablaUserBundle extends AbstractBundle
             ->set('wlindabla_user.session_control.inactivity_hours', $config['session_control']['inactivity_hours'])
             ->set('wlindabla_user.session_control.max_duration_hours', $config['session_control']['max_duration_hours'])
             ->set('wlindabla_user.session_control.firewall_name', $config['session_control']['firewall_name'])
-            ->set('wlindabla_user.session_control.excluded_routes', $config['session_control']['excluded_routes'])
+            ->set('wlindabla_user.session_control.excluded_routes', $excluded_routes)
+            ->set('wlindabla_user.session_control.redis_session_prefix', $config['session_control']['redis_session_prefix'])
             ->set('wlindabla_user.two_factor.firewall_name', $config['two_factor']['firewall_name'])
-            ->set('wlindabla_user.two_factor.allowed_routes_while_pending', $config['two_factor']['allowed_routes_while_pending'])
+            ->set('wlindabla_user.two_factor.allowed_routes_while_pending',$allowed_routes_while_pending)
             ->set('wlindabla_user.two_factor.inactivity_threshold_seconds', $config['two_factor']['inactivity_threshold_seconds'])
             ->set('wlindabla_user.two_factor.absolute_cap_seconds', $config['two_factor']['absolute_cap_seconds'])
             ->set('wlindabla_user.two_factor.activity_touch_throttle_seconds', $config['two_factor']['activity_touch_throttle_seconds'])

@@ -37,8 +37,7 @@ final class TwoFactorCodeMailerService implements TwoFactorCodeMailerServiceInte
         private readonly TemplateRegistryInterface $templateRegistry,
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function sendCodeByEmail(
         string $userIdentifier,

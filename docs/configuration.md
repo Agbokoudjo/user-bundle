@@ -51,12 +51,11 @@ wlindabla_user:
         email_change_request: App\Entity\EmailChangeRequest
         email_change_validation: App\Entity\EmailChangeValidation
 
-        # user_token: ~                            # ⚠️ accepted but never read by the code
+        # user_token: ~                            # ⚠️ deprecated: not used (a deprecation notice is raised if you set it)
 
-    # ⚠️ Role added to every user. Never use ROLE_ADMIN here.
-    # The value is stored in a parameter, but the code that actually adds the role
-    # is the constant AbstractBaseUser::ROLE_DEFAULT ('ROLE_USER'). See known issues.
-    default_role: ROLE_USER
+    # ⚠️ Deprecated: not used (a deprecation notice is raised if you set it).
+    # To change the default role, override the constant ROLE_DEFAULT in your user entity.
+    # default_role: ROLE_USER
 
     security:
         # Lifetime (seconds) of the cached user inside UserProvider.
@@ -83,20 +82,16 @@ wlindabla_user:
         confirm_path: /reset_password/form/request/confirm/{token}/{id}      # link sent by email. Keep {token} and {id}
 
     session_control:                       # used only if classes.user_session is set
-        policy: takeover                   # "takeover" or "block" (see session-control.md)
+        policy: takeover                   # "takeover" or "block" only: any other value stops the container build
         firewall_name: main                # REQUIRED when the module is on: the firewall to protect
         inactivity_hours: 4                # used by the cleanup job only (needs symfony/scheduler)
         max_duration_hours: 24             # absolute session age; used by the listener AND the cleanup job
-        excluded_routes:                   # route names the session check must skip
-            - wlindabla_user_two_factor_show
-            - wlindabla_user_two_factor_verify
-            - wlindabla_user_two_factor_resend
-            - wlindabla_user_logout
-        redis_session_prefix: ~            # ⚠️ accepted but never read by the code
+        excluded_routes: []                # ONLY your extra routes: the 3 two-factor routes, routes.login and routes.logout are added by the bundle
+        redis_session_prefix: ~            # exposed as the parameter %wlindabla_user.session_control.redis_session_prefix% for your own services
 
     two_factor:                            # used only if classes.two_factor_code is set
         firewall_name: main                # REQUIRED when the module is on. Same firewall as session_control
-        allowed_routes_while_pending:      # route names reachable while a code is pending. MUST include the 2FA routes
+        allowed_routes_while_pending:      # ONLY your extra routes: the bundle already adds the 2FA, password reset, login and logout routes
             - wlindabla_user_two_factor_show
             - wlindabla_user_two_factor_verify
             - wlindabla_user_two_factor_resend
@@ -123,7 +118,7 @@ wlindabla_user:
 | Key | Type | Default | Required | Notes |
 |---|---|---|---|---|
 | `user` | string (FQCN) | — | **yes** | Must implement `Wlindabla\UserBundle\Infrastructure\Model\UserInterface` (extend `BaseUser`). Mapped for Doctrine with `resolve_target_entities`. |
-| `user_token` | string \| null | `null` | no | ⚠️ Not read anywhere in the code. |
+| `user_token` | string \| null | `null` | no | ⚠️ **Deprecated**, not read anywhere. Setting it raises a deprecation notice ("will be removed in 2.0"). |
 | `user_session` | string \| null | `null` | no | Switches on the **user session** module. |
 | `logger_login_user` | string \| null | `null` | no | Switches on the **login logger** module. |
 | `two_factor_code` | string \| null | `null` | no | Switches on the **two-factor** module. |
@@ -143,7 +138,7 @@ The bundle also registers Doctrine `resolve_target_entities` for these interface
 
 | Type | Default | Notes |
 |---|---|---|
-| string (not empty) | `ROLE_USER` | ⚠️ The value is stored in the parameter `wlindabla_user.default_role`, but no code reads that parameter. `AbstractBaseUser::getRoles()` always adds the constant `ROLE_DEFAULT` (`ROLE_USER`). To change the default role, override the constant in your entity (`public const string ROLE_DEFAULT = '…'`; the code uses `static::ROLE_DEFAULT`). |
+| string (not empty) | `ROLE_USER` | ⚠️ **Deprecated**: setting it raises a deprecation notice. The value is stored in the parameter `wlindabla_user.default_role`, but no code reads it. `AbstractBaseUser::getRoles()` always adds the constant `ROLE_DEFAULT` (`ROLE_USER`). To change the default role, override the constant in your entity (`public const string ROLE_DEFAULT = '…'`; the code uses `static::ROLE_DEFAULT`). |
 
 ### `security`
 
@@ -206,31 +201,35 @@ for the variables each template receives.
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `policy` | string | `takeover` | `takeover`: the new login revokes the old sessions. `block`: the new login is refused while another session is active. Any value other than `block` behaves like `takeover` (the value is not validated). |
+| `policy` | `takeover` \| `block` | `takeover` | `takeover`: the new login revokes the old sessions. `block`: the new login is refused while another session is active. Any other value fails when the container is built (the key is an enum). |
 | `firewall_name` | string \| null | `null` | **Required** when `classes.user_session` is set. Name of the firewall to guard. |
-| `inactivity_hours` | integer | `4` | Sessions inactive for this long are revoked by the **cleanup job**. Without `symfony/scheduler` this value has no effect. |
+| `inactivity_hours` | integer | `4` | Used only by the session cleanup schedule: sessions inactive for this long are revoked. Without `symfony/scheduler` this value has no effect. |
 | `max_duration_hours` | integer | `24` | Maximum session age. Used by the cleanup job and shown in the "expired" message. Also passed to `SessionControlListener`. Align it with your `remember_me` lifetime. |
-| `excluded_routes` | list of strings | `[]` | Route names the listener ignores. |
-| `redis_session_prefix` | string \| null | `null` | ⚠️ Never read by the code. See [session control](session-control.md#redis-session-eviction). |
+| `excluded_routes` | list of strings | `[]` | **Extra** route names the listener ignores. The bundle always adds `wlindabla_user_two_factor_show`, `wlindabla_user_two_factor_verify`, `wlindabla_user_two_factor_resend`, and your `routes.login` and `routes.logout` names, so a session is never registered while a code is pending. |
+| `redis_session_prefix` | string \| null | `null` | The bundle does not use it itself (the Redis evictor is opt-in). It is exposed as the parameter `wlindabla_user.session_control.redis_session_prefix`, so your own `services.yaml` can reuse it. See [session control](session-control.md#redis-session-eviction). |
 
 ### `two_factor`
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `firewall_name` | string \| null | `null` | **Required** when `classes.two_factor_code` is set. Use the same firewall as `session_control`. |
-| `allowed_routes_while_pending` | list of strings | `[]` | Route names that stay reachable while a code is pending. **Must contain the three 2FA routes and the logout route**, otherwise you get a redirect loop (see below). |
+| `allowed_routes_while_pending` | list of strings | `[]` | **Extra** route names that stay reachable while a code is pending. The bundle always adds, by itself: the 3 two-factor routes, the 2 password-reset routes, and your `routes.login` and `routes.logout` names (see below). |
 | `inactivity_threshold_seconds` | integer | `7200` | Sliding window. If the last activity is older than this, a new code is required. |
 | `absolute_cap_seconds` | integer | `86400` | Maximum age of the last successful validation, even if the user is always active. |
 | `activity_touch_throttle_seconds` | integer | `300` | The activity timestamp is written at most once per this many seconds. |
 | `support_ajax_json_response` | boolean | `false` | `false`: always an HTTP redirect. `true`: JSON `401` for AJAX (XHR) requests. See [frontend and AJAX](frontend-ajax.md). |
 
-> **Redirect loop warning.** `TwoFactorAuthListener` blocks every request of the guarded firewall while a
-> code is pending, except routes listed in `allowed_routes_while_pending`. The default list is empty, so the
-> 2FA page itself would be redirected to the 2FA page forever. Always list
-> `wlindabla_user_two_factor_show`, `wlindabla_user_two_factor_verify`, `wlindabla_user_two_factor_resend`
-> and your logout route name.
+> **Routes added automatically.** `TwoFactorAuthListener` blocks every request of the guarded firewall while a
+> code is pending, except the allowed routes. The bundle now merges your list with this built-in list:
+> `wlindabla_user_two_factor_show`, `wlindabla_user_two_factor_verify`, `wlindabla_user_two_factor_resend`,
+> `wlindabla_user_password_reset_request`, `wlindabla_user_password_reset_confirm`, plus the names you set in
+> `routes.login` and `routes.logout`. So you only list **your own** extra routes (for example a public
+> "contact" page that must stay reachable). Listing the built-in ones again is harmless. (Older versions
+> needed the full list, otherwise the 2FA page redirected to itself forever.)
 
 ### `email_change`
+
+How to use this module (policy class, entities, controllers): [Email change module](email-change.md).
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
@@ -265,7 +264,7 @@ wlindabla_user.security.user_cache_ttl
 wlindabla_user.templates                           (the whole templates array)
 wlindabla_user.routes.{login,login_path,logout,logout_path,home,dashboard}
 wlindabla_user.password_reset.{request_path,confirm_path}
-wlindabla_user.session_control.{policy,inactivity_hours,max_duration_hours,firewall_name,excluded_routes}
+wlindabla_user.session_control.{policy,inactivity_hours,max_duration_hours,firewall_name,excluded_routes,redis_session_prefix}
 wlindabla_user.two_factor.{firewall_name,allowed_routes_while_pending,inactivity_threshold_seconds,
                            absolute_cap_seconds,activity_touch_throttle_seconds,support_ajax_json_response}
 wlindabla_user.email_change.{token_lifetime,retry_cooldown,exempt_roles_on_self,recovery_initiator_role}

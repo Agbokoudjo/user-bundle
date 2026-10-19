@@ -142,9 +142,7 @@ abstract class BaseUser extends AbstractBaseUser implements UserInterface
     #[Groups(['user:cache', 'user:read'])]
     protected ?string $avatarName = null;
 
-    #[Assert\NotBlank()]
     #[Assert\Length(min: 8, max: 80)]
-    #[Assert\NotNull]
     #[ORM\Column(type: 'phone_number', length: 80, nullable: true)]
     #[Groups(['user:read'])]
     protected ?PhoneNumber $phone = null;

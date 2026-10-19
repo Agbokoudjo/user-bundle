@@ -24,16 +24,11 @@
 | `wlindabla:user:create` | core | — | yes (asks username and email) |
 | `wlindabla:user:activate` | core | — | yes (asks username, then a confirmation) |
 | `wlindabla:user:generate_temporary_password` | core | `email` (required) | no |
-| `wlindabla:user:reset_password` | core ⚠️ | `email` (optional) | yes (hidden password prompt) |
+| `wlindabla:user:reset_password` | core | `email` (optional) | yes (hidden password prompt) |
 | `wlindabla:user-session:revoke` | user_session | `userIdentifier` (required) | confirmation |
 | `wlindabla:user-session:revoke-all` | user_session | — | confirmation |
 
 None of the commands has options other than Symfony's standard ones (`-n`, `-v`, …).
-
-> ⚠️ `wlindabla:user:reset_password` is declared in a class with the namespace `App\UI\Console` inside the
-> bundle, and the service file imports it from that namespace. It is probably **not** registered by the bundle
-> as it is now. See [known issues](known-issues.md#wrong-namespaces). The documentation below describes what the
-> command does when it is available.
 
 Several commands read the user by **username or email** through `UserManagerInterface`.
 
@@ -113,7 +108,7 @@ Exit code `1` if the user is not found or the handler throws. It calls
 
 ### `wlindabla:user:reset_password`
 
-Sets a new password chosen by an administrator. Description: *"Resets the password of a SonataUser using their
+Sets a new password chosen by an administrator. (Its class used to declare the wrong namespace `App\UI\Console`; this is fixed in the current source, see [known issues](known-issues.md#wrong-namespaces).) Description: *"Resets the password of a SonataUser using their
 email address."* (the text mentions Sonata, but the command uses the bundle's `UserManagerInterface`).
 
 | Argument | Required | Description |

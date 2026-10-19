@@ -19,6 +19,7 @@ namespace Wlindabla\UserBundle\Tests\Infrastructure\Validator\Constraint;
 use Symfony\Component\Validator\Test\ConstraintValidatorTestCase;
 use Wlindabla\UserBundle\Infrastructure\Validator\Constraint\NotDisposableEmail;
 use Wlindabla\UserBundle\Infrastructure\Validator\Constraint\NotDisposableEmailValidator;
+use Wlindabla\UserBundle\Infrastructure\Validator\EmailValidate;
 
 /**
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
@@ -26,40 +27,33 @@ use Wlindabla\UserBundle\Infrastructure\Validator\Constraint\NotDisposableEmailV
  */
 final class NotDisposableEmailValidatorTest extends ConstraintValidatorTestCase
 {
-    protected function createValidator(): NotDisposableEmailValidator
+    protected function createValidator(): NotDisposableEmailValidator { return new NotDisposableEmailValidator(); }
+
+    public function testNullAndEmptyAreValid(): void
     {
-        return new NotDisposableEmailValidator();
-    }
-
-    public function testRejectsAKnownDisposableDomain(): void
-    {
-        $constraint = new NotDisposableEmail();
-        $this->validator->validate('someone@mailinator.com', $constraint);
-
-        $this->buildViolation($constraint->message)
-            ->setParameter('{{ value }}', '"someone@mailinator.com"')
-            ->assertRaised();
-    }
-
-    public function testAcceptsAnOrdinaryEmail(): void
-    {
-        $this->validator->validate('franck@example.com', new NotDisposableEmail());
-
-        $this->assertNoViolation();
-    }
-
-    public function testIgnoresEmptyValues(): void
-    {
-        $this->validator->validate('', new NotDisposableEmail());
         $this->validator->validate(null, new NotDisposableEmail());
-
+        $this->validator->validate('', new NotDisposableEmail());
         $this->assertNoViolation();
     }
 
-    public function testIgnoresMalformedInputAndLeavesItToTheEmailConstraint(): void
+    public function testDisposableDomainIsRejected(): void
     {
-        $this->validator->validate('not-an-email', new NotDisposableEmail());
+        $blocked = EmailValidate::DATA_HOST_BLACKLIST[0];
+        $this->validator->validate('user@'.$blocked, new NotDisposableEmail());
+        $this->buildViolation((new NotDisposableEmail())->message)
+            ->setParameter('{{ value }}', '"user@'.$blocked.'"')->assertRaised();
+    }
 
+    public function testDomainIsCaseInsensitive(): void
+    {
+        $this->validator->validate('user@'.strtoupper(EmailValidate::DATA_HOST_BLACKLIST[0]), new NotDisposableEmail());
+        $this->buildViolation((new NotDisposableEmail())->message)
+            ->setParameter('{{ value }}', '"user@'.strtoupper(EmailValidate::DATA_HOST_BLACKLIST[0]).'"')->assertRaised();
+    }
+
+    public function testNormalDomainIsValid(): void
+    {
+        $this->validator->validate('user@example.org', new NotDisposableEmail());
         $this->assertNoViolation();
     }
 }

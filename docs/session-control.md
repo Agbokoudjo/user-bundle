@@ -31,8 +31,7 @@ wlindabla_user:
         policy: takeover          # or "block"
         max_duration_hours: 24
         inactivity_hours: 4       # used by the cleanup job
-        excluded_routes:
-            - wlindabla_user_logout
+        excluded_routes: []       # only your extra routes (see below)
 ```
 
 Create the `UserSession` entity and repository first ([entities](entities-and-migrations.md#other-entities)).
@@ -72,7 +71,9 @@ continues. So a database problem does not lock everybody out.
 | `takeover` (default) | The new session wins. The older sessions are revoked with the reason `conflict`. When the old browser makes its next request it is told its session was revoked. |
 | `block` | The new login loses. A revoked row is stored for the new browser, and that browser is redirected to the **conflict page**, which says the account is already used elsewhere. The existing session stays active. |
 
-The `policy` value is not validated: anything other than `block` behaves as `takeover`.
+The `policy` value is validated: only `takeover` and `block` are accepted. Any other value (for example a typo like `blok`) stops the container build.
+
+**Routes skipped by the session check.** The bundle always skips `wlindabla_user_two_factor_show`, `wlindabla_user_two_factor_verify`, `wlindabla_user_two_factor_resend`, and your login and logout routes, and merges them with your own `excluded_routes`. So no session is registered while a 2FA code is pending: the registration happens on the first request after the code is validated, with the final session id.
 
 ---
 
@@ -143,8 +144,10 @@ $result = $userSessionManager->cleanExpiredSessions(4, 24);
 When a session is revoked, the manager calls `SessionStoreEvictorInterface::evict($sessionId)` so the PHP
 session can be removed from the session store. The bundle registers `NullSessionStoreEvictor` (does nothing).
 A `RedisSessionStoreEvictor` exists in the code (`UNLINK <prefix><sessionId>`, default prefix
-`sf_wlindabla_user_s`) but **nothing selects it**: the setting `session_control.redis_session_prefix` is
-accepted and never read.
+`sf_wlindabla_user_s`) but the bundle **does not select it for you**: this is deliberate. A project that stores
+its PHP sessions in Redis registers it in its own `services.yaml`. The setting `session_control.redis_session_prefix`
+is not used by the bundle itself; it is only exposed as the parameter
+`%wlindabla_user.session_control.redis_session_prefix%`, so you can write the prefix once.
 
 To use it, define the services in your application (your definitions override the bundle's with the same id):
 
@@ -154,14 +157,15 @@ services:
     Wlindabla\UserBundle\Infrastructure\UserSession\RedisSessionStoreEvictor:
         arguments:
             $redis: '@Redis'           # your \Redis service
-            $prefix: 'sess_'           # must match the prefix used by your Redis session handler
+            $prefix: '%wlindabla_user.session_control.redis_session_prefix%'   # or a literal like 'sess_'; must match your Redis session handler
 
     Wlindabla\UserBundle\Domain\UserSession\Application\Service\SessionStoreEvictorInterface:
         alias: Wlindabla\UserBundle\Infrastructure\UserSession\RedisSessionStoreEvictor
 ```
 
 The prefix must be the one your Symfony Redis session handler really uses (the default of Symfony's
-`RedisSessionHandler` is `sess_`). Check your own configuration.
+`RedisSessionHandler` is `sess_`). To use the parameter above, set `session_control.redis_session_prefix` to that
+same value in `wlindabla_user.yaml`. Check your own configuration.
 
 ---
 
