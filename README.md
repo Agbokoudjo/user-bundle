@@ -205,4 +205,7 @@ This means **a Messenger worker must be running** in production. See
 
 ## License
 
-MIT. Author: **AGBOKOUDJO Franck** — INTERNATIONALES WEB APPS & SERVICES.
+MIT. Author: **AGBOKOUDJO Franck** <internationaleswebservices@gmail.com>
+     Phone: +229 01 67 25 18 86
+     LinkedIn: https://www.linkedin.com/in/internationales-web-apps-services-120520193/
+     Company: INTERNATIONALES WEB APPS & SERVICES
