@@ -96,8 +96,12 @@ use Wlindabla\UserBundle\Infrastructure\Doctrine\BaseUser;
 #[ORM\Table(name: 'users')]
 class User extends BaseUser
 {
-    // Add your own columns here. The "slug" column is already mapped by BaseUser.
-}
+   #[ORM\Id]
+    #[ORM\GeneratedValue('IDENTITY')]
+    #[ORM\Column(type: "integer")]
+    #[Groups(['user:cache', 'user:security', 'user:read'])]
+    protected int|string|null $id = null;
+} 
 ```
 
 **3. Configure the bundle**

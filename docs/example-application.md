@@ -182,6 +182,12 @@ the class constant (this is the part that really works):
 #[Gedmo\SoftDeleteable]
 class SonataUser extends BaseUser
 {
+    #[ORM\Id]
+    #[ORM\GeneratedValue('IDENTITY')]
+    #[ORM\Column(type: "integer")]
+    #[Groups(['user:cache', 'user:security', 'user:read'])]
+    protected int|string|null $id = null;
+
     use SoftDeleteableEntity;
     public const string ROLE_DEFAULT = 'ROLE_ADMIN';
 
@@ -242,7 +248,7 @@ the naming strategy `underscore_number_aware`, and the DQL functions `JSONB_EXIS
 
 ## Services wiring
 
-The explicit wiring done in `config/services.yaml`. Each block answers a point from the
+The explicit wiring done in your file `config/services.yaml` of project. Each block answers a point from the
 [installation checklist](installation.md#what-your-application-must-provide).
 
 ```yaml

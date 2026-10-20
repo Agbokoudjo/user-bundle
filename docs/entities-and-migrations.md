@@ -76,6 +76,13 @@ use Wlindabla\UserBundle\Infrastructure\Doctrine\BaseUser;
 class User extends BaseUser
 {
     // Add your own columns here. "slug" is already mapped by BaseUser.
+    // The mapped superclass declares an "id" property typed int|string|null but no #[ORM\Id].
+    // You must map the identifier yourself:
+    #[ORM\Id]
+    #[ORM\GeneratedValue('IDENTITY')]
+    #[ORM\Column(type: "integer")]
+    #[Groups(['user:cache', 'user:security', 'user:read'])]
+    protected int|string|null $id = null;
 }
 ```
 
@@ -104,7 +111,6 @@ Column names below assume Doctrine's default naming strategy (camelCase property
 
 | Property | Type | Nullable | Notes |
 |---|---|---|---|
-| `id` | integer, `IDENTITY` | no | Primary key |
 | `username` | string(255), unique | no | Full name; validated: 6–255 chars, letters (all languages), spaces, hyphens, dots |
 | `email` | string(200), unique | no | Validated with the HTML5 email mode, 6–200 chars |
 | `password` | string | no\* | Hashed password. (\*The property is `?string`, the column is not nullable) |

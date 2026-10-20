@@ -40,12 +40,6 @@ use Symfony\Component\Security\Core\User\UserInterface as SymfonySecurityUserInt
 #[ORM\MappedSuperclass]
 abstract class BaseUser extends AbstractBaseUser implements UserInterface
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue('IDENTITY')]
-    #[ORM\Column(type: "integer")]
-    #[Groups(['user:cache', 'user:security', 'user:read'])]
-    protected int|string|null $id = null;
-    
     #[Assert\NotBlank(message: 'Full name is required.')]
     #[Assert\NotNull(message: 'Full name cannot be null.')]
     #[Assert\Length(
