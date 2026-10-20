@@ -79,7 +79,7 @@ final class WlindablaUserBundle extends AbstractBundle
                     ->scalarNode('login')->defaultValue('wlindabla_user_login')->end()
                     ->scalarNode('login_path')->defaultValue('/admin/form/login')->end()
                     ->scalarNode('logout')->defaultValue('wlindabla_user_logout')->end()
-                    ->scalarNode('logout_path')->defaultValue("/admin/logout")->end()
+                    ->scalarNode('logout_path')->defaultValue("/admin/form/logout")->end()
                     ->scalarNode('home')->defaultNull()->end()
                     ->scalarNode('dashboard')->defaultNull()->end()
                 ->end()

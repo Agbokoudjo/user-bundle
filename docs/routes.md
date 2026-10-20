@@ -57,7 +57,7 @@ value rebuilds the router cache.
 | Route name | Path (default) | Methods | Module | Role |
 |---|---|---|---|---|
 | `wlindabla_user_login` ¹ | `/admin/form/login` ¹ | GET, POST | core | Login page. Redirects already-authenticated users to the dashboard (or home) with a flash message. |
-| `wlindabla_user_logout` ¹ | `/admin/logout` ¹ | GET | core | Logout. The controller is empty; Symfony's firewall intercepts it. |
+| `wlindabla_user_logout` ¹ | `/admin/form/logout` ¹ | GET | core | Logout. The controller is empty; Symfony's firewall intercepts it. |
 | `wlindabla_user_verify_email` ² | `/verify-email/{token}/{id}` | GET | core | Email verification link. `token`: 32–64 alphanumeric characters. |
 | `wlindabla_user_password_reset_request` | `/forget_password/form/request` ³ | GET, POST | core | "Forgot password" form. Rate limited by IP (`password_reset` limiter). |
 | `wlindabla_user_password_reset_confirm` | `/reset_password/form/request/confirm/{token}/{id}` ³ | GET | core | Password reset link sent by email. `token`: 32–64 alphanumeric characters. |
