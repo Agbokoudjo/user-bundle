@@ -46,4 +46,6 @@ interface EmailChangeRequestRepositoryInterface
      */
     public function find(mixed $id): ?object;
 
+    public function getClassName(): string ;
+
 }

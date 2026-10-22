@@ -18,15 +18,15 @@ namespace Wlindabla\UserBundle\Domain\LoggerLoginUser\Model\Persistance;
 use Wlindabla\UserBundle\Domain\LoggerLoginUser\Model\LoggerLoginUserInterface;
 
 /**
- * Repository Doctrine pour les enregistrements de connexion utilisateur.
- *
- * Responsabilités :
- * - Persister les nouveaux enregistrements (append-only)
- * - Fournir des requêtes d'audit (par IP, par utilisateur, par période)
- * - Purger les anciens logs selon une politique de rétention
- * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- * @package <https://github.com/Agbokoudjo/>
- */
+* Doctrine repository for user login records. 
+*
+* Responsibilities:
+* - Persist new records (append-only)
+* - Provide audit queries (by IP, by user, by time period)
+* - Purge old logs according to a retention policy
+* @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+* @package <https://github.com/Agbokoudjo/>
+*/
 interface LoggerLoginUserRepositoryInterface
 {
 

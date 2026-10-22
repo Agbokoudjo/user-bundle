@@ -16,17 +16,17 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\Domain\LoggerLoginUser\Model;
 
 /**
- * Contrat du modèle de domaine représentant un enregistrement de connexion utilisateur.
- *
- * Une tentative de connexion (réussie ou échouée) est un fait historique immuable :
- * ce contrat n'expose donc que les accesseurs nécessaires à la création du log
- * et à sa lecture, jamais de mutation post-persistance.
- *
- * NB : createdAt/updatedAt ne font pas partie de ce contrat — ils sont gérés
- * par TimestampableEntity + DoctrineTimestampableListener côté Infrastructure.
- *
- * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- */
+* Domain model contract representing a user login record. 
+*
+* A login attempt (whether successful or failed) is an immutable historical fact;
+* therefore, this contract exposes only the accessors necessary for creating and
+* reading the log—never for modification after persistence. 
+*
+* Note: `createdAt` and `updatedAt` are not part of this contract; they are managed
+* by `TimestampableEntity` and `DoctrineTimestampableListener` within the Infrastructure layer. 
+*
+* @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+*/
 interface LoggerLoginUserInterface
 {
     public function getUsername(): string;

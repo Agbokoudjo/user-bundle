@@ -17,15 +17,20 @@ declare(strict_types=1);
 namespace Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum;
 
 /**
- * Statut d'un code MFA.
- *
- * PENDING   : généré, en attente de saisie.
- * VERIFIED  : saisi correctement, code consommé.
- * EXPIRED   : durée de validité dépassée (10 min).
- * LOCKED    : nombre maximal de tentatives atteint (5).
- *
- * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- */
+
+* Status of an MFA code.
+
+* PENDING: Generated, awaiting entry.
+
+* VERIFIED: Entered correctly, code used.
+
+* EXPIRED: Validity period expired (10 min).
+
+* LOCKED: Maximum number of attempts reached (5).
+
+* @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+
+*/
 enum TwoFactorCodeStatus: string
 {
     case PENDING  = 'pending';

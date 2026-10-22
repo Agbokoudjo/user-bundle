@@ -54,7 +54,7 @@ abstract class AbstractEmailChangeRequestRepository extends ServiceEntityReposit
     {
         $entityManager = $this->getEntityManager();
         $entityManager->persist($request);
-
+ 
         if ($flush) {
             $entityManager->flush();
         }

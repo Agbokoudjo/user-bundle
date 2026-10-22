@@ -19,10 +19,10 @@ namespace Wlindabla\UserBundle\Domain\TwoFactorAuth\Model;
 use Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum\TwoFactorCodeStatus;
 
 /**
- * Contrat métier d'un code MFA (13 chiffres + 7 lettres, envoyé par email).
- *
- * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
- */
+* Business contract for an MFA code (13 digits + 7 letters, sent via email). 
+*
+* @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
+*/
 interface TwoFactorCodeInterface
 {
     public const int DEFAULT_MAX_ATTEMPTS = 5;
@@ -36,7 +36,7 @@ interface TwoFactorCodeInterface
 
     public function setUserIdentifier(string $userIdentifier): void;
 
-    /** Hash (hash_hmac sha256) du code — jamais le code en clair. */
+   /** Hash (hash_hmac sha256) of the code — never the code in plain text. */
     public function getCodeHash(): ?string;
 
     public function setCodeHash(string $codeHash): void;

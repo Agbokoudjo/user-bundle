@@ -26,7 +26,7 @@ use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
  * @author AGBOKOUDJO Franck <internationaleswebservices@gmail.com>
  * @package <https://github.com/Agbokoudjo/>
  */
-abstract class AbstractEmailChangeValidationRepository extends ServiceEntityRepository
+abstract class AbstractEmailChangeValidationRepository extends ServiceEntityRepository implements EmailChangeValidationInterface
 {
     public function __construct(ManagerRegistry $registry, string $entityClass)
     {

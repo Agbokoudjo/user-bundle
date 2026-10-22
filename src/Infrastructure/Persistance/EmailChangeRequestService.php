@@ -26,13 +26,13 @@ use Wlindabla\UserBundle\Domain\EmailChange\Enum\EmailChangeCancelReason;
 use Wlindabla\UserBundle\Domain\EmailChange\Enum\EmailChangeRequestStatus;
 use Wlindabla\UserBundle\Domain\EmailChange\Enum\EmailChangeValidationOutcome;
 use Wlindabla\UserBundle\Domain\EmailChange\Model\EmailChangeRequestInterface;
+use Wlindabla\UserBundle\Domain\EmailChange\Model\Persistance\EmailChangeRequestRepositoryInterface;
+use Wlindabla\UserBundle\Domain\EmailChange\Model\Persistance\EmailChangeValidationRepositoryInterface;
 use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Domain\User\Exception\InvalidTokenException;
 use Wlindabla\UserBundle\Domain\User\Model\BaseUserInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Application\Manager\UserSessionManagerInterface;
 use Wlindabla\UserBundle\Domain\UserSession\Enum\UserSessionRevokedReason;
-use Wlindabla\UserBundle\Infrastructure\Doctrine\Repository\AbstractEmailChangeRequestRepository;
-use Wlindabla\UserBundle\Infrastructure\Doctrine\Repository\AbstractEmailChangeValidationRepository;
 use Wlindabla\UserBundle\Infrastructure\Service\EmailChangeRequestMailerService;
 
 /**
@@ -43,8 +43,8 @@ final readonly class EmailChangeRequestService implements EmailChangeRequestServ
 {
     public function __construct(
         private UserManagerInterface $userManager,
-        private AbstractEmailChangeRequestRepository $emailChangeRequestRepository,
-        private AbstractEmailChangeValidationRepository $emailChangeValidationRepository,
+        private EmailChangeRequestRepositoryInterface $emailChangeRequestRepository,
+        private EmailChangeValidationRepositoryInterface $emailChangeValidationRepository,
         private EmailChangeValidatorPolicyInterface $validatorPolicy,
         private UserSessionManagerInterface $userSessionManager,
         private TokenGeneratorInterface $tokenGenerator,
@@ -59,7 +59,10 @@ final readonly class EmailChangeRequestService implements EmailChangeRequestServ
     ) {
     }
 
-    public function requestChange(BaseUserInterface $requestedBy, BaseUserInterface $targetUser, string $newEmail): void
+    public function requestChange(
+        BaseUserInterface $requestedBy, 
+        BaseUserInterface $targetUser, 
+        string $newEmail): void
     {
         $this->guardNoActiveRequest($targetUser);
         $this->guardCooldownElapsed($targetUser);
@@ -96,7 +99,10 @@ final readonly class EmailChangeRequestService implements EmailChangeRequestServ
         ]);
     }
 
-    public function requestRecovery(BaseUserInterface $requestedBy, BaseUserInterface $targetUser, string $newEmail): void
+    public function requestRecovery(
+        BaseUserInterface $requestedBy, 
+        BaseUserInterface $targetUser, 
+        string $newEmail): void
     {
         if (!$requestedBy->hasRole($this->recoveryInitiatorRole)) {
             $this->logger->warning('Recovery procedure initiation attempted by an unauthorized account.', [

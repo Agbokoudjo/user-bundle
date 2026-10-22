@@ -21,7 +21,7 @@ namespace Wlindabla\UserBundle\Domain\TwoFactorAuth\Enum;
 enum TwoFactorAuthKey:string
 {
     /**
-     * Clé de session : présence = 2FA en attente de validation pour cette session PHP.
-     */
+    * Session key: presence indicates 2FA awaiting validation for this PHP session. 
+    */
     case PENDING_2FA = '_2fa_pending';
 }
