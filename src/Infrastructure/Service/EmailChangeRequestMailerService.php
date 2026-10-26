@@ -24,7 +24,6 @@ use Wlindabla\MailingBundle\Mailing\MailerManagerInterface;
 use Wlindabla\MailingBundle\Mailing\PriorityInterface;
 use Wlindabla\ShareServiceBundle\Security\Encryption\IdEncryptionInterface;
 use Wlindabla\UserBundle\Domain\EmailChange\Application\Manager\EmailChangeValidatorPolicyInterface;
-use Wlindabla\UserBundle\Domain\User\Application\Manager\UserManagerInterface;
 use Wlindabla\UserBundle\Infrastructure\Doctrine\Repository\AbstractEmailChangeRequestRepository;
 use Wlindabla\UserBundle\Infrastructure\Templating\TemplateRegistryInterface;
 
@@ -40,7 +39,6 @@ final readonly class EmailChangeRequestMailerService
 {
     public function __construct(
         private AbstractEmailChangeRequestRepository $emailChangeRequestRepository,
-        private UserManagerInterface $userManager,
         private EmailChangeValidatorPolicyInterface $validatorPolicy,
         private MailerManagerInterface $mailerManager,
         private UrlGeneratorInterface $urlGenerator,
@@ -66,13 +64,13 @@ final readonly class EmailChangeRequestMailerService
         $siteName = $this->parameterBag->get('app.site_name');
 
         $confirmationUrl = $this->urlGenerator->generate(
-            'app_email_change_confirm_old',
+            'wlindabla_user_email_change_confirm_old',
             ['token' => $plainToken, 'id' => $encryptedId],
-            UrlGeneratorInterface::ABSOLUTE_URL,
+            UrlGeneratorInterface::ABSOLUTE_URL, 
         );
 
         $notMeUrl = $this->urlGenerator->generate(
-            'app_email_change_not_me',
+            'wlindabla_user_email_change_not_me',
             ['token' => $plainToken, 'id' => $encryptedId],
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
@@ -110,7 +108,7 @@ final readonly class EmailChangeRequestMailerService
         $siteName = $this->parameterBag->get('app.site_name');
 
         $confirmationUrl = $this->urlGenerator->generate(
-            'app_email_change_confirm_new',
+            'wlindabla_user_email_change_confirm_new',
             ['token' => $plainToken, 'id' => $encryptedId],
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
